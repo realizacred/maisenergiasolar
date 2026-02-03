@@ -234,22 +234,69 @@ export default function FinanciamentoConfig() {
     }
   };
 
-  const handleSyncApi = async () => {
-    if (!apiFormData.url || !apiFormData.ativo) {
+  const handleSyncBCB = async () => {
+    setSyncing(true);
+    try {
+      // Chamar a edge function que sincroniza com o Banco Central
+      const { data, error } = await supabase.functions.invoke('sync-taxas-bcb');
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({ 
+          title: "Sincronização concluída!",
+          description: `${data.resultados?.length || 0} bancos atualizados com taxas do Banco Central.`,
+        });
+        fetchData();
+      } else {
+        throw new Error(data?.error || "Erro na sincronização");
+      }
+    } catch (error: any) {
+      console.error("Erro ao sincronizar:", error);
       toast({
-        title: "API não configurada",
-        description: "Configure e ative a API antes de sincronizar.",
+        title: "Erro na sincronização",
+        description: error.message || "Não foi possível conectar à API do Banco Central.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleSyncApi = async () => {
+    if (!apiFormData.url) {
+      // Se não tem URL customizada, usar API do Banco Central
+      return handleSyncBCB();
     }
 
     setSyncing(true);
     try {
-      // TODO: Implementar chamada real à API quando o usuário fornecer
-      // Por enquanto, apenas simula a sincronização
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Chamar API customizada do usuário
+      const response = await fetch(apiFormData.url, {
+        headers: apiFormData.api_key ? { 'Authorization': `Bearer ${apiFormData.api_key}` } : {},
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro na API: ${response.status}`);
+      }
+
+      const data = await response.json();
       
+      // Espera um array de { nome, taxa_mensal, max_parcelas }
+      if (Array.isArray(data)) {
+        for (const banco of data) {
+          if (banco.nome && banco.taxa_mensal) {
+            await supabase
+              .from("financiamento_bancos")
+              .update({ 
+                taxa_mensal: banco.taxa_mensal,
+                max_parcelas: banco.max_parcelas || 60,
+              })
+              .ilike("nome", `%${banco.nome}%`);
+          }
+        }
+      }
+
       if (apiConfig) {
         await supabase
           .from("financiamento_api_config")
@@ -262,11 +309,11 @@ export default function FinanciamentoConfig() {
         description: "As taxas foram atualizadas com sucesso.",
       });
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao sincronizar:", error);
       toast({
         title: "Erro na sincronização",
-        description: "Não foi possível conectar à API. Verifique a URL e chave.",
+        description: error.message || "Não foi possível conectar à API.",
         variant: "destructive",
       });
     } finally {
@@ -404,15 +451,56 @@ export default function FinanciamentoConfig() {
         </CardContent>
       </Card>
 
-      {/* API Configuration */}
+      {/* Banco Central Integration */}
+      <Card className="border-green-200 bg-green-50/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-700">
+            <RefreshCw className="w-5 h-5" />
+            API do Banco Central do Brasil
+          </CardTitle>
+          <CardDescription>
+            Sincronize automaticamente com as taxas oficiais do Banco Central (gratuito e sem configuração)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+            <div>
+              <p className="font-medium">Taxas de Juros - Dados Abertos BCB</p>
+              <p className="text-sm text-muted-foreground">
+                {apiConfig?.ultima_sincronizacao 
+                  ? `Última sincronização: ${new Date(apiConfig.ultima_sincronizacao).toLocaleString('pt-BR')}`
+                  : "Nunca sincronizado"
+                }
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Fonte: olinda.bcb.gov.br/olinda/servico/taxaJuros
+              </p>
+            </div>
+            <Button
+              onClick={handleSyncBCB}
+              disabled={syncing}
+              className="gap-2 bg-green-600 hover:bg-green-700"
+            >
+              {syncing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              Sincronizar com BCB
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Custom API Configuration */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-brand-blue">
             <Link2 className="w-5 h-5" />
-            Configuração de API (Opcional)
+            API Customizada (Opcional)
           </CardTitle>
           <CardDescription>
-            Configure uma API externa para atualizar as taxas automaticamente
+            Configure sua própria API para buscar taxas de parceiros ou sistemas internos
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -427,7 +515,7 @@ export default function FinanciamentoConfig() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="api_key">Chave da API</Label>
+              <Label htmlFor="api_key">Chave da API (opcional)</Label>
               <div className="relative">
                 <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -443,26 +531,17 @@ export default function FinanciamentoConfig() {
           </div>
 
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Switch
-                checked={apiFormData.ativo}
-                onCheckedChange={(checked) => setApiFormData(prev => ({ ...prev, ativo: checked }))}
-              />
-              <div>
-                <p className="font-medium">Ativar sincronização automática</p>
-                <p className="text-sm text-muted-foreground">
-                  {apiConfig?.ultima_sincronizacao 
-                    ? `Última sincronização: ${new Date(apiConfig.ultima_sincronizacao).toLocaleString('pt-BR')}`
-                    : "Nunca sincronizado"
-                  }
-                </p>
-              </div>
+            <div>
+              <p className="font-medium">Sincronização com API customizada</p>
+              <p className="text-sm text-muted-foreground">
+                Configure a URL acima para usar sua própria fonte de dados
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 onClick={handleSyncApi}
-                disabled={syncing || !apiFormData.url || !apiFormData.ativo}
+                disabled={syncing || !apiFormData.url}
                 className="gap-2"
               >
                 {syncing ? (
@@ -470,22 +549,21 @@ export default function FinanciamentoConfig() {
                 ) : (
                   <RefreshCw className="w-4 h-4" />
                 )}
-                Sincronizar Agora
+                Sincronizar
               </Button>
               <Button onClick={handleSaveApiConfig} disabled={saving}>
                 {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                Salvar Configuração
+                Salvar
               </Button>
             </div>
           </div>
 
           <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
             <p className="text-sm text-muted-foreground">
-              <strong>Dica:</strong> Você pode integrar com APIs de instituições financeiras ou criar 
-              sua própria API que retorne os dados no formato JSON. A API deve retornar um array com 
-              objetos contendo: <code className="bg-muted px-1 rounded">nome</code>, 
-              <code className="bg-muted px-1 rounded">taxa_mensal</code> e 
-              <code className="bg-muted px-1 rounded">max_parcelas</code>.
+              <strong>Formato esperado:</strong> A API deve retornar um array JSON com objetos contendo: 
+              <code className="bg-muted px-1 rounded mx-1">nome</code>, 
+              <code className="bg-muted px-1 rounded mx-1">taxa_mensal</code> e 
+              <code className="bg-muted px-1 rounded mx-1">max_parcelas</code>.
             </p>
           </div>
         </CardContent>
