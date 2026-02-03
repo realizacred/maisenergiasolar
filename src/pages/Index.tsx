@@ -1,8 +1,6 @@
 import { Zap, Leaf, TrendingDown, Shield } from "lucide-react";
 import LeadFormWizard from "@/components/LeadFormWizard";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import TestimonialsSection from "@/components/TestimonialsSection";
-import ProjectGallery from "@/components/ProjectGallery";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -84,12 +82,6 @@ export default function Index() {
           <LeadFormWizard />
         </div>
       </section>
-
-      {/* Testimonials Section */}
-      <TestimonialsSection />
-
-      {/* Project Gallery */}
-      <ProjectGallery />
 
       <Footer />
 
