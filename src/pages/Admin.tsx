@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink, BarChart3, Kanban, Calculator, Webhook, Bell } from "lucide-react";
+import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink, BarChart3, Kanban, Calculator, Webhook, Bell, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logo from "@/assets/logo.png";
@@ -20,6 +20,7 @@ import LeadsPipeline from "@/components/admin/LeadsPipeline";
 import CalculadoraConfig from "@/components/admin/CalculadoraConfig";
 import WebhookManager from "@/components/admin/WebhookManager";
 import FollowUpManager from "@/components/admin/FollowUpManager";
+import FinanciamentoConfig from "@/components/admin/FinanciamentoConfig";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface Lead {
   id: string;
@@ -209,7 +210,7 @@ export default function Admin() {
 
         {/* Tabs Navigation */}
         <Tabs defaultValue="leads" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:inline-flex">
             <TabsTrigger value="leads" className="gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Leads</span>
@@ -233,6 +234,10 @@ export default function Admin() {
             <TabsTrigger value="config" className="gap-2">
               <Calculator className="w-4 h-4" />
               <span className="hidden sm:inline">Calculadora</span>
+            </TabsTrigger>
+            <TabsTrigger value="financiamento" className="gap-2">
+              <Building2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Bancos</span>
             </TabsTrigger>
             <TabsTrigger value="webhooks" className="gap-2">
               <Webhook className="w-4 h-4" />
@@ -371,6 +376,11 @@ export default function Admin() {
           {/* Calculadora Config Tab */}
           <TabsContent value="config">
             <CalculadoraConfig />
+          </TabsContent>
+
+          {/* Financiamento Tab */}
+          <TabsContent value="financiamento">
+            <FinanciamentoConfig />
           </TabsContent>
 
           {/* Webhooks Tab */}

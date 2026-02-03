@@ -50,6 +50,72 @@ export type Database = {
         }
         Relationships: []
       }
+      financiamento_api_config: {
+        Row: {
+          api_key: string | null
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          ultima_sincronizacao: string | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          api_key?: string | null
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          ultima_sincronizacao?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          api_key?: string | null
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          ultima_sincronizacao?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
+      financiamento_bancos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          max_parcelas: number
+          nome: string
+          ordem: number
+          taxa_mensal: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          max_parcelas?: number
+          nome: string
+          ordem?: number
+          taxa_mensal: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          max_parcelas?: number
+          nome?: string
+          ordem?: number
+          taxa_mensal?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lead_status: {
         Row: {
           cor: string
