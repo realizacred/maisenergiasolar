@@ -174,13 +174,6 @@ export default function FileUpload({
     <div className="space-y-4">
       {/* Upload Area */}
       <div
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!isUploading && !isMobile) {
-            fileInputRef.current?.click();
-          }
-        }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -192,7 +185,6 @@ export default function FileUpload({
             : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
           }
           ${isUploading ? 'opacity-60 cursor-not-allowed' : ''}
-          ${!isMobile ? 'cursor-pointer' : ''}
         `}
       >
         {isUploading ? (
@@ -204,14 +196,15 @@ export default function FileUpload({
           <>
             <Upload className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
             <p className="text-muted-foreground mb-3 text-sm">
-              {isMobile ? "Tire uma foto ou selecione arquivos" : "Arraste e solte seus arquivos aqui"}
+              {isMobile ? "Tire uma foto ou selecione arquivos" : "Arraste arquivos aqui ou use os botões abaixo"}
             </p>
             
-            <div className={`flex gap-2 justify-center ${isMobile ? 'flex-col sm:flex-row' : ''}`}>
+            <div className="flex gap-2 justify-center flex-wrap">
               {isMobile && (
                 <button
                   type="button"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     handleCameraCapture();
                   }}
@@ -224,13 +217,14 @@ export default function FileUpload({
               <button
                 type="button"
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   fileInputRef.current?.click();
                 }}
                 className="px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
               >
                 <Upload className="w-4 h-4" />
-                {isMobile ? "Galeria/Arquivos" : "Selecionar Arquivos"}
+                Selecionar Arquivos
               </button>
             </div>
             
