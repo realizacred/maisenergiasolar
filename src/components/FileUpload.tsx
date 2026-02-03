@@ -1,7 +1,8 @@
 import { useState, useRef, DragEvent, ChangeEvent } from "react";
-import { Upload, X, FileText, Image, Loader2 } from "lucide-react";
+import { Upload, X, FileText, Image, Loader2, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FileUploadProps {
   onFilesChange: (urls: string[]) => void;
@@ -25,6 +26,8 @@ export default function FileUpload({
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
   const { toast } = useToast();
 
   const formatFileSize = (bytes: number) => {
@@ -157,28 +160,33 @@ export default function FileUpload({
 
   const getFileIcon = (type: string) => {
     return type.startsWith('image/') ? (
-      <Image className="w-5 h-5 text-blue-500" />
+      <Image className="w-5 h-5 text-primary" />
     ) : (
-      <FileText className="w-5 h-5 text-red-500" />
+      <FileText className="w-5 h-5 text-secondary" />
     );
+  };
+
+  const handleCameraCapture = () => {
+    cameraInputRef.current?.click();
   };
 
   return (
     <div className="space-y-4">
       {/* Upload Area */}
       <div
-        onClick={() => !isUploading && fileInputRef.current?.click()}
+        onClick={() => !isUploading && !isMobile && fileInputRef.current?.click()}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-          relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer
+          relative border-2 border-dashed rounded-xl p-6 text-center
           transition-all duration-200
           ${isDragging 
             ? 'border-primary bg-primary/5 scale-[1.01]' 
             : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
           }
           ${isUploading ? 'opacity-60 cursor-not-allowed' : ''}
+          ${!isMobile ? 'cursor-pointer' : ''}
         `}
       >
         {isUploading ? (
@@ -188,27 +196,60 @@ export default function FileUpload({
           </div>
         ) : (
           <>
-            <Upload className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground mb-2">
-              Arraste e solte seus arquivos aqui ou
+            <Upload className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
+            <p className="text-muted-foreground mb-3 text-sm">
+              {isMobile ? "Tire uma foto ou selecione arquivos" : "Arraste e solte seus arquivos aqui"}
             </p>
-            <button
-              type="button"
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
-            >
-              Selecionar Arquivos
-            </button>
-            <p className="text-sm text-muted-foreground mt-3">
+            
+            <div className={`flex gap-2 justify-center ${isMobile ? 'flex-col sm:flex-row' : ''}`}>
+              {isMobile && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCameraCapture();
+                  }}
+                  className="px-4 py-2.5 bg-secondary text-secondary-foreground rounded-lg font-medium hover:bg-secondary/90 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Camera className="w-4 h-4" />
+                  Tirar Foto
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
+                className="px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                {isMobile ? "Galeria/Arquivos" : "Selecionar Arquivos"}
+              </button>
+            </div>
+            
+            <p className="text-xs text-muted-foreground mt-3">
               Formatos aceitos: PDF, JPG, PNG (máx. {maxSizeMB}MB)
             </p>
           </>
         )}
         
+        {/* Input para galeria/arquivos */}
         <input
           ref={fileInputRef}
           type="file"
           multiple
           accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+          onChange={handleInputChange}
+          className="hidden"
+        />
+        
+        {/* Input para câmera (mobile) */}
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
           onChange={handleInputChange}
           className="hidden"
         />
