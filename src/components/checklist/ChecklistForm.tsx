@@ -302,7 +302,7 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
             type="button"
             variant="outline"
             size="sm"
-            onClick={syncPendingChecklists}
+            onClick={() => syncPendingChecklists()}
             disabled={!isOnline || isSyncing}
             className="gap-1"
           >
