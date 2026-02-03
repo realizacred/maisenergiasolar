@@ -6,6 +6,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import ProjectGallery from "@/components/ProjectGallery";
 import logo from "@/assets/logo.png";
+import logoBranca from "@/assets/logo-branca.png";
 
 // WhatsApp da Mais Energia Solar
 const WHATSAPP_NUMBER = "5532998437675";
@@ -106,7 +107,7 @@ export default function Index() {
       {/* Footer */}
       <footer className="py-8 bg-secondary text-secondary-foreground">
         <div className="container mx-auto px-4 text-center">
-          <img src={logo} alt="Mais Energia Solar" className="h-10 w-auto mx-auto mb-4 brightness-0 invert" />
+          <img src={logoBranca} alt="Mais Energia Solar" className="h-12 w-auto mx-auto mb-4" />
           <p className="text-sm opacity-80">
             © {new Date().getFullYear()} Mais Energia Solar. Todos os direitos reservados.
           </p>
