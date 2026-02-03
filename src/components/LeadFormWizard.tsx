@@ -212,18 +212,16 @@ export default function LeadFormWizard() {
         cep: data.cep || null,
         estado: data.estado,
         cidade: data.cidade,
+        rua: data.rua || null,
+        numero: data.numero || null,
+        bairro: data.bairro || null,
+        complemento: data.complemento || null,
         area: data.area,
         tipo_telhado: data.tipo_telhado,
         rede_atendimento: data.rede_atendimento,
         media_consumo: data.media_consumo,
         consumo_previsto: data.consumo_previsto,
-        observacoes: [
-          data.rua && `Rua: ${data.rua}`,
-          data.numero && `Nº: ${data.numero}`,
-          data.bairro && `Bairro: ${data.bairro}`,
-          data.complemento && `Complemento: ${data.complemento}`,
-          data.observacoes,
-        ].filter(Boolean).join(" | ") || null,
+        observacoes: data.observacoes || null,
         arquivos_urls: uploadedFiles,
       });
 

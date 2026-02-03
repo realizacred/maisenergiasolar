@@ -22,6 +22,10 @@ interface Lead {
   cep: string | null;
   estado: string;
   cidade: string;
+  rua: string | null;
+  numero: string | null;
+  bairro: string | null;
+  complemento: string | null;
   area: string;
   tipo_telhado: string;
   rede_atendimento: string;
@@ -302,49 +306,78 @@ export default function Admin() {
                   <p className="text-sm text-muted-foreground">Telefone</p>
                   <p className="font-medium">{selectedLead.telefone}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">CEP</p>
-                  <p className="font-medium">{selectedLead.cep || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Localização</p>
-                  <p className="font-medium">
-                    {selectedLead.cidade}, {selectedLead.estado}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Área</p>
-                  <p className="font-medium">{selectedLead.area}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Tipo de Telhado</p>
-                  <p className="font-medium">{selectedLead.tipo_telhado}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Rede</p>
-                  <p className="font-medium">{selectedLead.rede_atendimento}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Consumo Médio</p>
-                  <p className="font-medium">{selectedLead.media_consumo} kWh</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Consumo Previsto</p>
-                  <p className="font-medium">{selectedLead.consumo_previsto} kWh</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Data de Cadastro</p>
-                  <p className="font-medium">
-                    {format(new Date(selectedLead.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                      locale: ptBR,
-                    })}
-                  </p>
+              </div>
+              
+              {/* Endereço */}
+              <div className="pt-2 border-t">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Endereço</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">CEP</p>
+                    <p className="font-medium text-sm">{selectedLead.cep || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cidade/Estado</p>
+                    <p className="font-medium text-sm">{selectedLead.cidade}, {selectedLead.estado}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Bairro</p>
+                    <p className="font-medium text-sm">{selectedLead.bairro || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Rua</p>
+                    <p className="font-medium text-sm">{selectedLead.rua || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Número</p>
+                    <p className="font-medium text-sm">{selectedLead.numero || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Complemento</p>
+                    <p className="font-medium text-sm">{selectedLead.complemento || "-"}</p>
+                  </div>
                 </div>
               </div>
+              
+              {/* Imóvel */}
+              <div className="pt-2 border-t">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Imóvel e Consumo</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Área</p>
+                    <p className="font-medium text-sm">{selectedLead.area}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Tipo de Telhado</p>
+                    <p className="font-medium text-sm">{selectedLead.tipo_telhado}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Rede</p>
+                    <p className="font-medium text-sm">{selectedLead.rede_atendimento}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Consumo Médio</p>
+                    <p className="font-medium text-sm">{selectedLead.media_consumo} kWh</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Consumo Previsto</p>
+                    <p className="font-medium text-sm">{selectedLead.consumo_previsto} kWh</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Data de Cadastro</p>
+                    <p className="font-medium text-sm">
+                      {format(new Date(selectedLead.created_at), "dd/MM/yyyy 'às' HH:mm", {
+                        locale: ptBR,
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
               {selectedLead.observacoes && (
-                <div>
+                <div className="pt-2 border-t">
                   <p className="text-sm text-muted-foreground">Observações</p>
-                  <p className="font-medium">{selectedLead.observacoes}</p>
+                  <p className="font-medium text-sm">{selectedLead.observacoes}</p>
                 </div>
               )}
               
