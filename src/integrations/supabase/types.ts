@@ -1373,6 +1373,7 @@ export type Database = {
           nome: string
           telefone: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           ativo?: boolean
@@ -1383,6 +1384,7 @@ export type Database = {
           nome: string
           telefone: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           ativo?: boolean
@@ -1393,6 +1395,7 @@ export type Database = {
           nome?: string
           telefone?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1435,6 +1438,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
       }
+      get_vendedor_nome: { Args: { _user_id: string }; Returns: string }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
