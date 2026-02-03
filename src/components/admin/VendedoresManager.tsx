@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatPhone, formatName } from "@/lib/validations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -366,8 +367,9 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
               <Input
                 id="nome"
                 value={formData.nome}
-                onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, nome: formatName(e.target.value) }))}
                 placeholder="Nome do vendedor"
+                maxLength={100}
               />
             </div>
             <div className="space-y-2">
@@ -375,8 +377,9 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
               <Input
                 id="telefone"
                 value={formData.telefone}
-                onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, telefone: formatPhone(e.target.value) }))}
                 placeholder="(00) 00000-0000"
+                maxLength={15}
               />
             </div>
             <div className="space-y-2">
