@@ -7,7 +7,7 @@ import confetti from "canvas-confetti";
 import { 
   User, Phone, MapPin, Home, Zap, BarChart3, MessageSquare, 
   Send, Loader2, CheckCircle, FileText, ArrowLeft, ArrowRight,
-  Building, Hash, WifiOff, RefreshCw
+  Building, Hash, WifiOff, RefreshCw, ShieldCheck
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,17 +16,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { FloatingInput } from "@/components/ui/floating-input";
 import { FloatingSelect } from "@/components/ui/floating-select";
-import { StepIndicator } from "@/components/ui/step-indicator";
 import ConsumptionChart from "./ConsumptionChart";
 import FileUpload from "./FileUpload";
 import { useOfflineLeadSync } from "@/hooks/useOfflineLeadSync";
+import { useFormAutoSave } from "@/hooks/useFormAutoSave";
+import { useFormRateLimit } from "@/hooks/useFormRateLimit";
+import { useHoneypot } from "@/hooks/useHoneypot";
+import { 
+  HoneypotField, 
+  FormProgressBar, 
+  RateLimitWarning,
+  AutoSaveIndicator 
+} from "@/components/form";
 import logo from "@/assets/logo.png";
 import {
   leadFormSchema,
   LeadFormData,
-  step1Schema,
-  step2Schema,
-  step3Schema,
   formatPhone,
   formatCEP,
   formatName,
@@ -89,6 +94,19 @@ export default function LeadFormWizard() {
     retrySync,
     refreshPendingCount,
   } = useOfflineLeadSync();
+
+  // Honeypot anti-bot protection
+  const { honeypotValue, handleHoneypotChange, validateHoneypot, resetHoneypot } = useHoneypot();
+
+  // Rate limiting protection
+  const { 
+    checkRateLimit, 
+    recordAttempt, 
+    isBlocked, 
+    remainingAttempts,
+    getRemainingCooldownSeconds,
+    reset: resetRateLimit 
+  } = useFormRateLimit({ maxAttempts: 5, windowMs: 60000, cooldownMs: 300000 });
 
   // Captura e valida o vendedor da URL
   useEffect(() => {
@@ -262,27 +280,53 @@ export default function LeadFormWizard() {
     fire(0.1, { spread: 120, startVelocity: 45 });
   };
 
+  // Auto-save draft
+  const { clearDraft, hasDraft } = useFormAutoSave(form, { key: "lead_wizard" });
+
   const onSubmit = async (data: LeadFormData) => {
+    // Check for bots
+    const honeypotCheck = validateHoneypot();
+    if (honeypotCheck.isBot) {
+      console.warn("[Security] Bot detected:", honeypotCheck.reason);
+      // Silently fail for bots
+      toast({
+        title: "Cadastro enviado! ☀️",
+        description: "Entraremos em contato em breve.",
+      });
+      return;
+    }
+
+    // Check rate limit
+    if (!checkRateLimit()) {
+      toast({
+        title: "Muitas tentativas",
+        description: "Por favor, aguarde alguns minutos antes de tentar novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    recordAttempt();
     setIsSubmitting(true);
     setSavedOffline(false);
     
     try {
       const leadData = {
-        nome: data.nome,
-        telefone: data.telefone,
-        cep: data.cep || null,
+        nome: data.nome.trim(),
+        telefone: data.telefone.trim(),
+        cep: data.cep?.trim() || null,
         estado: data.estado,
-        cidade: data.cidade,
-        rua: data.rua || null,
-        numero: data.numero || null,
-        bairro: data.bairro || null,
-        complemento: data.complemento || null,
+        cidade: data.cidade.trim(),
+        rua: data.rua?.trim() || null,
+        numero: data.numero?.trim() || null,
+        bairro: data.bairro?.trim() || null,
+        complemento: data.complemento?.trim() || null,
         area: data.area,
         tipo_telhado: data.tipo_telhado,
         rede_atendimento: data.rede_atendimento,
         media_consumo: data.media_consumo,
         consumo_previsto: data.consumo_previsto,
-        observacoes: data.observacoes || null,
+        observacoes: data.observacoes?.trim() || null,
         arquivos_urls: uploadedFiles,
         vendedor: vendedorNome,
       };
@@ -292,6 +336,9 @@ export default function LeadFormWizard() {
       if (result.success) {
         setIsSuccess(true);
         setSavedOffline(result.offline);
+        clearDraft(); // Clear saved draft on success
+        resetHoneypot();
+        resetRateLimit();
         
         if (!result.offline) {
           triggerConfetti();
@@ -327,7 +374,8 @@ export default function LeadFormWizard() {
     setSavedOffline(false);
     setUploadedFiles([]);
     setTouchedFields(new Set());
-    // Refresh pending count after reset
+    clearDraft();
+    resetHoneypot();
     refreshPendingCount();
   };
 
@@ -340,13 +388,13 @@ export default function LeadFormWizard() {
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
             className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 ${
-              savedOffline ? "bg-amber-100" : "bg-emerald-100"
+              savedOffline ? "bg-secondary/20" : "bg-primary/20"
             }`}
           >
             {savedOffline ? (
-              <WifiOff className="w-12 h-12 text-amber-600" />
+              <WifiOff className="w-12 h-12 text-secondary" />
             ) : (
-              <CheckCircle className="w-12 h-12 text-emerald-600" />
+              <CheckCircle className="w-12 h-12 text-primary" />
             )}
           </motion.div>
           <motion.h2
@@ -407,18 +455,36 @@ export default function LeadFormWizard() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         />
-        <CardTitle className="text-2xl md:text-3xl font-bold text-brand-blue">
-          Solicite seu Orçamento
-        </CardTitle>
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <CardTitle className="text-2xl md:text-3xl font-bold text-brand-blue">
+            Solicite seu Orçamento
+          </CardTitle>
+        </div>
         <CardDescription className="text-base">
           Preencha o formulário e receba uma proposta personalizada
         </CardDescription>
+        
+        {/* Auto-save indicator */}
+        <div className="absolute top-4 right-4">
+          <AutoSaveIndicator hasDraft={hasDraft()} isOnline={isOnline} />
+        </div>
       </CardHeader>
 
       <CardContent className="pt-6">
-        <StepIndicator steps={STEPS} currentStep={currentStep} className="mb-8" />
+        {/* Enhanced Progress Bar */}
+        <FormProgressBar steps={STEPS} currentStep={currentStep} className="mb-8" />
+
+        {/* Rate limit warning */}
+        <RateLimitWarning
+          isBlocked={isBlocked}
+          remainingSeconds={getRemainingCooldownSeconds()}
+          remainingAttempts={remainingAttempts}
+        />
 
         <form onSubmit={form.handleSubmit(onSubmit)} onKeyDown={handleKeyDown}>
+          {/* Honeypot field - invisible to users */}
+          <HoneypotField value={honeypotValue} onChange={handleHoneypotChange} />
+
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={currentStep}
@@ -695,7 +761,7 @@ export default function LeadFormWizard() {
               <Button
                 type="submit"
                 className="gap-2 gradient-solar hover:opacity-90"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isBlocked}
               >
                 {isSubmitting ? (
                   <>
@@ -711,6 +777,17 @@ export default function LeadFormWizard() {
               </Button>
             )}
           </div>
+
+          {/* Security badge */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="flex items-center justify-center gap-2 mt-6 text-xs text-muted-foreground"
+          >
+            <ShieldCheck className="w-4 h-4 text-primary" />
+            <span>Seus dados estão protegidos e seguros</span>
+          </motion.div>
         </form>
       </CardContent>
     </Card>
