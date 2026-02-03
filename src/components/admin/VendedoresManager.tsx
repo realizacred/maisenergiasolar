@@ -49,6 +49,9 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
+  const isNewVendedor = !editingVendedor;
+  const isLinkingExistingUser = isNewVendedor && !!formData.user_id;
+
   // Count leads per vendedor
   const leadCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -124,17 +127,17 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
       return;
     }
 
-    // For new vendedor, email and senha are required
-    if (!editingVendedor && (!formData.email.trim() || !formData.senha.trim())) {
+    // For new vendedor, either link an existing user OR provide email+senha to create access
+    if (isNewVendedor && !isLinkingExistingUser && (!formData.email.trim() || !formData.senha.trim())) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha email e senha para criar o acesso do vendedor.",
+        description: "Preencha email e senha para criar o acesso do vendedor (ou vincule um usuário existente).",
         variant: "destructive",
       });
       return;
     }
 
-    if (!editingVendedor && formData.senha.length < 6) {
+    if (isNewVendedor && !isLinkingExistingUser && formData.senha.length < 6) {
       toast({
         title: "Senha muito curta",
         description: "A senha deve ter pelo menos 6 caracteres.",
@@ -160,6 +163,28 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
         if (error) throw error;
         toast({ title: "Vendedor atualizado!" });
       } else {
+        // If linking an existing user, skip user creation
+        if (isLinkingExistingUser) {
+          const { error: vendedorError } = await supabase
+            .from("vendedores")
+            .insert({
+              nome: formData.nome,
+              telefone: formData.telefone,
+              email: formData.email || null,
+              user_id: formData.user_id,
+              codigo: "temp", // Will be overwritten by trigger
+            } as any);
+
+          if (vendedorError) throw vendedorError;
+
+          toast({
+            title: "Vendedor cadastrado!",
+            description: "Usuário existente vinculado ao Portal do Vendedor.",
+          });
+
+          // Refresh users list
+          fetchUsers();
+        } else {
         // Create user account first
         setCreatingUser(true);
         
@@ -185,11 +210,23 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
         );
 
         if (userError) {
-          throw new Error(userError.message || "Erro ao criar usuário");
+          const msg = userError.message || "Erro ao criar usuário";
+          if (msg.toLowerCase().includes("already been registered") || msg.toLowerCase().includes("email")) {
+            throw new Error(
+              "Este e-mail já está cadastrado. Use outro e-mail ou selecione 'Vincular usuário existente' para reaproveitar um usuário já criado."
+            );
+          }
+          throw new Error(msg);
         }
 
         if (userResult?.error) {
-          throw new Error(userResult.error);
+          const msg = String(userResult.error);
+          if (msg.toLowerCase().includes("already been registered") || msg.toLowerCase().includes("email")) {
+            throw new Error(
+              "Este e-mail já está cadastrado. Use outro e-mail ou selecione 'Vincular usuário existente' para reaproveitar um usuário já criado."
+            );
+          }
+          throw new Error(msg);
         }
 
         const newUserId = userResult?.user_id;
@@ -214,6 +251,7 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
         
         // Refresh users list
         fetchUsers();
+        }
       }
 
       setIsDialogOpen(false);
@@ -505,7 +543,7 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
             {/* Email - obrigatório para novo, opcional para edição */}
             <div className="space-y-2">
               <Label htmlFor="email">
-                Email {!editingVendedor && "*"}
+                Email {isNewVendedor && !isLinkingExistingUser && "*"}
               </Label>
               <Input
                 id="email"
@@ -515,16 +553,22 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
                 placeholder="email@exemplo.com"
                 disabled={!!editingVendedor?.user_id}
               />
-              {!editingVendedor && (
+              {isNewVendedor && !isLinkingExistingUser && (
                 <p className="text-xs text-muted-foreground">
                   <Mail className="w-3 h-3 inline mr-1" />
                   Será usado para login no Portal do Vendedor.
                 </p>
               )}
+              {isLinkingExistingUser && (
+                <p className="text-xs text-muted-foreground">
+                  <UserCheck className="w-3 h-3 inline mr-1" />
+                  Você está vinculando um usuário existente; email/senha não serão criados aqui.
+                </p>
+              )}
             </div>
             
             {/* Senha - apenas para novo vendedor */}
-            {!editingVendedor && (
+            {isNewVendedor && !isLinkingExistingUser && (
               <div className="space-y-2">
                 <Label htmlFor="senha">Senha *</Label>
                 <div className="relative">
@@ -553,6 +597,35 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
                 <p className="text-xs text-muted-foreground">
                   <KeyRound className="w-3 h-3 inline mr-1" />
                   Senha padrão que o vendedor usará para acessar.
+                </p>
+              </div>
+            )}
+
+            {/* Vincular usuário - opcional para novo vendedor */}
+            {isNewVendedor && (
+              <div className="space-y-2">
+                <Label htmlFor="user_id">Vincular usuário existente (opcional)</Label>
+                <Select
+                  value={formData.user_id}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, user_id: value === "none" ? "" : value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um usuário..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum (criar acesso novo)</SelectItem>
+                    {availableUsers.map((user) => (
+                      <SelectItem key={user.user_id} value={user.user_id}>
+                        {user.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  <UserCheck className="w-3 h-3 inline mr-1" />
+                  Use isso quando o email já existir no sistema ou quando o usuário já tiver acesso criado.
                 </p>
               </div>
             )}
@@ -593,7 +666,7 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
               </div>
             )}
             
-            {!editingVendedor && (
+            {isNewVendedor && (
               <p className="text-sm text-muted-foreground">
                 <LinkIcon className="w-3 h-3 inline mr-1" />
                 O link único será gerado automaticamente após o cadastro.
