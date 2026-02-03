@@ -174,6 +174,13 @@ export default function LeadFormWizard() {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && currentStep < STEPS.length) {
+      e.preventDefault();
+      nextStep();
+    }
+  };
+
   const prevStep = () => {
     if (currentStep > 1) {
       setDirection(-1);
@@ -317,7 +324,7 @@ export default function LeadFormWizard() {
       <CardContent className="pt-6">
         <StepIndicator steps={STEPS} currentStep={currentStep} className="mb-8" />
 
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} onKeyDown={handleKeyDown}>
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={currentStep}
