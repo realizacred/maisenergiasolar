@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Copy, Check, Trash2, Edit2, Users, Link as LinkIcon, Phone, Mail, Loader2, UserCheck, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Plus, Copy, Check, Trash2, Edit2, Users, Link as LinkIcon, Phone, Mail, Loader2, UserCheck, Eye, EyeOff, KeyRound, Unlink } from "lucide-react";
 
 interface Vendedor {
   id: string;
@@ -690,39 +690,59 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
               </div>
             )}
             
-            {/* Vincular usuário - apenas para edição */}
-            {editingVendedor && !editingVendedor.user_id && (
-              <div className="space-y-2">
-                <Label htmlFor="user_id">Vincular a usuário existente</Label>
-                <Select
-                  value={formData.user_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, user_id: value === "none" ? "" : value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um usuário..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    {availableUsers.map((user) => (
-                      <SelectItem key={user.user_id} value={user.user_id}>
-                        {user.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  <UserCheck className="w-3 h-3 inline mr-1" />
-                  Vincular permite que este usuário acesse o Portal do Vendedor.
-                </p>
-              </div>
-            )}
-            
-            {editingVendedor?.user_id && (
-              <div className="rounded-lg bg-muted/50 p-3 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <UserCheck className="w-4 h-4 text-primary" />
-                  <span>Usuário vinculado: <strong className="text-foreground">{getUserName(editingVendedor.user_id)}</strong></span>
+            {/* Vincular/Alterar/Desvincular usuário - edição */}
+            {editingVendedor && (
+              <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <Label>Usuário Vinculado</Label>
+                  {formData.user_id && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, user_id: "" }))}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1 h-7"
+                    >
+                      <Unlink className="w-3 h-3" />
+                      Desvincular
+                    </Button>
+                  )}
                 </div>
+                
+                {formData.user_id ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 p-2 rounded bg-background border">
+                      <UserCheck className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium">{getUserName(formData.user_id) || "Usuário vinculado"}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Este usuário pode acessar o Portal do Vendedor. Para alterar, primeiro desvincule.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Select
+                      value={formData.user_id || "none"}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, user_id: value === "none" ? "" : value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um usuário..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum (sem acesso ao portal)</SelectItem>
+                        {availableUsers.map((user) => (
+                          <SelectItem key={user.user_id} value={user.user_id}>
+                            {user.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      <UserCheck className="w-3 h-3 inline mr-1" />
+                      Vincular permite que o usuário acesse o Portal do Vendedor.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
             
