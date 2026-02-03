@@ -1,18 +1,13 @@
+import Header from "@/components/layout/Header";
 import LeadFormWizard from "@/components/LeadFormWizard";
-import logo from "@/assets/logo.png";
 
 export function VendorLandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      {/* Simple Header */}
-      <header className="py-6 bg-white shadow-sm">
-        <div className="container mx-auto px-4 flex justify-center">
-          <img src={logo} alt="Mais Energia Solar" className="h-16" />
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col">
+      <Header />
 
       {/* Form Section */}
-      <main className="py-12">
+      <main className="flex-1 py-12">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
