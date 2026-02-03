@@ -167,6 +167,7 @@ export type Database = {
           ultimo_contato: string | null
           updated_at: string
           vendedor: string | null
+          visto: boolean
         }
         Insert: {
           area: string
@@ -194,6 +195,7 @@ export type Database = {
           ultimo_contato?: string | null
           updated_at?: string
           vendedor?: string | null
+          visto?: boolean
         }
         Update: {
           area?: string
@@ -221,6 +223,7 @@ export type Database = {
           ultimo_contato?: string | null
           updated_at?: string
           vendedor?: string | null
+          visto?: boolean
         }
         Relationships: [
           {

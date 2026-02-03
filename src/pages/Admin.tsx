@@ -10,7 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink, BarChart3, Kanban, Calculator, Webhook, Bell, Building2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink, BarChart3, Kanban, Calculator, Webhook, Bell, Building2, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logo from "@/assets/logo.png";
@@ -43,6 +45,7 @@ interface Lead {
   vendedor: string | null;
   arquivos_urls: string[] | null;
   status_id: string | null;
+  visto: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -52,6 +55,9 @@ export default function Admin() {
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterVisto, setFilterVisto] = useState<string>("todos");
+  const [filterVendedor, setFilterVendedor] = useState<string>("todos");
+  const [filterEstado, setFilterEstado] = useState<string>("todos");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -74,15 +80,66 @@ export default function Admin() {
   }, [user]);
 
   useEffect(() => {
-    const filtered = leads.filter((lead) =>
+    let filtered = leads.filter((lead) =>
       lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.telefone.includes(searchTerm) ||
       lead.cidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.estado.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (lead.vendedor && lead.vendedor.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+    
+    // Filter by visto
+    if (filterVisto === "visto") {
+      filtered = filtered.filter((lead) => lead.visto);
+    } else if (filterVisto === "nao_visto") {
+      filtered = filtered.filter((lead) => !lead.visto);
+    }
+    
+    // Filter by vendedor
+    if (filterVendedor !== "todos") {
+      filtered = filtered.filter((lead) => lead.vendedor === filterVendedor);
+    }
+    
+    // Filter by estado
+    if (filterEstado !== "todos") {
+      filtered = filtered.filter((lead) => lead.estado === filterEstado);
+    }
+    
     setFilteredLeads(filtered);
-  }, [searchTerm, leads]);
+  }, [searchTerm, leads, filterVisto, filterVendedor, filterEstado]);
+  
+  // Get unique vendedores and estados for filters
+  const uniqueVendedores = [...new Set(leads.map((l) => l.vendedor).filter(Boolean))] as string[];
+  const uniqueEstados = [...new Set(leads.map((l) => l.estado))].sort();
+  
+  const handleToggleVisto = async (lead: Lead) => {
+    const newVisto = !lead.visto;
+    
+    // Optimistic update
+    setLeads((prev) =>
+      prev.map((l) => (l.id === lead.id ? { ...l, visto: newVisto } : l))
+    );
+    
+    try {
+      const { error } = await supabase
+        .from("leads")
+        .update({ visto: newVisto })
+        .eq("id", lead.id);
+        
+      if (error) throw error;
+    } catch (error) {
+      console.error("Erro ao atualizar visto:", error);
+      // Revert on error
+      setLeads((prev) =>
+        prev.map((l) => (l.id === lead.id ? { ...l, visto: lead.visto } : l))
+      );
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchLeads = async () => {
     try {
@@ -249,16 +306,76 @@ export default function Admin() {
           <TabsContent value="leads">
             <Card>
               <CardHeader>
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <CardTitle className="text-brand-blue">Leads Cadastrados</CardTitle>
-                  <div className="relative w-full md:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar por nome, telefone, cidade..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <CardTitle className="text-brand-blue">Leads Cadastrados</CardTitle>
+                    <div className="relative w-full md:w-80">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar por nome, telefone, cidade..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Filters */}
+                  <div className="flex flex-wrap items-center gap-3 pt-2 border-t">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Filter className="w-4 h-4" />
+                      <span>Filtros:</span>
+                    </div>
+                    
+                    <Select value={filterVisto} onValueChange={setFilterVisto}>
+                      <SelectTrigger className="w-[140px] h-9">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos</SelectItem>
+                        <SelectItem value="visto">Vistos</SelectItem>
+                        <SelectItem value="nao_visto">Não Vistos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={filterVendedor} onValueChange={setFilterVendedor}>
+                      <SelectTrigger className="w-[160px] h-9">
+                        <SelectValue placeholder="Vendedor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos Vendedores</SelectItem>
+                        {uniqueVendedores.map((v) => (
+                          <SelectItem key={v} value={v}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={filterEstado} onValueChange={setFilterEstado}>
+                      <SelectTrigger className="w-[120px] h-9">
+                        <SelectValue placeholder="Estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos Estados</SelectItem>
+                        {uniqueEstados.map((e) => (
+                          <SelectItem key={e} value={e}>{e}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {(filterVisto !== "todos" || filterVendedor !== "todos" || filterEstado !== "todos") && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setFilterVisto("todos");
+                          setFilterVendedor("todos");
+                          setFilterEstado("todos");
+                        }}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        Limpar filtros
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -267,6 +384,7 @@ export default function Admin() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-12">Visto</TableHead>
                         <TableHead className="w-24">Código</TableHead>
                         <TableHead>Nome</TableHead>
                         <TableHead>Telefone</TableHead>
@@ -280,13 +398,23 @@ export default function Admin() {
                     <TableBody>
                       {filteredLeads.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                          <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                             Nenhum lead encontrado
                           </TableCell>
                         </TableRow>
                       ) : (
                         filteredLeads.map((lead) => (
-                          <TableRow key={lead.id}>
+                          <TableRow 
+                            key={lead.id} 
+                            className={lead.visto ? "bg-green-50 dark:bg-green-950/20" : ""}
+                          >
+                            <TableCell>
+                              <Checkbox
+                                checked={lead.visto}
+                                onCheckedChange={() => handleToggleVisto(lead)}
+                                className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                              />
+                            </TableCell>
                             <TableCell>
                               <Badge variant="outline" className="font-mono text-xs">
                                 {lead.lead_code || "-"}
