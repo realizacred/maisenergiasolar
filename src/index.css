@@ -4,44 +4,44 @@
 
 @layer base {
   :root {
-    /* Mais Energia Solar - Orange, Blue, White */
+    /* Mais Energia Solar - Laranja #FF6B00 e Azul #0066CC */
     --background: 0 0% 100%;
-    --foreground: 220 60% 20%;
+    --foreground: 210 50% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 60% 20%;
+    --card-foreground: 210 50% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 60% 20%;
+    --popover-foreground: 210 50% 20%;
 
-    /* Primary - Orange */
-    --primary: 25 95% 53%;
+    /* Primary - Laranja #FF6B00 (24° 100% 50%) */
+    --primary: 24 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Blue */
-    --secondary: 220 70% 35%;
+    /* Secondary - Azul #0066CC (210° 100% 40%) */
+    --secondary: 210 100% 40%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 20% 96%;
-    --muted-foreground: 220 15% 45%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 210 15% 45%;
 
-    /* Accent - Blue */
-    --accent: 220 70% 35%;
+    /* Accent - Azul */
+    --accent: 210 100% 40%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 90%;
-    --input: 220 20% 90%;
-    --ring: 25 95% 53%;
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 24 100% 50%;
 
     --radius: 0.75rem;
 
-    /* Brand colors */
-    --brand-orange: 25 95% 53%;
-    --brand-blue: 220 70% 35%;
-    --brand-blue-light: 220 80% 50%;
+    /* Brand colors - Cores oficiais do site */
+    --brand-orange: 24 100% 50%;
+    --brand-blue: 210 100% 40%;
+    --brand-blue-light: 210 100% 50%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -63,24 +63,24 @@
     --popover: 220 30% 12%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 25 95% 55%;
-    --primary-foreground: 220 30% 8%;
+    --primary: 24 100% 55%;
+    --primary-foreground: 210 30% 8%;
 
-    --secondary: 220 60% 45%;
+    --secondary: 210 100% 50%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 25% 18%;
-    --muted-foreground: 220 15% 65%;
+    --muted: 210 25% 18%;
+    --muted-foreground: 210 15% 65%;
 
-    --accent: 220 60% 45%;
+    --accent: 210 100% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 25% 20%;
-    --input: 220 25% 20%;
-    --ring: 25 95% 55%;
+    --border: 210 25% 20%;
+    --input: 210 25% 20%;
+    --ring: 24 100% 55%;
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
