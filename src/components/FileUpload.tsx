@@ -247,7 +247,7 @@ export default function FileUpload({
           multiple
           accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
           onChange={handleInputChange}
-          className="hidden"
+           className="sr-only"
         />
         
         {/* Input para câmera (mobile) */}
@@ -257,7 +257,7 @@ export default function FileUpload({
           accept="image/*"
           capture="environment"
           onChange={handleInputChange}
-          className="hidden"
+           className="sr-only"
         />
       </div>
 
