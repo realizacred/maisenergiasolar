@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Sun, LogOut, Search, Edit, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye } from "lucide-react";
+import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import logo from "@/assets/logo.png";
 
 interface Lead {
   id: string;
@@ -133,20 +134,17 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted/30">
       {/* Header */}
       <header className="bg-white border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full gradient-solar flex items-center justify-center">
-              <Sun className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <span className="text-xl font-bold text-foreground">Painel Admin</span>
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img src={logo} alt="Mais Energia Solar" className="h-10 w-auto" />
+            <div className="hidden sm:block">
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleSignOut} className="gap-2">
+          <Button variant="outline" onClick={handleSignOut} className="gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
             <LogOut className="w-4 h-4" />
             Sair
           </Button>
@@ -156,37 +154,37 @@ export default function Admin() {
       <main className="container mx-auto px-4 py-8">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card>
+          <Card className="border-l-4 border-l-primary">
             <CardContent className="flex items-center gap-4 pt-6">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <Users className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{leads.length}</p>
+                <p className="text-2xl font-bold text-foreground">{leads.length}</p>
                 <p className="text-sm text-muted-foreground">Total de Leads</p>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-green-500">
             <CardContent className="flex items-center gap-4 pt-6">
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
                 <Zap className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-bold text-foreground">
                   {leads.reduce((acc, l) => acc + l.media_consumo, 0).toLocaleString()}
                 </p>
                 <p className="text-sm text-muted-foreground">kWh Total</p>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-secondary">
             <CardContent className="flex items-center gap-4 pt-6">
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <MapPin className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
+                <MapPin className="w-6 h-6 text-secondary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-bold text-foreground">
                   {new Set(leads.map((l) => l.estado)).size}
                 </p>
                 <p className="text-sm text-muted-foreground">Estados</p>
@@ -199,7 +197,7 @@ export default function Admin() {
         <Card>
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <CardTitle>Leads Cadastrados</CardTitle>
+              <CardTitle className="text-brand-blue">Leads Cadastrados</CardTitle>
               <div className="relative w-full md:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -242,7 +240,7 @@ export default function Admin() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary">
+                          <Badge variant="secondary" className="bg-secondary/10 text-secondary">
                             {lead.cidade}, {lead.estado}
                           </Badge>
                         </TableCell>
@@ -255,6 +253,7 @@ export default function Admin() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="text-secondary hover:text-secondary"
                               onClick={() => {
                                 setSelectedLead(lead);
                                 setIsViewOpen(true);
@@ -289,7 +288,7 @@ export default function Admin() {
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Detalhes do Lead</DialogTitle>
+            <DialogTitle className="text-brand-blue">Detalhes do Lead</DialogTitle>
           </DialogHeader>
           {selectedLead && (
             <div className="space-y-4">

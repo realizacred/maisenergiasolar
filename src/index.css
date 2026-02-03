@@ -4,42 +4,44 @@
 
 @layer base {
   :root {
-    /* Solar Energy Theme - Warm orange/yellow with blue accents */
-    --background: 40 33% 98%;
-    --foreground: 220 20% 15%;
+    /* Mais Energia Solar - Orange, Blue, White */
+    --background: 0 0% 100%;
+    --foreground: 220 60% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 220 60% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 220 60% 20%;
 
+    /* Primary - Orange */
     --primary: 25 95% 53%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 220 20% 25%;
+    /* Secondary - Blue */
+    --secondary: 220 70% 35%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 40 20% 94%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 220 20% 96%;
+    --muted-foreground: 220 15% 45%;
 
-    --accent: 200 80% 50%;
+    /* Accent - Blue */
+    --accent: 220 70% 35%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 20% 88%;
-    --input: 40 20% 88%;
+    --border: 220 20% 90%;
+    --input: 220 20% 90%;
     --ring: 25 95% 53%;
 
     --radius: 0.75rem;
 
-    /* Custom solar colors */
-    --solar-orange: 25 95% 53%;
-    --solar-yellow: 45 100% 51%;
-    --solar-blue: 210 90% 50%;
-    --solar-green: 145 63% 42%;
+    /* Brand colors */
+    --brand-orange: 25 95% 53%;
+    --brand-blue: 220 70% 35%;
+    --brand-blue-light: 220 80% 50%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -52,32 +54,32 @@
   }
 
   .dark {
-    --background: 220 20% 10%;
-    --foreground: 40 20% 95%;
+    --background: 220 30% 8%;
+    --foreground: 0 0% 98%;
 
-    --card: 220 20% 13%;
-    --card-foreground: 40 20% 95%;
+    --card: 220 30% 12%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 220 20% 13%;
-    --popover-foreground: 40 20% 95%;
+    --popover: 220 30% 12%;
+    --popover-foreground: 0 0% 98%;
 
     --primary: 25 95% 55%;
-    --primary-foreground: 220 20% 10%;
+    --primary-foreground: 220 30% 8%;
 
-    --secondary: 220 15% 20%;
-    --secondary-foreground: 40 20% 90%;
+    --secondary: 220 60% 45%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 40 10% 60%;
+    --muted: 220 25% 18%;
+    --muted-foreground: 220 15% 65%;
 
-    --accent: 200 80% 55%;
-    --accent-foreground: 220 20% 10%;
+    --accent: 220 60% 45%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
+    --border: 220 25% 20%;
+    --input: 220 25% 20%;
     --ring: 25 95% 55%;
 
     --sidebar-background: 240 5.9% 10%;
@@ -101,11 +103,31 @@
   }
 }
 
-/* Custom gradient backgrounds */
+/* Brand gradients */
 .gradient-solar {
-  background: linear-gradient(135deg, hsl(var(--solar-orange)) 0%, hsl(var(--solar-yellow)) 100%);
+  background: linear-gradient(135deg, hsl(var(--brand-orange)) 0%, hsl(30 100% 45%) 100%);
+}
+
+.gradient-blue {
+  background: linear-gradient(135deg, hsl(var(--brand-blue)) 0%, hsl(var(--brand-blue-light)) 100%);
 }
 
 .gradient-solar-soft {
-  background: linear-gradient(135deg, hsl(40 33% 98%) 0%, hsl(0 0% 100%) 50%, hsl(40 50% 97%) 100%);
+  background: linear-gradient(135deg, hsl(40 60% 98%) 0%, hsl(0 0% 100%) 50%, hsl(220 40% 98%) 100%);
+}
+
+.text-brand-blue {
+  color: hsl(var(--brand-blue));
+}
+
+.text-brand-orange {
+  color: hsl(var(--brand-orange));
+}
+
+.bg-brand-blue {
+  background-color: hsl(var(--brand-blue));
+}
+
+.bg-brand-orange {
+  background-color: hsl(var(--brand-orange));
 }
