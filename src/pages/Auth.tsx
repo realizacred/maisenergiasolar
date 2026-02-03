@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,18 +6,45 @@ import { useAuth } from "@/hooks/useAuth";
 import { AuthForm } from "@/components/auth";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Auth() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [checkingRole, setCheckingRole] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) {
-      navigate("/admin");
-    }
+    const checkUserRoleAndRedirect = async () => {
+      if (!loading && user) {
+        setCheckingRole(true);
+        try {
+          // Check if user has 'vendedor' role
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id);
+
+          const isVendedor = roles?.some(r => r.role === "vendedor");
+          const isAdmin = roles?.some(r => r.role === "admin" || r.role === "gerente");
+
+          if (isVendedor && !isAdmin) {
+            navigate("/vendedor");
+          } else {
+            navigate("/admin");
+          }
+        } catch (error) {
+          console.error("Error checking user role:", error);
+          navigate("/admin");
+        } finally {
+          setCheckingRole(false);
+        }
+      }
+    };
+
+    checkUserRoleAndRedirect();
   }, [user, loading, navigate]);
 
-  if (loading) {
+  if (loading || checkingRole) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
