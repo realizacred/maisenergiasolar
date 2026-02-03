@@ -202,6 +202,10 @@ export default function LeadFormWizard() {
     return isValid;
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const nextStep = async () => {
     const isValid = await validateCurrentStep();
     if (!isValid) {
@@ -216,6 +220,7 @@ export default function LeadFormWizard() {
     if (currentStep < STEPS.length) {
       setDirection(1);
       setCurrentStep(prev => prev + 1);
+      scrollToTop();
     }
   };
 
@@ -230,6 +235,7 @@ export default function LeadFormWizard() {
     if (currentStep > 1) {
       setDirection(-1);
       setCurrentStep(prev => prev - 1);
+      scrollToTop();
     }
   };
 
