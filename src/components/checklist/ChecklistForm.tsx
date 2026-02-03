@@ -93,14 +93,7 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
   });
 
   const onSubmit = async (formData: ChecklistFormData) => {
-    if (!user) {
-      toast({
-        title: "Erro",
-        description: "Você precisa estar logado para enviar o checklist.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Permite envio mesmo sem usuário logado (formulário público)
 
     // Get signatures from state (already saved when user drew them)
     if (!clientSignature) {
@@ -139,10 +132,9 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
         configuracao_wifi: formData.configuracao_wifi,
         foto_servico: formData.foto_servico,
         observacoes: formData.observacoes,
-        assinatura_cliente_url: clientSignature,
-        assinatura_instalador_url: installerSignature,
         fotos_urls: photos,
-        instalador_id: user.id,
+        // Usa ID do usuário logado ou ID público para submissões anônimas
+        instalador_id: user?.id || "00000000-0000-0000-0000-000000000000",
       });
 
       if (result.success) {
