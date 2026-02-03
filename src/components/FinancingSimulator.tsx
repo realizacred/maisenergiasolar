@@ -1,26 +1,60 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, TrendingUp, Calculator, Check } from "lucide-react";
+import { CreditCard, TrendingUp, Calculator, Check, Loader2 } from "lucide-react";
 
 interface FinancingSimulatorProps {
   investimento: number;
   economia: number;
 }
 
-// Common financing options in Brazil for solar
-const FINANCING_OPTIONS = [
-  { name: "Santander Solar", taxa: 1.29, maxParcelas: 60 },
-  { name: "BV Financeira", taxa: 1.49, maxParcelas: 72 },
-  { name: "Banco do Brasil", taxa: 1.19, maxParcelas: 48 },
-  { name: "Caixa Econômica", taxa: 1.09, maxParcelas: 60 },
+interface Banco {
+  id: string;
+  nome: string;
+  taxa_mensal: number;
+  max_parcelas: number;
+}
+
+// Fallback options if database is empty
+const FALLBACK_OPTIONS = [
+  { id: "1", nome: "Santander Solar", taxa_mensal: 1.29, max_parcelas: 60 },
+  { id: "2", nome: "BV Financeira", taxa_mensal: 1.49, max_parcelas: 72 },
+  { id: "3", nome: "Banco do Brasil", taxa_mensal: 1.19, max_parcelas: 48 },
+  { id: "4", nome: "Caixa Econômica", taxa_mensal: 1.09, max_parcelas: 60 },
 ];
 
 export default function FinancingSimulator({ investimento, economia }: FinancingSimulatorProps) {
+  const [bancos, setBancos] = useState<Banco[]>(FALLBACK_OPTIONS);
+  const [loading, setLoading] = useState(true);
   const [parcelas, setParcelas] = useState(36);
   const [selectedBank, setSelectedBank] = useState(0);
+
+  useEffect(() => {
+    const fetchBancos = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("financiamento_bancos")
+          .select("id, nome, taxa_mensal, max_parcelas")
+          .eq("ativo", true)
+          .order("ordem");
+
+        if (error) throw error;
+        if (data && data.length > 0) {
+          setBancos(data);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar bancos:", error);
+        // Keep fallback options
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBancos();
+  }, []);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -32,8 +66,10 @@ export default function FinancingSimulator({ investimento, economia }: Financing
   };
 
   const calculations = useMemo(() => {
-    const bank = FINANCING_OPTIONS[selectedBank];
-    const taxaMensal = bank.taxa / 100;
+    const bank = bancos[selectedBank] || bancos[0];
+    if (!bank) return null;
+    
+    const taxaMensal = bank.taxa_mensal / 100;
     
     // PMT formula: P * [r(1+r)^n] / [(1+r)^n - 1]
     const fator = Math.pow(1 + taxaMensal, parcelas);
@@ -56,7 +92,21 @@ export default function FinancingSimulator({ investimento, economia }: Financing
       autoFinanciado,
       banco: bank,
     };
-  }, [investimento, parcelas, selectedBank, economia]);
+  }, [investimento, parcelas, selectedBank, economia, bancos]);
+
+  if (loading) {
+    return (
+      <Card className="shadow-lg border-t-4 border-t-secondary">
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!calculations) {
+    return null;
+  }
 
   return (
     <Card className="shadow-lg border-t-4 border-t-secondary">
@@ -71,9 +121,9 @@ export default function FinancingSimulator({ investimento, economia }: Financing
         <div className="space-y-2">
           <Label className="text-sm font-medium">Banco</Label>
           <div className="grid grid-cols-2 gap-2">
-            {FINANCING_OPTIONS.map((bank, index) => (
+            {bancos.map((bank, index) => (
               <button
-                key={bank.name}
+                key={bank.id}
                 onClick={() => setSelectedBank(index)}
                 className={`p-2 rounded-lg border text-left transition-all ${
                   selectedBank === index
@@ -81,8 +131,8 @@ export default function FinancingSimulator({ investimento, economia }: Financing
                     : "border-border hover:border-secondary/50"
                 }`}
               >
-                <p className="font-medium text-sm">{bank.name}</p>
-                <p className="text-xs text-muted-foreground">{bank.taxa}% a.m.</p>
+                <p className="font-medium text-sm">{bank.nome}</p>
+                <p className="text-xs text-muted-foreground">{bank.taxa_mensal}% a.m.</p>
               </button>
             ))}
           </div>
@@ -100,13 +150,13 @@ export default function FinancingSimulator({ investimento, economia }: Financing
             value={[parcelas]}
             onValueChange={(value) => setParcelas(value[0])}
             min={12}
-            max={calculations.banco.maxParcelas}
+            max={calculations.banco.max_parcelas}
             step={6}
             className="py-2"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>12x</span>
-            <span>{calculations.banco.maxParcelas}x</span>
+            <span>{calculations.banco.max_parcelas}x</span>
           </div>
         </div>
 
