@@ -18,16 +18,20 @@ export type Database = {
         Row: {
           area: string
           arquivos_urls: string[] | null
+          bairro: string | null
           cep: string | null
           cidade: string
+          complemento: string | null
           consumo_previsto: number
           created_at: string
           estado: string
           id: string
           media_consumo: number
           nome: string
+          numero: string | null
           observacoes: string | null
           rede_atendimento: string
+          rua: string | null
           telefone: string
           tipo_telhado: string
           updated_at: string
@@ -36,16 +40,20 @@ export type Database = {
         Insert: {
           area: string
           arquivos_urls?: string[] | null
+          bairro?: string | null
           cep?: string | null
           cidade: string
+          complemento?: string | null
           consumo_previsto: number
           created_at?: string
           estado: string
           id?: string
           media_consumo: number
           nome: string
+          numero?: string | null
           observacoes?: string | null
           rede_atendimento: string
+          rua?: string | null
           telefone: string
           tipo_telhado: string
           updated_at?: string
@@ -54,16 +62,20 @@ export type Database = {
         Update: {
           area?: string
           arquivos_urls?: string[] | null
+          bairro?: string | null
           cep?: string | null
           cidade?: string
+          complemento?: string | null
           consumo_previsto?: number
           created_at?: string
           estado?: string
           id?: string
           media_consumo?: number
           nome?: string
+          numero?: string | null
           observacoes?: string | null
           rede_atendimento?: string
+          rua?: string | null
           telefone?: string
           tipo_telhado?: string
           updated_at?: string
