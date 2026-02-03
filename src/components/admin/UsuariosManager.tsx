@@ -24,12 +24,28 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   Shield, 
   UserPlus, 
@@ -39,6 +55,9 @@ import {
   ShieldCheck,
   ShieldAlert,
   Plus,
+  MoreVertical,
+  UserX,
+  UserCheck,
 } from "lucide-react";
 
 interface UserRole {
@@ -90,6 +109,10 @@ export function UsuariosManager() {
     password: "",
     role: "vendedor",
   });
+  const [userToDeactivate, setUserToDeactivate] = useState<UserWithRoles | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserWithRoles | null>(null);
+  const [isDeactivating, setIsDeactivating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -283,6 +306,85 @@ export function UsuariosManager() {
     return Object.keys(ROLE_LABELS).filter(role => !user.roles.includes(role));
   };
 
+  const handleToggleActive = async () => {
+    if (!userToDeactivate) return;
+
+    setIsDeactivating(true);
+    try {
+      const newStatus = !userToDeactivate.ativo;
+      const { error } = await supabase
+        .from("profiles")
+        .update({ ativo: newStatus })
+        .eq("user_id", userToDeactivate.user_id);
+
+      if (error) throw error;
+
+      toast({ 
+        title: newStatus ? "Usuário reativado!" : "Usuário desativado!",
+        description: newStatus 
+          ? `${userToDeactivate.nome} agora pode acessar o sistema.`
+          : `${userToDeactivate.nome} não poderá mais acessar o sistema.`,
+      });
+      setUserToDeactivate(null);
+      fetchUsers();
+    } catch (error) {
+      console.error("Error toggling user status:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível alterar o status do usuário.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeactivating(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Sessão inválida. Faça login novamente.");
+      }
+
+      const response = await supabase.functions.invoke("delete-user", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: {
+          user_id: userToDelete.user_id,
+        },
+      });
+
+      if (response.error) {
+        const parsed = await parseInvokeError(response.error);
+        throw new Error(parsed.message || "Erro ao excluir usuário");
+      }
+
+      if (response.data?.error) {
+        throw new Error(String(response.data.error));
+      }
+
+      toast({ 
+        title: "Usuário excluído!",
+        description: `${userToDelete.nome} foi removido permanentemente do sistema.`,
+      });
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      toast({
+        title: "Erro ao excluir usuário",
+        description: error.message || "Não foi possível excluir o usuário.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -366,17 +468,51 @@ export function UsuariosManager() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        {getAvailableRoles(user).length > 0 && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openAddRoleDialog(user)}
-                            className="gap-1"
-                          >
-                            <UserPlus className="w-3 h-3" />
-                            Adicionar Perfil
-                          </Button>
-                        )}
+                        <div className="flex items-center justify-end gap-2">
+                          {getAvailableRoles(user).length > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openAddRoleDialog(user)}
+                              className="gap-1"
+                            >
+                              <UserPlus className="w-3 h-3" />
+                              Adicionar Perfil
+                            </Button>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                                onClick={() => setUserToDeactivate(user)}
+                                className={user.ativo ? "text-amber-600" : "text-green-600"}
+                              >
+                                {user.ativo ? (
+                                  <>
+                                    <UserX className="mr-2 h-4 w-4" />
+                                    Desativar
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserCheck className="mr-2 h-4 w-4" />
+                                    Reativar
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => setUserToDelete(user)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Excluir permanentemente
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -502,6 +638,66 @@ export function UsuariosManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Deactivate/Reactivate Confirmation Dialog */}
+      <AlertDialog open={!!userToDeactivate} onOpenChange={(open) => !open && setUserToDeactivate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {userToDeactivate?.ativo ? "Desativar usuário?" : "Reativar usuário?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {userToDeactivate?.ativo 
+                ? `O usuário "${userToDeactivate?.nome}" não poderá mais acessar o sistema. Você poderá reativá-lo a qualquer momento.`
+                : `O usuário "${userToDeactivate?.nome}" poderá acessar o sistema novamente.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeactivating}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleToggleActive} 
+              disabled={isDeactivating}
+              className={userToDeactivate?.ativo ? "bg-amber-600 hover:bg-amber-700" : "bg-green-600 hover:bg-green-700"}
+            >
+              {isDeactivating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {userToDeactivate?.ativo ? "Desativar" : "Reativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">
+              Excluir usuário permanentemente?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-semibold text-destructive">Atenção: Esta ação é irreversível!</span>
+              <br /><br />
+              O usuário "{userToDelete?.nome}" será removido permanentemente do sistema, incluindo:
+              <ul className="list-disc ml-4 mt-2">
+                <li>Conta de acesso (login)</li>
+                <li>Perfil e informações</li>
+                <li>Todos os perfis/roles atribuídos</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteUser} 
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
