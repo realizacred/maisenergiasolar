@@ -26,6 +26,7 @@ export type Database = {
           created_at: string
           estado: string
           id: string
+          lead_code: string | null
           media_consumo: number
           nome: string
           numero: string | null
@@ -48,6 +49,7 @@ export type Database = {
           created_at?: string
           estado: string
           id?: string
+          lead_code?: string | null
           media_consumo: number
           nome: string
           numero?: string | null
@@ -70,6 +72,7 @@ export type Database = {
           created_at?: string
           estado?: string
           id?: string
+          lead_code?: string | null
           media_consumo?: number
           nome?: string
           numero?: string | null

@@ -17,6 +17,7 @@ import logo from "@/assets/logo.png";
 
 interface Lead {
   id: string;
+  lead_code: string | null;
   nome: string;
   telefone: string;
   cep: string | null;
@@ -219,6 +220,7 @@ export default function Admin() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-24">Código</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Telefone</TableHead>
                     <TableHead>Localização</TableHead>
@@ -230,13 +232,18 @@ export default function Admin() {
                 <TableBody>
                   {filteredLeads.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         Nenhum lead encontrado
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredLeads.map((lead) => (
                       <TableRow key={lead.id}>
+                        <TableCell>
+                          <Badge variant="outline" className="font-mono text-xs">
+                            {lead.lead_code || "-"}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="font-medium">{lead.nome}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
@@ -297,6 +304,13 @@ export default function Admin() {
           </DialogHeader>
           {selectedLead && (
             <div className="space-y-4">
+              {selectedLead.lead_code && (
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="font-mono text-sm px-3 py-1">
+                    {selectedLead.lead_code}
+                  </Badge>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Nome</p>
