@@ -50,6 +50,78 @@ export type Database = {
         }
         Relationships: []
       }
+      checklists_instalacao: {
+        Row: {
+          adesivo_inversor: boolean | null
+          assinatura_cliente_url: string | null
+          assinatura_instalador_url: string | null
+          avaliacao_atendimento: string | null
+          bairro: string | null
+          configuracao_wifi: boolean | null
+          created_at: string
+          data_instalacao: string
+          endereco: string
+          foto_servico: boolean | null
+          fotos_urls: string[] | null
+          id: string
+          instalador_id: string
+          inversor_local_aprovado: boolean | null
+          lead_code: string | null
+          nome_cliente: string
+          observacoes: string | null
+          placas_local_aprovado: boolean | null
+          plaquinha_relogio: boolean | null
+          synced: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          adesivo_inversor?: boolean | null
+          assinatura_cliente_url?: string | null
+          assinatura_instalador_url?: string | null
+          avaliacao_atendimento?: string | null
+          bairro?: string | null
+          configuracao_wifi?: boolean | null
+          created_at?: string
+          data_instalacao: string
+          endereco: string
+          foto_servico?: boolean | null
+          fotos_urls?: string[] | null
+          id?: string
+          instalador_id: string
+          inversor_local_aprovado?: boolean | null
+          lead_code?: string | null
+          nome_cliente: string
+          observacoes?: string | null
+          placas_local_aprovado?: boolean | null
+          plaquinha_relogio?: boolean | null
+          synced?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          adesivo_inversor?: boolean | null
+          assinatura_cliente_url?: string | null
+          assinatura_instalador_url?: string | null
+          avaliacao_atendimento?: string | null
+          bairro?: string | null
+          configuracao_wifi?: boolean | null
+          created_at?: string
+          data_instalacao?: string
+          endereco?: string
+          foto_servico?: boolean | null
+          fotos_urls?: string[] | null
+          id?: string
+          instalador_id?: string
+          inversor_local_aprovado?: boolean | null
+          lead_code?: string | null
+          nome_cliente?: string
+          observacoes?: string | null
+          placas_local_aprovado?: boolean | null
+          plaquinha_relogio?: boolean | null
+          synced?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       financiamento_api_config: {
         Row: {
           api_key: string | null
