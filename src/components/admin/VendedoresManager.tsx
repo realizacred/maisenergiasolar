@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatPhone, formatName } from "@/lib/validations";
+import { isEmailAlreadyRegisteredError, parseInvokeError } from "@/lib/supabaseFunctionError";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -222,21 +223,35 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
         );
 
         if (userError) {
-          const msg = userError.message || "Erro ao criar usuário";
-          if (msg.toLowerCase().includes("already been registered") || msg.toLowerCase().includes("email")) {
-            throw new Error(
-              "Este e-mail já está cadastrado. Use outro e-mail ou selecione 'Vincular usuário existente' para reaproveitar um usuário já criado."
-            );
+          const parsed = await parseInvokeError(userError);
+          const msg = parsed.message || "Erro ao criar usuário";
+
+          if (isEmailAlreadyRegisteredError(msg)) {
+            // Mantém o modal aberto e guia o usuário pro fluxo correto.
+            setFormData((prev) => ({ ...prev, tipoAcesso: "vincular", senha: "" }));
+            toast({
+              title: "E-mail já cadastrado",
+              description:
+                "Esse e-mail já existe no sistema. Selecione 'Vincular usuário existente' e escolha o usuário na lista.",
+              variant: "destructive",
+            });
+            return;
           }
+
           throw new Error(msg);
         }
 
         if (userResult?.error) {
           const msg = String(userResult.error);
-          if (msg.toLowerCase().includes("already been registered") || msg.toLowerCase().includes("email")) {
-            throw new Error(
-              "Este e-mail já está cadastrado. Use outro e-mail ou selecione 'Vincular usuário existente' para reaproveitar um usuário já criado."
-            );
+          if (isEmailAlreadyRegisteredError(msg)) {
+            setFormData((prev) => ({ ...prev, tipoAcesso: "vincular", senha: "" }));
+            toast({
+              title: "E-mail já cadastrado",
+              description:
+                "Esse e-mail já existe no sistema. Selecione 'Vincular usuário existente' e escolha o usuário na lista.",
+              variant: "destructive",
+            });
+            return;
           }
           throw new Error(msg);
         }
