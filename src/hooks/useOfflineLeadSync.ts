@@ -38,6 +38,8 @@ export function useOfflineLeadSync() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const syncInProgressRef = useRef(false);
+  const syncedIdsRef = useRef<Set<string>>(new Set());
 
   const countPending = useCallback(() => {
     try {
@@ -85,7 +87,8 @@ export function useOfflineLeadSync() {
   const syncPendingLeads = useCallback(async (showToast = true): Promise<SyncResult> => {
     const result: SyncResult = { total: 0, synced: 0, failed: 0 };
     
-    if (!navigator.onLine || isSyncing) {
+    // Prevent multiple simultaneous sync operations
+    if (!navigator.onLine || isSyncing || syncInProgressRef.current) {
       if (showToast && !navigator.onLine) {
         toast({
           title: "Sem conexão",
@@ -98,6 +101,7 @@ export function useOfflineLeadSync() {
 
     try {
       setIsSyncing(true);
+      syncInProgressRef.current = true;
       
       if (showToast) {
         toast({
@@ -109,11 +113,13 @@ export function useOfflineLeadSync() {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) {
         setIsSyncing(false);
+        syncInProgressRef.current = false;
         return result;
       }
 
       const leads: LeadData[] = JSON.parse(stored);
-      const pending = leads.filter((l) => !l.synced);
+      // Filter out already synced and recently synced leads to prevent duplicates
+      const pending = leads.filter((l) => !l.synced && l.id && !syncedIdsRef.current.has(l.id));
       result.total = pending.length;
 
       if (pending.length === 0) {
@@ -124,15 +130,25 @@ export function useOfflineLeadSync() {
           });
         }
         setIsSyncing(false);
+        syncInProgressRef.current = false;
         return result;
       }
 
       for (const lead of pending) {
+        // Double-check this lead hasn't been synced
+        if (lead.id && syncedIdsRef.current.has(lead.id)) {
+          continue;
+        }
+        
         const success = await syncLead(lead);
         if (success) {
           const index = leads.findIndex((l) => l.id === lead.id);
           if (index >= 0) {
             leads[index].synced = true;
+            // Mark as synced to prevent duplicates
+            if (lead.id) {
+              syncedIdsRef.current.add(lead.id);
+            }
             result.synced++;
           }
         } else {
@@ -178,6 +194,7 @@ export function useOfflineLeadSync() {
       return result;
     } finally {
       setIsSyncing(false);
+      syncInProgressRef.current = false;
     }
   }, [isSyncing, countPending]);
 
@@ -295,5 +312,6 @@ export function useOfflineLeadSync() {
     syncPendingLeads,
     retrySync,
     clearSyncedLeads,
+    refreshPendingCount: countPending,
   };
 }

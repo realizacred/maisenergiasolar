@@ -86,7 +86,8 @@ export default function LeadFormWizard() {
     pendingCount, 
     isSyncing, 
     saveLead, 
-    retrySync 
+    retrySync,
+    refreshPendingCount,
   } = useOfflineLeadSync();
 
   // Captura e valida o vendedor da URL
@@ -326,6 +327,8 @@ export default function LeadFormWizard() {
     setSavedOffline(false);
     setUploadedFiles([]);
     setTouchedFields(new Set());
+    // Refresh pending count after reset
+    refreshPendingCount();
   };
 
   if (isSuccess) {
