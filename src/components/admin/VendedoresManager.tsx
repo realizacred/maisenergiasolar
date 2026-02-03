@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Copy, Check, Trash2, Edit2, Users, Link as LinkIcon, Phone, Mail, Loader2 } from "lucide-react";
+import { Plus, Copy, Check, Trash2, Edit2, Users, Link as LinkIcon, Phone, Mail, Loader2, UserCheck } from "lucide-react";
 
 interface Vendedor {
   id: string;
@@ -20,12 +21,13 @@ interface Vendedor {
   email: string | null;
   codigo: string;
   ativo: boolean;
+  user_id: string | null;
   created_at: string;
 }
 
-interface LeadCount {
-  vendedor: string | null;
-  count: number;
+interface UserProfile {
+  user_id: string;
+  nome: string;
 }
 
 interface VendedoresManagerProps {
@@ -34,13 +36,14 @@ interface VendedoresManagerProps {
 
 export default function VendedoresManager({ leads }: VendedoresManagerProps) {
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [editingVendedor, setEditingVendedor] = useState<Vendedor | null>(null);
   const [vendedorToDelete, setVendedorToDelete] = useState<Vendedor | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ nome: "", telefone: "", email: "" });
+  const [formData, setFormData] = useState({ nome: "", telefone: "", email: "", user_id: "" });
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
@@ -57,7 +60,36 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
 
   useEffect(() => {
     fetchVendedores();
+    fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      // Fetch profiles with user_id to link to vendedores
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, nome")
+        .eq("ativo", true)
+        .order("nome");
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error("Erro ao buscar usuários:", error);
+    }
+  };
+
+  // Get list of user_ids already linked to vendedores
+  const linkedUserIds = useMemo(() => {
+    return vendedores
+      .filter(v => v.user_id && v.id !== editingVendedor?.id)
+      .map(v => v.user_id);
+  }, [vendedores, editingVendedor]);
+
+  // Available users (not yet linked to another vendedor)
+  const availableUsers = useMemo(() => {
+    return users.filter(u => !linkedUserIds.includes(u.user_id));
+  }, [users, linkedUserIds]);
 
   const fetchVendedores = async () => {
     try {
@@ -100,6 +132,7 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
             nome: formData.nome,
             telefone: formData.telefone,
             email: formData.email || null,
+            user_id: formData.user_id || null,
           })
           .eq("id", editingVendedor.id);
 
@@ -113,6 +146,7 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
             nome: formData.nome,
             telefone: formData.telefone,
             email: formData.email || null,
+            user_id: formData.user_id || null,
             codigo: "temp", // Will be overwritten by trigger
           } as any);
 
@@ -122,7 +156,7 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
 
       setIsDialogOpen(false);
       setEditingVendedor(null);
-      setFormData({ nome: "", telefone: "", email: "" });
+      setFormData({ nome: "", telefone: "", email: "", user_id: "" });
       fetchVendedores();
     } catch (error) {
       console.error("Erro ao salvar vendedor:", error);
@@ -216,14 +250,22 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
       nome: vendedor.nome,
       telefone: vendedor.telefone,
       email: vendedor.email || "",
+      user_id: vendedor.user_id || "",
     });
     setIsDialogOpen(true);
   };
 
   const openNewDialog = () => {
     setEditingVendedor(null);
-    setFormData({ nome: "", telefone: "", email: "" });
+    setFormData({ nome: "", telefone: "", email: "", user_id: "" });
     setIsDialogOpen(true);
+  };
+
+  // Get user name by user_id
+  const getUserName = (userId: string | null) => {
+    if (!userId) return null;
+    const user = users.find(u => u.user_id === userId);
+    return user?.nome;
   };
 
   if (loading) {
@@ -267,6 +309,7 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
                   <TableRow>
                     <TableHead>Nome</TableHead>
                     <TableHead>Contato</TableHead>
+                    <TableHead>Usuário Vinculado</TableHead>
                     <TableHead>Leads</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Link</TableHead>
@@ -290,6 +333,16 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
                             </div>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {vendedor.user_id ? (
+                          <Badge variant="secondary" className="gap-1">
+                            <UserCheck className="w-3 h-3" />
+                            {getUserName(vendedor.user_id) || "Vinculado"}
+                          </Badge>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
@@ -392,6 +445,34 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 placeholder="email@exemplo.com"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="user_id">Vincular a usuário (opcional)</Label>
+              <Select
+                value={formData.user_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, user_id: value === "none" ? "" : value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um usuário..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {availableUsers.map((user) => (
+                    <SelectItem key={user.user_id} value={user.user_id}>
+                      {user.nome}
+                    </SelectItem>
+                  ))}
+                  {editingVendedor?.user_id && !availableUsers.find(u => u.user_id === editingVendedor.user_id) && (
+                    <SelectItem value={editingVendedor.user_id}>
+                      {getUserName(editingVendedor.user_id)} (atual)
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                <UserCheck className="w-3 h-3 inline mr-1" />
+                Vincular permite que este usuário acesse o Portal do Vendedor.
+              </p>
             </div>
             {!editingVendedor && (
               <p className="text-sm text-muted-foreground">
