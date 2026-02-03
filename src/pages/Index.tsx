@@ -3,6 +3,8 @@ import { Zap, Leaf, TrendingDown, Shield, LogIn, Calculator } from "lucide-react
 import { Button } from "@/components/ui/button";
 import LeadFormWizard from "@/components/LeadFormWizard";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import TestimonialsSection from "@/components/TestimonialsSection";
+import ProjectGallery from "@/components/ProjectGallery";
 import logo from "@/assets/logo.png";
 
 // Configure your WhatsApp number here (with country code, e.g., 5511999999999)
@@ -95,8 +97,14 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <TestimonialsSection />
+
+      {/* Project Gallery */}
+      <ProjectGallery />
+
       {/* Footer */}
-      <footer className="py-8 bg-secondary text-secondary-foreground mt-12">
+      <footer className="py-8 bg-secondary text-secondary-foreground">
         <div className="container mx-auto px-4 text-center">
           <img src={logo} alt="Mais Energia Solar" className="h-10 w-auto mx-auto mb-4 brightness-0 invert" />
           <p className="text-sm opacity-80">

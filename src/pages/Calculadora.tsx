@@ -21,6 +21,7 @@ import {
   Loader2
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import FinancingSimulator from "@/components/FinancingSimulator";
 import {
   Tooltip,
   TooltipContent,
@@ -327,6 +328,9 @@ export default function Calculadora() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Financing Simulator */}
+            <FinancingSimulator investimento={investimento} economia={economia.mensal} />
 
             {/* CTA Button */}
             <Link to="/" className="block">

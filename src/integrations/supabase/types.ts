@@ -84,6 +84,7 @@ export type Database = {
           complemento: string | null
           consumo_previsto: number
           created_at: string
+          data_proxima_acao: string | null
           estado: string
           id: string
           lead_code: string | null
@@ -91,11 +92,13 @@ export type Database = {
           nome: string
           numero: string | null
           observacoes: string | null
+          proxima_acao: string | null
           rede_atendimento: string
           rua: string | null
           status_id: string | null
           telefone: string
           tipo_telhado: string
+          ultimo_contato: string | null
           updated_at: string
           vendedor: string | null
         }
@@ -108,6 +111,7 @@ export type Database = {
           complemento?: string | null
           consumo_previsto: number
           created_at?: string
+          data_proxima_acao?: string | null
           estado: string
           id?: string
           lead_code?: string | null
@@ -115,11 +119,13 @@ export type Database = {
           nome: string
           numero?: string | null
           observacoes?: string | null
+          proxima_acao?: string | null
           rede_atendimento: string
           rua?: string | null
           status_id?: string | null
           telefone: string
           tipo_telhado: string
+          ultimo_contato?: string | null
           updated_at?: string
           vendedor?: string | null
         }
@@ -132,6 +138,7 @@ export type Database = {
           complemento?: string | null
           consumo_previsto?: number
           created_at?: string
+          data_proxima_acao?: string | null
           estado?: string
           id?: string
           lead_code?: string | null
@@ -139,11 +146,13 @@ export type Database = {
           nome?: string
           numero?: string | null
           observacoes?: string | null
+          proxima_acao?: string | null
           rede_atendimento?: string
           rua?: string | null
           status_id?: string | null
           telefone?: string
           tipo_telhado?: string
+          ultimo_contato?: string | null
           updated_at?: string
           vendedor?: string | null
         }
@@ -187,6 +196,36 @@ export type Database = {
           nome?: string
           telefone?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      webhook_config: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          eventos: string[]
+          id: string
+          nome: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          eventos?: string[]
+          id?: string
+          nome: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          eventos?: string[]
+          id?: string
+          nome?: string
+          updated_at?: string
+          url?: string
         }
         Relationships: []
       }
