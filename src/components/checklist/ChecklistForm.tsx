@@ -179,12 +179,76 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
     }
   };
 
+  const validateStep1 = (): boolean => {
+    const data = form.getValues();
+    const errors: string[] = [];
+    
+    if (!data.data_instalacao) {
+      errors.push("Data da instalação");
+    }
+    if (!data.endereco || data.endereco.length < 3) {
+      errors.push("Endereço");
+    }
+    
+    if (errors.length > 0) {
+      toast({
+        title: "Campos obrigatórios",
+        description: `Preencha: ${errors.join(", ")}`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep2 = (): boolean => {
+    const data = form.getValues();
+    const errors: string[] = [];
+    
+    if (!data.nome_cliente || data.nome_cliente.length < 2) {
+      errors.push("Nome do cliente");
+    }
+    if (!data.avaliacao_atendimento) {
+      errors.push("Avaliação do atendimento");
+    }
+    
+    // Save current signature state
+    if (clientSignatureRef.current) {
+      const sig = clientSignatureRef.current.getSignatureDataUrl();
+      if (sig) setClientSignature(sig);
+    }
+    
+    if (!clientSignature && !clientSignatureRef.current?.getSignatureDataUrl()) {
+      errors.push("Assinatura do cliente");
+    }
+    
+    if (errors.length > 0) {
+      toast({
+        title: "Campos obrigatórios",
+        description: `Preencha: ${errors.join(", ")}`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
+
   const nextStep = () => {
+    // Validate current step before advancing
+    if (currentStep === 1 && !validateStep1()) {
+      return;
+    }
+    
+    if (currentStep === 2 && !validateStep2()) {
+      return;
+    }
+    
     // Save client signature before moving to next step
     if (currentStep === 2 && clientSignatureRef.current) {
       const sig = clientSignatureRef.current.getSignatureDataUrl();
       if (sig) setClientSignature(sig);
     }
+    
     if (currentStep < 3) setCurrentStep(currentStep + 1);
   };
 
