@@ -10,22 +10,25 @@ const corsHeaders = {
 // Documentação: https://olinda.bcb.gov.br/olinda/servico/taxaJuros/versao/v2/swagger-ui3#/
 const BCB_API_URL = "https://olinda.bcb.gov.br/olinda/servico/taxaJuros/versao/v2/odata/TaxasJurosDiariaPorInicioPeriodo";
 
-// Mapeamento de instituições financeiras para energia solar
-const BANCOS_SOLAR: Record<string, string> = {
-  "BANCO SANTANDER (BRASIL) S.A.": "Santander Solar",
-  "BANCO BV S.A.": "BV Financeira",
-  "BANCO VOTORANTIM S.A.": "BV Financeira",
-  "BANCO DO BRASIL S.A.": "Banco do Brasil",
-  "CAIXA ECONOMICA FEDERAL": "Caixa Econômica",
-  "CAIXA ECONÔMICA FEDERAL": "Caixa Econômica",
+// Mapeamento de códigos BCB para bancos
+const BANCOS_MAPEAMENTO: Record<string, { nomes: string[], codigo_bcb: string }> = {
+  "Santander": {
+    nomes: ["BANCO SANTANDER (BRASIL) S.A.", "SANTANDER"],
+    codigo_bcb: "033"
+  },
+  "BV": {
+    nomes: ["BANCO BV S.A.", "BANCO VOTORANTIM S.A.", "BV FINANCEIRA"],
+    codigo_bcb: "655"
+  },
+  "Banco do Brasil": {
+    nomes: ["BANCO DO BRASIL S.A."],
+    codigo_bcb: "001"
+  },
+  "Caixa": {
+    nomes: ["CAIXA ECONOMICA FEDERAL", "CAIXA ECONÔMICA FEDERAL"],
+    codigo_bcb: "104"
+  },
 };
-
-// Modalidades de crédito relacionadas a financiamento
-const MODALIDADES_CREDITO = [
-  "Aquisição de outros bens - Pessoa física",
-  "Crédito pessoal não consignado",
-  "Financiamento de projeto - Pessoa física",
-];
 
 interface TaxaBCB {
   InstituicaoFinanceira: string;
@@ -33,6 +36,12 @@ interface TaxaBCB {
   TaxaJurosAoMes: number;
   TaxaJurosAoAno: number;
   InicioPeriodo: string;
+}
+
+interface BancoDb {
+  id: string;
+  nome: string;
+  codigo_bcb: string | null;
 }
 
 serve(async (req) => {
@@ -46,14 +55,43 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log("[sync-taxas-bcb] Iniciando sincronização com API do Banco Central...");
+    // Check if syncing specific bank
+    let bankId: string | null = null;
+    try {
+      const body = await req.json();
+      bankId = body?.bank_id || null;
+    } catch {
+      // No body or invalid JSON, sync all
+    }
 
-    // Buscar taxas do BCB
-    const filterInstituicoes = Object.keys(BANCOS_SOLAR).map(b => `InstituicaoFinanceira eq '${b}'`).join(' or ');
-    const filterModalidades = MODALIDADES_CREDITO.map(m => `Modalidade eq '${m}'`).join(' or ');
+    console.log("[sync-taxas-bcb] Iniciando sincronização com API do Banco Central...");
+    if (bankId) {
+      console.log(`[sync-taxas-bcb] Sincronizando apenas banco ID: ${bankId}`);
+    }
+
+    // Buscar bancos cadastrados que têm código BCB ou que podem ser mapeados
+    const { data: bancosDb, error: bancosError } = await supabase
+      .from('financiamento_bancos')
+      .select('id, nome, codigo_bcb');
+    
+    if (bancosError) throw bancosError;
+
+    // Filter if specific bank requested
+    let bancosParaSincronizar = bancosDb || [];
+    if (bankId) {
+      bancosParaSincronizar = bancosParaSincronizar.filter(b => b.id === bankId);
+    }
+
+    // Buscar todas as instituições que podemos mapear
+    const todasInstituicoes: string[] = [];
+    for (const config of Object.values(BANCOS_MAPEAMENTO)) {
+      todasInstituicoes.push(...config.nomes);
+    }
+
+    const filterInstituicoes = todasInstituicoes.map(b => `InstituicaoFinanceira eq '${b}'`).join(' or ');
     
     const url = `${BCB_API_URL}?$format=json&$top=100&$filter=(${filterInstituicoes})`;
-    console.log("[sync-taxas-bcb] URL:", url);
+    console.log("[sync-taxas-bcb] Consultando API BCB...");
 
     const response = await fetch(url);
     
@@ -68,56 +106,114 @@ serve(async (req) => {
     
     console.log(`[sync-taxas-bcb] Recebidas ${taxas.length} taxas da API`);
 
-    // Processar e agregar taxas por banco
-    const taxasPorBanco: Record<string, { taxas: number[], nome: string }> = {};
-
+    // Processar taxas por instituição BCB
+    const taxasPorInstituicao: Record<string, number[]> = {};
     for (const taxa of taxas) {
-      const nomeBanco = BANCOS_SOLAR[taxa.InstituicaoFinanceira];
-      if (!nomeBanco) continue;
-
-      if (!taxasPorBanco[nomeBanco]) {
-        taxasPorBanco[nomeBanco] = { taxas: [], nome: nomeBanco };
+      const inst = taxa.InstituicaoFinanceira.toUpperCase();
+      if (!taxasPorInstituicao[inst]) {
+        taxasPorInstituicao[inst] = [];
       }
-      taxasPorBanco[nomeBanco].taxas.push(taxa.TaxaJurosAoMes);
+      taxasPorInstituicao[inst].push(taxa.TaxaJurosAoMes);
     }
 
-    // Calcular média das taxas e atualizar no banco
-    const resultados: { banco: string, taxa_atualizada: number }[] = [];
+    // Resultados da sincronização
+    const resultados: { banco: string, taxa_anterior: number | null, taxa_nova: number, sincronizado: boolean }[] = [];
+    const erros: { banco: string, erro: string }[] = [];
 
-    for (const [nomeBanco, dados] of Object.entries(taxasPorBanco)) {
-      if (dados.taxas.length === 0) continue;
+    // Atualizar cada banco cadastrado
+    for (const banco of bancosParaSincronizar) {
+      let taxaEncontrada: number | null = null;
+      let instituicaoEncontrada: string | null = null;
 
-      // Média das taxas encontradas
-      const taxaMedia = dados.taxas.reduce((a, b) => a + b, 0) / dados.taxas.length;
-      const taxaArredondada = Math.round(taxaMedia * 100) / 100;
+      // Primeiro, tentar pelo código BCB se existe
+      if (banco.codigo_bcb) {
+        for (const [, config] of Object.entries(BANCOS_MAPEAMENTO)) {
+          if (config.codigo_bcb === banco.codigo_bcb) {
+            for (const nomeInst of config.nomes) {
+              const key = nomeInst.toUpperCase();
+              if (taxasPorInstituicao[key] && taxasPorInstituicao[key].length > 0) {
+                const taxas = taxasPorInstituicao[key];
+                taxaEncontrada = taxas.reduce((a, b) => a + b, 0) / taxas.length;
+                instituicaoEncontrada = nomeInst;
+                break;
+              }
+            }
+            if (taxaEncontrada) break;
+          }
+        }
+      }
 
-      // Atualizar no banco de dados
-      const { error } = await supabase
-        .from('financiamento_bancos')
-        .update({ taxa_mensal: taxaArredondada })
-        .ilike('nome', `%${nomeBanco.split(' ')[0]}%`);
+      // Se não encontrou pelo código, tentar pelo nome
+      if (!taxaEncontrada) {
+        for (const [nomePadrao, config] of Object.entries(BANCOS_MAPEAMENTO)) {
+          // Verificar se o nome do banco contém alguma das palavras-chave
+          if (banco.nome.toUpperCase().includes(nomePadrao.toUpperCase())) {
+            for (const nomeInst of config.nomes) {
+              const key = nomeInst.toUpperCase();
+              if (taxasPorInstituicao[key] && taxasPorInstituicao[key].length > 0) {
+                const taxas = taxasPorInstituicao[key];
+                taxaEncontrada = taxas.reduce((a, b) => a + b, 0) / taxas.length;
+                instituicaoEncontrada = nomeInst;
+                break;
+              }
+            }
+            if (taxaEncontrada) break;
+          }
+        }
+      }
 
-      if (error) {
-        console.error(`[sync-taxas-bcb] Erro ao atualizar ${nomeBanco}:`, error);
+      if (taxaEncontrada !== null) {
+        const taxaArredondada = Math.round(taxaEncontrada * 100) / 100;
+        
+        // Buscar taxa anterior para log
+        const { data: bancoAtual } = await supabase
+          .from('financiamento_bancos')
+          .select('taxa_mensal')
+          .eq('id', banco.id)
+          .single();
+
+        // Atualizar banco com nova taxa e marcar fonte como BCB
+        const { error: updateError } = await supabase
+          .from('financiamento_bancos')
+          .update({ 
+            taxa_mensal: taxaArredondada,
+            fonte_sync: 'bcb',
+            ultima_sync: new Date().toISOString(),
+          })
+          .eq('id', banco.id);
+
+        if (updateError) {
+          console.error(`[sync-taxas-bcb] Erro ao atualizar ${banco.nome}:`, updateError);
+          erros.push({ banco: banco.nome, erro: updateError.message });
+        } else {
+          console.log(`[sync-taxas-bcb] ✅ ${banco.nome}: ${bancoAtual?.taxa_mensal || '?'}% → ${taxaArredondada}% (fonte: ${instituicaoEncontrada})`);
+          resultados.push({ 
+            banco: banco.nome, 
+            taxa_anterior: bancoAtual?.taxa_mensal || null,
+            taxa_nova: taxaArredondada,
+            sincronizado: true 
+          });
+        }
       } else {
-        console.log(`[sync-taxas-bcb] ${nomeBanco}: ${taxaArredondada}% a.m.`);
-        resultados.push({ banco: nomeBanco, taxa_atualizada: taxaArredondada });
+        console.log(`[sync-taxas-bcb] ⚠️ ${banco.nome}: Não encontrado na API do BCB`);
+        erros.push({ banco: banco.nome, erro: "Não encontrado na API do Banco Central. Configure o código BCB ou sincronize manualmente." });
       }
     }
 
-    // Atualizar timestamp de sincronização
+    // Atualizar timestamp global de sincronização
     await supabase
       .from('financiamento_api_config')
       .update({ ultima_sincronizacao: new Date().toISOString() })
       .eq('nome', 'Configuração de API');
 
-    console.log(`[sync-taxas-bcb] Sincronização concluída. ${resultados.length} bancos atualizados.`);
+    console.log(`[sync-taxas-bcb] Sincronização concluída. ${resultados.length} bancos atualizados, ${erros.length} erros.`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Taxas atualizadas para ${resultados.length} bancos`,
+        message: `Taxas atualizadas para ${resultados.length} banco(s)`,
         resultados,
+        erros,
         fonte: "Banco Central do Brasil - API de Taxas de Juros",
       }),
       { 
