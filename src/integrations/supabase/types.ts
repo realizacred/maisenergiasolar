@@ -17,6 +17,7 @@ export type Database = {
       leads: {
         Row: {
           area: string
+          arquivos_urls: string[] | null
           cep: string | null
           cidade: string
           consumo_previsto: number
@@ -34,6 +35,7 @@ export type Database = {
         }
         Insert: {
           area: string
+          arquivos_urls?: string[] | null
           cep?: string | null
           cidade: string
           consumo_previsto: number
@@ -51,6 +53,7 @@ export type Database = {
         }
         Update: {
           area?: string
+          arquivos_urls?: string[] | null
           cep?: string | null
           cidade?: string
           consumo_previsto?: number
