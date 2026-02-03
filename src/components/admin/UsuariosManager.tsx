@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { isEmailAlreadyRegisteredError, parseInvokeError } from "@/lib/supabaseFunctionError";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -241,11 +242,20 @@ export function UsuariosManager() {
       });
 
       if (response.error) {
-        throw new Error(response.error.message || "Erro ao criar usuário");
+        const parsed = await parseInvokeError(response.error);
+        const msg = parsed.message || "Erro ao criar usuário";
+        if (isEmailAlreadyRegisteredError(msg)) {
+          throw new Error("Este e-mail já está cadastrado. Use outro e-mail ou crie o usuário com um e-mail diferente.");
+        }
+        throw new Error(msg);
       }
 
       if (response.data?.error) {
-        throw new Error(response.data.error);
+        const msg = String(response.data.error);
+        if (isEmailAlreadyRegisteredError(msg)) {
+          throw new Error("Este e-mail já está cadastrado. Use outro e-mail ou crie o usuário com um e-mail diferente.");
+        }
+        throw new Error(msg);
       }
 
       toast({ 
