@@ -7,7 +7,7 @@ import confetti from "canvas-confetti";
 import { 
   User, Phone, MapPin, Home, Zap, BarChart3, MessageSquare, 
   Send, Loader2, CheckCircle, FileText, ArrowLeft, ArrowRight,
-  Building, Hash, WifiOff, RefreshCw, Cloud
+  Building, Hash, WifiOff, RefreshCw
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 import { FloatingInput } from "@/components/ui/floating-input";
 import { FloatingSelect } from "@/components/ui/floating-select";
 import { StepIndicator } from "@/components/ui/step-indicator";
-import { Badge } from "@/components/ui/badge";
 import ConsumptionChart from "./ConsumptionChart";
 import FileUpload from "./FileUpload";
 import { useOfflineLeadSync } from "@/hooks/useOfflineLeadSync";
@@ -392,34 +391,6 @@ export default function LeadFormWizard() {
   return (
     <Card className="max-w-2xl mx-auto border-0 shadow-2xl overflow-hidden">
       <CardHeader className="text-center pb-4 bg-gradient-to-b from-primary/5 to-transparent relative">
-        {/* Offline/Pending Status Indicator */}
-        <div className="absolute top-4 right-4 flex items-center gap-2">
-          {!isOnline && (
-            <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300 bg-amber-50">
-              <WifiOff className="w-3 h-3" />
-              Offline
-            </Badge>
-          )}
-          {pendingCount > 0 && (
-            <Badge 
-              variant="outline" 
-              className={`gap-1 cursor-pointer transition-colors ${
-                isOnline 
-                  ? "text-primary border-primary/30 bg-primary/5 hover:bg-primary/10" 
-                  : "text-amber-600 border-amber-300 bg-amber-50"
-              }`}
-              onClick={isOnline && !isSyncing ? retrySync : undefined}
-            >
-              {isSyncing ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <Cloud className="w-3 h-3" />
-              )}
-              {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
-            </Badge>
-          )}
-        </div>
-
         <motion.img
           src={logo}
           alt="Mais Energia Solar"
