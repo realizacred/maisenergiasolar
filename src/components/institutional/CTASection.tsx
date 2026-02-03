@@ -1,11 +1,18 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Phone, MessageCircle } from "lucide-react";
+
+const WHATSAPP_NUMBER = "5532998437675";
 
 export function CTASection() {
-  const scrollToForm = () => {
-    const formSection = document.getElementById("orcamento");
-    if (formSection) {
-      formSection.scrollIntoView({ behavior: "smooth" });
-    }
+  const handleWhatsApp = () => {
+    const message = encodeURIComponent(
+      "Olá! Gostaria de saber mais sobre energia solar e solicitar um orçamento."
+    );
+    window.open(
+      `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`,
+      "_blank"
+    );
   };
 
   return (
@@ -15,15 +22,27 @@ export function CTASection() {
           Economize até 90% na sua conta de Energia!
         </h2>
         <p className="text-lg opacity-90 mb-8 max-w-xl mx-auto">
-          Solicite um orçamento agora sem compromisso!
+          Entre em contato conosco e solicite um orçamento personalizado!
         </p>
-        <Button 
-          onClick={scrollToForm}
-          size="lg"
-          className="bg-white text-secondary hover:bg-white/90 font-semibold px-8"
-        >
-          Orçamento
-        </Button>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <Button 
+            onClick={handleWhatsApp}
+            size="lg"
+            className="bg-white text-secondary hover:bg-white/90 font-semibold px-8 gap-2"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Fale pelo WhatsApp
+          </Button>
+          <Link to="/calculadora">
+            <Button 
+              variant="outline"
+              size="lg"
+              className="border-white text-white hover:bg-white/10 font-semibold px-8"
+            >
+              Simular Economia
+            </Button>
+          </Link>
+        </div>
       </div>
     </section>
   );
