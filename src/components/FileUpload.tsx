@@ -174,7 +174,13 @@ export default function FileUpload({
     <div className="space-y-4">
       {/* Upload Area */}
       <div
-        onClick={() => !isUploading && !isMobile && fileInputRef.current?.click()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!isUploading && !isMobile) {
+            fileInputRef.current?.click();
+          }
+        }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
