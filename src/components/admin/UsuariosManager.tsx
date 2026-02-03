@@ -224,8 +224,14 @@ export function UsuariosManager() {
     setSaving(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Sessão inválida. Faça login novamente.");
+      }
       
       const response = await supabase.functions.invoke("create-vendedor-user", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: {
           nome: newUserForm.nome,
           email: newUserForm.email,
