@@ -11,11 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { loginSchema, LoginData } from "@/lib/validations";
+import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -33,6 +35,41 @@ export default function Auth() {
       navigate("/admin");
     }
   }, [user, loading, navigate]);
+
+  const handleForgotPassword = async () => {
+    const email = form.getValues("email");
+    if (!email) {
+      toast({
+        title: "Email necessário",
+        description: "Digite seu email para receber o link de recuperação.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+
+      if (error) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível enviar o email. Tente novamente.",
+          variant: "destructive",
+        });
+      } else {
+        setResetEmailSent(true);
+        toast({
+          title: "Email enviado! 📧",
+          description: "Verifique sua caixa de entrada para redefinir sua senha.",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSignIn = async (data: LoginData) => {
     setIsLoading(true);
@@ -173,6 +210,23 @@ export default function Auth() {
                         "Entrar"
                       )}
                     </Button>
+
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline"
+                        disabled={isLoading}
+                      >
+                        Esqueceu sua senha?
+                      </button>
+                    </div>
+
+                    {resetEmailSent && (
+                      <p className="text-sm text-center text-primary font-medium">
+                        ✓ Email de recuperação enviado!
+                      </p>
+                    )}
                   </form>
                 </Form>
               </TabsContent>
