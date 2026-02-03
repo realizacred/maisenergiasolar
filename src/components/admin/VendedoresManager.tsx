@@ -43,14 +43,14 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
   const [editingVendedor, setEditingVendedor] = useState<Vendedor | null>(null);
   const [vendedorToDelete, setVendedorToDelete] = useState<Vendedor | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ nome: "", telefone: "", email: "", user_id: "", senha: "" });
+  const [formData, setFormData] = useState({ nome: "", telefone: "", email: "", user_id: "", senha: "", tipoAcesso: "criar" as "criar" | "vincular" });
   const [showPassword, setShowPassword] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   const isNewVendedor = !editingVendedor;
-  const isLinkingExistingUser = isNewVendedor && !!formData.user_id;
+  const isLinkingExistingUser = isNewVendedor && formData.tipoAcesso === "vincular";
 
   // Count leads per vendedor
   const leadCounts = useMemo(() => {
@@ -127,23 +127,35 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
       return;
     }
 
-    // For new vendedor, either link an existing user OR provide email+senha to create access
-    if (isNewVendedor && !isLinkingExistingUser && (!formData.email.trim() || !formData.senha.trim())) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha email e senha para criar o acesso do vendedor (ou vincule um usuário existente).",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (isNewVendedor && !isLinkingExistingUser && formData.senha.length < 6) {
-      toast({
-        title: "Senha muito curta",
-        description: "A senha deve ter pelo menos 6 caracteres.",
-        variant: "destructive",
-      });
-      return;
+    // Validate based on access type
+    if (isNewVendedor) {
+      if (isLinkingExistingUser) {
+        if (!formData.user_id) {
+          toast({
+            title: "Usuário obrigatório",
+            description: "Selecione um usuário existente para vincular.",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else {
+        if (!formData.email.trim() || !formData.senha.trim()) {
+          toast({
+            title: "Campos obrigatórios",
+            description: "Preencha email e senha para criar o acesso do vendedor.",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (formData.senha.length < 6) {
+          toast({
+            title: "Senha muito curta",
+            description: "A senha deve ter pelo menos 6 caracteres.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
     }
 
     setSaving(true);
@@ -256,7 +268,7 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
 
       setIsDialogOpen(false);
       setEditingVendedor(null);
-      setFormData({ nome: "", telefone: "", email: "", user_id: "", senha: "" });
+      setFormData({ nome: "", telefone: "", email: "", user_id: "", senha: "", tipoAcesso: "criar" });
       fetchVendedores();
     } catch (error: any) {
       console.error("Erro ao salvar vendedor:", error);
@@ -353,6 +365,7 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
       email: vendedor.email || "",
       user_id: vendedor.user_id || "",
       senha: "",
+      tipoAcesso: "criar",
     });
     setShowPassword(false);
     setIsDialogOpen(true);
@@ -360,7 +373,7 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
 
   const openNewDialog = () => {
     setEditingVendedor(null);
-    setFormData({ nome: "", telefone: "", email: "", user_id: "", senha: "" });
+    setFormData({ nome: "", telefone: "", email: "", user_id: "", senha: "", tipoAcesso: "criar" });
     setShowPassword(false);
     setIsDialogOpen(true);
   };
@@ -540,82 +553,99 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
                 maxLength={15}
               />
             </div>
-            {/* Email - obrigatório para novo, opcional para edição */}
-            <div className="space-y-2">
-              <Label htmlFor="email">
-                Email {isNewVendedor && !isLinkingExistingUser && "*"}
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="email@exemplo.com"
-                disabled={!!editingVendedor?.user_id}
-              />
-              {isNewVendedor && !isLinkingExistingUser && (
-                <p className="text-xs text-muted-foreground">
-                  <Mail className="w-3 h-3 inline mr-1" />
-                  Será usado para login no Portal do Vendedor.
-                </p>
-              )}
-              {isLinkingExistingUser && (
-                <p className="text-xs text-muted-foreground">
-                  <UserCheck className="w-3 h-3 inline mr-1" />
-                  Você está vinculando um usuário existente; email/senha não serão criados aqui.
-                </p>
-              )}
-            </div>
-            
-            {/* Senha - apenas para novo vendedor */}
-            {isNewVendedor && !isLinkingExistingUser && (
-              <div className="space-y-2">
-                <Label htmlFor="senha">Senha *</Label>
-                <div className="relative">
-                  <Input
-                    id="senha"
-                    type={showPassword ? "text" : "password"}
-                    value={formData.senha}
-                    onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
-                    placeholder="Mínimo 6 caracteres"
-                    className="pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </Button>
+            {/* Tipo de acesso - escolha entre criar novo ou vincular existente */}
+            {isNewVendedor && (
+              <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
+                <Label>Tipo de Acesso ao Portal *</Label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="tipoAcesso"
+                      value="criar"
+                      checked={formData.tipoAcesso === "criar"}
+                      onChange={() => setFormData(prev => ({ ...prev, tipoAcesso: "criar", user_id: "" }))}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <span className="text-sm">Criar acesso novo</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="tipoAcesso"
+                      value="vincular"
+                      checked={formData.tipoAcesso === "vincular"}
+                      onChange={() => setFormData(prev => ({ ...prev, tipoAcesso: "vincular", email: "", senha: "" }))}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <span className="text-sm">Vincular usuário existente</span>
+                  </label>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  <KeyRound className="w-3 h-3 inline mr-1" />
-                  Senha padrão que o vendedor usará para acessar.
-                </p>
               </div>
             )}
 
-            {/* Vincular usuário - opcional para novo vendedor */}
-            {isNewVendedor && (
+            {/* Campos para CRIAR NOVO ACESSO */}
+            {isNewVendedor && formData.tipoAcesso === "criar" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="email@exemplo.com"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    <Mail className="w-3 h-3 inline mr-1" />
+                    Será usado para login no Portal do Vendedor.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="senha">Senha *</Label>
+                  <div className="relative">
+                    <Input
+                      id="senha"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.senha}
+                      onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
+                      placeholder="Mínimo 6 caracteres"
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    <KeyRound className="w-3 h-3 inline mr-1" />
+                    Senha padrão que o vendedor usará para acessar.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Campos para VINCULAR USUÁRIO EXISTENTE */}
+            {isNewVendedor && formData.tipoAcesso === "vincular" && (
               <div className="space-y-2">
-                <Label htmlFor="user_id">Vincular usuário existente (opcional)</Label>
+                <Label htmlFor="user_id">Usuário *</Label>
                 <Select
                   value={formData.user_id}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, user_id: value === "none" ? "" : value }))
-                  }
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, user_id: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um usuário..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Nenhum (criar acesso novo)</SelectItem>
                     {availableUsers.map((user) => (
                       <SelectItem key={user.user_id} value={user.user_id}>
                         {user.nome}
@@ -625,8 +655,23 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
                 </Select>
                 <p className="text-xs text-muted-foreground">
                   <UserCheck className="w-3 h-3 inline mr-1" />
-                  Use isso quando o email já existir no sistema ou quando o usuário já tiver acesso criado.
+                  Escolha um usuário que já existe no sistema.
                 </p>
+              </div>
+            )}
+
+            {/* Email para edição (readonly quando já tem user vinculado) */}
+            {editingVendedor && (
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="email@exemplo.com"
+                  disabled={!!editingVendedor?.user_id}
+                />
               </div>
             )}
             
