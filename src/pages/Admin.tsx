@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink, BarChart3, Kanban, Settings, Calculator } from "lucide-react";
+import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink, BarChart3, Kanban, Calculator, Webhook, Bell } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logo from "@/assets/logo.png";
@@ -18,6 +18,8 @@ import VendedoresManager from "@/components/admin/VendedoresManager";
 import DashboardCharts from "@/components/admin/DashboardCharts";
 import LeadsPipeline from "@/components/admin/LeadsPipeline";
 import CalculadoraConfig from "@/components/admin/CalculadoraConfig";
+import WebhookManager from "@/components/admin/WebhookManager";
+import FollowUpManager from "@/components/admin/FollowUpManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface Lead {
   id: string;
@@ -207,7 +209,7 @@ export default function Admin() {
 
         {/* Tabs Navigation */}
         <Tabs defaultValue="leads" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-flex">
             <TabsTrigger value="leads" className="gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Leads</span>
@@ -215,6 +217,10 @@ export default function Admin() {
             <TabsTrigger value="pipeline" className="gap-2">
               <Kanban className="w-4 h-4" />
               <span className="hidden sm:inline">Pipeline</span>
+            </TabsTrigger>
+            <TabsTrigger value="followup" className="gap-2">
+              <Bell className="w-4 h-4" />
+              <span className="hidden sm:inline">Follow-up</span>
             </TabsTrigger>
             <TabsTrigger value="dashboard" className="gap-2">
               <BarChart3 className="w-4 h-4" />
@@ -227,6 +233,10 @@ export default function Admin() {
             <TabsTrigger value="config" className="gap-2">
               <Calculator className="w-4 h-4" />
               <span className="hidden sm:inline">Calculadora</span>
+            </TabsTrigger>
+            <TabsTrigger value="webhooks" className="gap-2">
+              <Webhook className="w-4 h-4" />
+              <span className="hidden sm:inline">Webhooks</span>
             </TabsTrigger>
           </TabsList>
 
@@ -343,6 +353,11 @@ export default function Admin() {
             <LeadsPipeline />
           </TabsContent>
 
+          {/* Follow-up Tab */}
+          <TabsContent value="followup">
+            <FollowUpManager diasAlerta={3} />
+          </TabsContent>
+
           {/* Dashboard Tab */}
           <TabsContent value="dashboard">
             <DashboardCharts leads={leads} />
@@ -356,6 +371,11 @@ export default function Admin() {
           {/* Calculadora Config Tab */}
           <TabsContent value="config">
             <CalculadoraConfig />
+          </TabsContent>
+
+          {/* Webhooks Tab */}
+          <TabsContent value="webhooks">
+            <WebhookManager />
           </TabsContent>
         </Tabs>
       </main>
