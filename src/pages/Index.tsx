@@ -1,12 +1,10 @@
-import { Link } from "react-router-dom";
-import { Zap, Leaf, TrendingDown, Shield, LogIn, Calculator } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Zap, Leaf, TrendingDown, Shield } from "lucide-react";
 import LeadFormWizard from "@/components/LeadFormWizard";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import ProjectGallery from "@/components/ProjectGallery";
-import logo from "@/assets/logo.png";
-import logoBranca from "@/assets/logo-branca.png";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 // WhatsApp da Mais Energia Solar
 const WHATSAPP_NUMBER = "5532998437675";
@@ -14,30 +12,7 @@ const WHATSAPP_NUMBER = "5532998437675";
 export default function Index() {
   return (
     <div className="min-h-screen gradient-solar-soft">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-border">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="Mais Energia Solar" className="h-12 md:h-14 w-auto" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Link to="/calculadora">
-              <Button variant="ghost" size="sm" className="gap-2 text-primary hover:text-primary hover:bg-primary/10">
-                <Calculator className="w-4 h-4" />
-                <span className="hidden sm:inline">Calculadora Solar</span>
-                <span className="sm:hidden">Calcular</span>
-              </Button>
-            </Link>
-            <Link to="/auth">
-              <Button variant="outline" size="sm" className="gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
-                <LogIn className="w-4 h-4" />
-                <span className="hidden sm:inline">Área Administrativa</span>
-                <span className="sm:hidden">Admin</span>
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="py-12 md:py-20">
@@ -61,7 +36,7 @@ export default function Index() {
               </div>
               <div>
                 <p className="font-semibold text-sm text-foreground">Economia de até</p>
-                <p className="text-primary font-bold">95%</p>
+                <p className="text-primary font-bold">90%</p>
               </div>
             </div>
             <div className="flex items-center gap-3 bg-white rounded-xl p-4 shadow-sm border border-border">
@@ -104,15 +79,7 @@ export default function Index() {
       {/* Project Gallery */}
       <ProjectGallery />
 
-      {/* Footer */}
-      <footer className="py-8 bg-secondary text-secondary-foreground">
-        <div className="container mx-auto px-4 text-center">
-          <img src={logoBranca} alt="Mais Energia Solar" className="h-12 w-auto mx-auto mb-4" />
-          <p className="text-sm opacity-80">
-            © {new Date().getFullYear()} Mais Energia Solar. Todos os direitos reservados.
-          </p>
-        </div>
-      </footer>
+      <Footer />
 
       {/* WhatsApp Button */}
       <WhatsAppButton phoneNumber={WHATSAPP_NUMBER} />

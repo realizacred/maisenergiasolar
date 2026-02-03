@@ -17,10 +17,10 @@ import {
   DollarSign, 
   ArrowRight,
   Calculator,
-  Info,
-  Loader2
+  Info
 } from "lucide-react";
-import logo from "@/assets/logo.png";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import FinancingSimulator from "@/components/FinancingSimulator";
 import {
   Tooltip,
@@ -112,30 +112,10 @@ export default function Calculadora() {
   };
 
   return (
-    <div className="min-h-screen gradient-solar-soft">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/">
-            <img src={logo} alt="Mais Energia Solar" className="h-10 w-auto" />
-          </Link>
-          <div className="flex gap-2">
-            <Link to="/">
-              <Button variant="ghost" className="text-secondary hover:text-secondary">
-                Início
-              </Button>
-            </Link>
-            <Link to="/">
-              <Button className="bg-primary hover:bg-primary/90 gap-2">
-                <Zap className="w-4 h-4" />
-                Solicitar Orçamento
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen gradient-solar-soft flex flex-col">
+      <Header showCalculadora={false} />
 
-      <main className="container mx-auto px-4 py-8 max-w-5xl">
+      <main className="container mx-auto px-4 py-8 max-w-5xl flex-1">
         {/* Hero Section */}
         <motion.div 
           className="text-center mb-10"
@@ -302,7 +282,7 @@ export default function Calculadora() {
               </Card>
 
               {/* Investment */}
-              <Card className="shadow border-l-4 border-l-brand-blue">
+              <Card className="shadow border-l-4 border-l-secondary">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 text-secondary mb-1">
                     <DollarSign className="w-4 h-4" />
@@ -358,6 +338,8 @@ export default function Calculadora() {
           </p>
         </motion.div>
       </main>
+
+      <Footer />
     </div>
   );
 }

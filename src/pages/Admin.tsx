@@ -208,10 +208,10 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header */}
-      <header className="bg-white border-b border-border sticky top-0 z-50">
+      <header className="bg-white/80 backdrop-blur-md border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src={logo} alt="Mais Energia Solar" className="h-10 w-auto" />
+            <img src={logo} alt="Mais Energia Solar" className="h-12 w-auto" />
             <div className="hidden sm:block">
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
