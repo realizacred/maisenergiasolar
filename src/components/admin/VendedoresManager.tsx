@@ -163,13 +163,23 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
         // Create user account first
         setCreatingUser(true);
         
+        // Get current session to pass auth token
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          throw new Error("Sessão inválida. Faça login novamente.");
+        }
+        
         const { data: userResult, error: userError } = await supabase.functions.invoke(
           "create-vendedor-user",
           {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
             body: {
               email: formData.email,
               password: formData.senha,
               nome: formData.nome,
+              role: "vendedor",
             },
           }
         );
