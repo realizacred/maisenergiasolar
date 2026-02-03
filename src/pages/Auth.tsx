@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { loginSchema, LoginData } from "@/lib/validations";
-import logo from "@/assets/logo.png";
+import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
 export default function Auth() {
@@ -94,21 +94,15 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen gradient-solar-soft flex flex-col">
-      {/* Simple Header */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-border">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="Mais Energia Solar" className="h-12 md:h-14 w-auto" />
-          </Link>
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar ao site
-          </Link>
-        </div>
-      </header>
+      <Header showCalculadora={false} showAdmin={false}>
+        <Link
+          to="/"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="hidden sm:inline">Voltar ao site</span>
+        </Link>
+      </Header>
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center p-4">

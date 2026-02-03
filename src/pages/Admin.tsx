@@ -24,6 +24,7 @@ import WebhookManager from "@/components/admin/WebhookManager";
 import FollowUpManager from "@/components/admin/FollowUpManager";
 import FinanciamentoConfig from "@/components/admin/FinanciamentoConfig";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Footer from "@/components/layout/Footer";
 interface Lead {
   id: string;
   lead_code: string | null;
@@ -700,6 +701,8 @@ export default function Admin() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Footer />
     </div>
   );
 }
