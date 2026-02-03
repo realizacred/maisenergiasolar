@@ -86,16 +86,21 @@ export default function LeadFormWizard() {
       if (!codigo) return;
 
       try {
+        // Busca case-insensitive para maior flexibilidade
         const { data, error } = await supabase
           .from("vendedores")
           .select("codigo, nome, ativo")
-          .eq("codigo", codigo)
+          .ilike("codigo", codigo)
           .eq("ativo", true)
           .single();
 
         if (data && !error) {
           setVendedorCodigo(data.codigo);
           setVendedorNome(data.nome);
+          console.log("Vendedor validado:", data.nome);
+        } else if (error) {
+          // Fallback: se não encontrou vendedor válido, não salva nada
+          console.log("Vendedor não encontrado ou inativo:", codigo);
         }
       } catch (error) {
         console.error("Erro ao validar vendedor:", error);
