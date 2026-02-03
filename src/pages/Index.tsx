@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Zap, Leaf, TrendingDown, Shield, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import LeadForm from "@/components/LeadForm";
+import LeadFormWizard from "@/components/LeadFormWizard";
 import logo from "@/assets/logo.png";
 
 export default function Index() {
@@ -77,8 +77,8 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Lead Form */}
-          <LeadForm />
+          {/* Lead Form Wizard */}
+          <LeadFormWizard />
         </div>
       </section>
 
