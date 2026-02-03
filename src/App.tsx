@@ -22,7 +22,7 @@ import PendingApproval from "./pages/app/PendingApproval";
 import UsersManager from "./pages/app/admin/UsersManager";
 
 // Páginas legadas (serão migradas gradualmente)
-import Admin from "./pages/Admin";
+// Admin legado removido - agora usa /app com RBAC
 
 const queryClient = new QueryClient();
 
