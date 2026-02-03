@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { User, Phone, MapPin, Home, Zap, BarChart3, MessageSquare, Send, Loader2, CheckCircle } from "lucide-react";
+import { User, Phone, MapPin, Home, Zap, BarChart3, MessageSquare, Send, Loader2, CheckCircle, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,11 +21,13 @@ import {
   REDES_ATENDIMENTO,
 } from "@/lib/validations";
 import ConsumptionChart from "./ConsumptionChart";
+import FileUpload from "./FileUpload";
 import logo from "@/assets/logo.png";
 
 export default function LeadForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const { toast } = useToast();
 
   const form = useForm<LeadFormData>({
@@ -80,6 +82,7 @@ export default function LeadForm() {
         media_consumo: data.media_consumo,
         consumo_previsto: data.consumo_previsto,
         observacoes: data.observacoes || null,
+        arquivos_urls: uploadedFiles,
       });
 
       if (error) throw error;
@@ -90,6 +93,7 @@ export default function LeadForm() {
         description: "Entraremos em contato em breve.",
       });
       form.reset();
+      setUploadedFiles([]);
       
       setTimeout(() => setIsSuccess(false), 3000);
     } catch (error) {
@@ -376,6 +380,18 @@ export default function LeadForm() {
                 consumoPrevisto={consumoPrevisto}
               />
             )}
+
+            {/* Upload de Contas de Luz */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <FileText className="w-4 h-4 text-secondary" /> Contas de Luz
+              </label>
+              <FileUpload 
+                onFilesChange={setUploadedFiles}
+                maxFiles={10}
+                maxSizeMB={10}
+              />
+            </div>
 
             {/* Observações */}
             <FormField
