@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -16,6 +18,22 @@ import {
 const WHATSAPP_NUMBER = "5532998437675";
 
 export default function Index() {
+  const [searchParams] = useSearchParams();
+
+  // Auto-scroll to form when accessing via salesperson link
+  useEffect(() => {
+    const vendedor = searchParams.get("v") || searchParams.get("vendedor");
+    if (vendedor) {
+      // Small delay to ensure the page has rendered
+      setTimeout(() => {
+        const formSection = document.getElementById("orcamento");
+        if (formSection) {
+          formSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 300);
+    }
+  }, [searchParams]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
