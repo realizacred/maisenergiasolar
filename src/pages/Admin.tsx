@@ -70,7 +70,8 @@ export default function Admin() {
       lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.telefone.includes(searchTerm) ||
       lead.cidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.estado.toLowerCase().includes(searchTerm.toLowerCase())
+      lead.estado.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (lead.vendedor && lead.vendedor.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     setFilteredLeads(filtered);
   }, [searchTerm, leads]);
@@ -223,6 +224,7 @@ export default function Admin() {
                     <TableHead className="w-24">Código</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Telefone</TableHead>
+                    <TableHead>Vendedor</TableHead>
                     <TableHead>Localização</TableHead>
                     <TableHead>Consumo</TableHead>
                     <TableHead>Data</TableHead>
@@ -232,7 +234,7 @@ export default function Admin() {
                 <TableBody>
                   {filteredLeads.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         Nenhum lead encontrado
                       </TableCell>
                     </TableRow>
@@ -250,6 +252,15 @@ export default function Admin() {
                             <Phone className="w-3 h-3 text-muted-foreground" />
                             {lead.telefone}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {lead.vendedor ? (
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                              {lead.vendedor}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="bg-secondary/10 text-secondary">

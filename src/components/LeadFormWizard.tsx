@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "react-router-dom";
 import confetti from "canvas-confetti";
 import { 
   User, Phone, MapPin, Home, Zap, BarChart3, MessageSquare, 
@@ -67,13 +68,23 @@ const fieldVariants = {
 };
 
 export default function LeadFormWizard() {
+  const [searchParams] = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
+  const [vendedor, setVendedor] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Captura o vendedor da URL
+  useEffect(() => {
+    const vendedorParam = searchParams.get("vendedor");
+    if (vendedorParam) {
+      setVendedor(vendedorParam);
+    }
+  }, [searchParams]);
 
   const form = useForm<LeadFormData>({
     resolver: zodResolver(leadFormSchema),
@@ -230,6 +241,7 @@ export default function LeadFormWizard() {
         consumo_previsto: data.consumo_previsto,
         observacoes: data.observacoes || null,
         arquivos_urls: uploadedFiles,
+        vendedor: vendedor,
       });
 
       if (error) throw error;
