@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Zap, Leaf, TrendingDown, Shield, LogIn } from "lucide-react";
+import { Zap, Leaf, TrendingDown, Shield, LogIn, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LeadFormWizard from "@/components/LeadFormWizard";
 import logo from "@/assets/logo.png";
@@ -13,13 +13,22 @@ export default function Index() {
           <div className="flex items-center gap-2">
             <img src={logo} alt="Mais Energia Solar" className="h-12 md:h-14 w-auto" />
           </div>
-          <Link to="/auth">
-            <Button variant="outline" size="sm" className="gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
-              <LogIn className="w-4 h-4" />
-              <span className="hidden sm:inline">Área Administrativa</span>
-              <span className="sm:hidden">Admin</span>
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/calculadora">
+              <Button variant="ghost" size="sm" className="gap-2 text-primary hover:text-primary hover:bg-primary/10">
+                <Calculator className="w-4 h-4" />
+                <span className="hidden sm:inline">Calculadora Solar</span>
+                <span className="sm:hidden">Calcular</span>
+              </Button>
+            </Link>
+            <Link to="/auth">
+              <Button variant="outline" size="sm" className="gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+                <LogIn className="w-4 h-4" />
+                <span className="hidden sm:inline">Área Administrativa</span>
+                <span className="sm:hidden">Admin</span>
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
