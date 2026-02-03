@@ -20,7 +20,7 @@ interface ChecklistData {
   observacoes?: string;
   fotos_urls: string[];
   assinatura_instalador_url?: string;
-  instalador_id: string;
+  instalador_id: string; // UUID do usuário ou ID público "00000000-0000-0000-0000-000000000000"
   synced: boolean;
 }
 
