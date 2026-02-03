@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye } from "lucide-react";
+import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logo from "@/assets/logo.png";
@@ -29,6 +29,7 @@ interface Lead {
   consumo_previsto: number;
   observacoes: string | null;
   vendedor: string | null;
+  arquivos_urls: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -344,6 +345,64 @@ export default function Admin() {
                 <div>
                   <p className="text-sm text-muted-foreground">Observações</p>
                   <p className="font-medium">{selectedLead.observacoes}</p>
+                </div>
+              )}
+              
+              {/* Arquivos Anexados */}
+              {selectedLead.arquivos_urls && selectedLead.arquivos_urls.length > 0 && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Arquivos Anexados ({selectedLead.arquivos_urls.length})
+                  </p>
+                  <div className="space-y-2">
+                    {selectedLead.arquivos_urls.map((filePath, index) => {
+                      const fileName = filePath.split('/').pop() || `Arquivo ${index + 1}`;
+                      const isImage = /\.(jpg|jpeg|png)$/i.test(fileName);
+                      
+                      const handleOpenFile = async () => {
+                        const { data, error } = await supabase.storage
+                          .from('contas-luz')
+                          .createSignedUrl(filePath, 3600); // 1 hour expiry
+                        
+                        if (data?.signedUrl) {
+                          window.open(data.signedUrl, '_blank');
+                        } else {
+                          toast({
+                            title: "Erro",
+                            description: "Não foi possível abrir o arquivo.",
+                            variant: "destructive",
+                          });
+                        }
+                      };
+                      
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            {isImage ? (
+                              <Image className="w-5 h-5 text-primary" />
+                            ) : (
+                              <FileText className="w-5 h-5 text-destructive" />
+                            )}
+                            <span className="text-sm font-medium truncate">
+                              {fileName}
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleOpenFile}
+                            className="flex items-center gap-1 text-primary hover:text-primary"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Abrir
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
