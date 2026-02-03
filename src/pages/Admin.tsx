@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink, BarChart3, Kanban, Calculator, Webhook, Bell, Building2, Filter } from "lucide-react";
+import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink, BarChart3, Kanban, Calculator, Webhook, Bell, Building2, Filter, UserCheck, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logo from "@/assets/logo.png";
@@ -23,6 +23,8 @@ import CalculadoraConfig from "@/components/admin/CalculadoraConfig";
 import WebhookManager from "@/components/admin/WebhookManager";
 import FollowUpManager from "@/components/admin/FollowUpManager";
 import FinanciamentoConfig from "@/components/admin/FinanciamentoConfig";
+import { ClientesManager } from "@/components/admin/ClientesManager";
+import { RecebimentosManager } from "@/components/admin/RecebimentosManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Footer from "@/components/layout/Footer";
 interface Lead {
@@ -275,7 +277,7 @@ export default function Admin() {
             fetchLeads();
           }
         }} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:inline-flex">
+          <TabsList className="flex flex-wrap gap-1 h-auto p-1 lg:inline-flex">
             <TabsTrigger value="leads" className="gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Leads</span>
@@ -287,6 +289,14 @@ export default function Admin() {
             <TabsTrigger value="followup" className="gap-2">
               <Bell className="w-4 h-4" />
               <span className="hidden sm:inline">Follow-up</span>
+            </TabsTrigger>
+            <TabsTrigger value="clientes" className="gap-2">
+              <UserCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">Clientes</span>
+            </TabsTrigger>
+            <TabsTrigger value="recebimentos" className="gap-2">
+              <DollarSign className="w-4 h-4" />
+              <span className="hidden sm:inline">Recebimentos</span>
             </TabsTrigger>
             <TabsTrigger value="dashboard" className="gap-2">
               <BarChart3 className="w-4 h-4" />
@@ -522,6 +532,30 @@ export default function Admin() {
           {/* Webhooks Tab */}
           <TabsContent value="webhooks">
             <WebhookManager />
+          </TabsContent>
+
+          {/* Clientes Tab */}
+          <TabsContent value="clientes">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gestão de Clientes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ClientesManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Recebimentos Tab */}
+          <TabsContent value="recebimentos">
+            <Card>
+              <CardHeader>
+                <CardTitle>Controle de Recebimentos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RecebimentosManager />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
