@@ -25,7 +25,6 @@ import {
   Users, 
   TrendingUp, 
   Eye, 
-  Clock, 
   LogOut, 
   Search,
   Phone,
@@ -40,6 +39,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
 import { LeadAlerts } from "@/components/vendor/LeadAlerts";
+import { LeadStatusSelector } from "@/components/vendor/LeadStatusSelector";
 import logo from "@/assets/logo.png";
 
 interface Lead {
@@ -162,10 +162,14 @@ export default function VendedorPortal() {
     return status?.nome || "Desconhecido";
   };
 
-  const getStatusColor = (statusId: string | null) => {
-    if (!statusId) return "#3b82f6";
-    const status = statuses.find(s => s.id === statusId);
-    return status?.cor || "#3b82f6";
+  const handleLocalStatusChange = (leadId: string, newStatusId: string | null) => {
+    setLeads(prev => 
+      prev.map(lead => 
+        lead.id === leadId 
+          ? { ...lead, status_id: newStatusId, ultimo_contato: new Date().toISOString() } 
+          : lead
+      )
+    );
   };
 
   const filteredLeads = leads.filter(lead => {
@@ -379,15 +383,12 @@ export default function VendedorPortal() {
                           <span className="text-sm">{lead.media_consumo} kWh</span>
                         </TableCell>
                         <TableCell>
-                          <Badge 
-                            variant="outline"
-                            style={{ 
-                              borderColor: getStatusColor(lead.status_id),
-                              color: getStatusColor(lead.status_id)
-                            }}
-                          >
-                            {getStatusName(lead.status_id)}
-                          </Badge>
+                          <LeadStatusSelector
+                            leadId={lead.id}
+                            currentStatusId={lead.status_id}
+                            statuses={statuses}
+                            onStatusChange={(newStatusId) => handleLocalStatusChange(lead.id, newStatusId)}
+                          />
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">

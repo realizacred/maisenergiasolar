@@ -17,6 +17,7 @@ import WebhookManager from "@/components/admin/WebhookManager";
 import { ClientesManager } from "@/components/admin/ClientesManager";
 import { RecebimentosManager } from "@/components/admin/RecebimentosManager";
 import { InstagramConfig } from "@/components/admin/InstagramConfig";
+import { UsuariosManager } from "@/components/admin/UsuariosManager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Footer from "@/components/layout/Footer";
 
@@ -86,6 +87,8 @@ export default function Admin() {
         return <DashboardCharts leads={leads} />;
       case "vendedores":
         return <VendedoresManager leads={leads} />;
+      case "usuarios":
+        return <UsuariosManager />;
       case "config":
         return <CalculadoraConfig />;
       case "financiamento":
