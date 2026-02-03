@@ -192,7 +192,8 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
   };
 
   const copyLink = async (vendedor: Vendedor) => {
-    const baseUrl = window.location.origin;
+    // Always use the published URL for vendor links
+    const baseUrl = "https://maisenergiasolar.lovable.app";
     const link = `${baseUrl}/?v=${vendedor.codigo}`;
     
     try {
