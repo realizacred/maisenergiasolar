@@ -10,7 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Edit2, Loader2, Building2, Percent, CreditCard, Link2, RefreshCw, Key, GripVertical } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Plus, Trash2, Edit2, Loader2, Building2, Percent, CreditCard, RefreshCw, GripVertical, Check, Clock, AlertCircle, Globe } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Banco {
   id: string;
@@ -19,23 +22,18 @@ interface Banco {
   max_parcelas: number;
   ativo: boolean;
   ordem: number;
-}
-
-interface ApiConfig {
-  id: string;
-  nome: string;
-  url: string | null;
-  api_key: string | null;
-  ativo: boolean;
-  ultima_sincronizacao: string | null;
+  fonte_sync: string | null;
+  ultima_sync: string | null;
+  codigo_bcb: string | null;
+  api_customizada_url: string | null;
 }
 
 export default function FinanciamentoConfig() {
   const [bancos, setBancos] = useState<Banco[]>([]);
-  const [apiConfig, setApiConfig] = useState<ApiConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
+  const [syncingBankId, setSyncingBankId] = useState<string | null>(null);
+  const [syncingAll, setSyncingAll] = useState(false);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -46,12 +44,8 @@ export default function FinanciamentoConfig() {
     nome: "",
     taxa_mensal: "",
     max_parcelas: "60",
-  });
-  
-  const [apiFormData, setApiFormData] = useState({
-    url: "",
-    api_key: "",
-    ativo: false,
+    codigo_bcb: "",
+    api_customizada_url: "",
   });
   
   const { toast } = useToast();
@@ -62,22 +56,13 @@ export default function FinanciamentoConfig() {
 
   const fetchData = async () => {
     try {
-      const [bancosRes, apiRes] = await Promise.all([
-        supabase.from("financiamento_bancos").select("*").order("ordem"),
-        supabase.from("financiamento_api_config").select("*").limit(1).single(),
-      ]);
+      const { data, error } = await supabase
+        .from("financiamento_bancos")
+        .select("*")
+        .order("ordem");
 
-      if (bancosRes.error) throw bancosRes.error;
-      setBancos(bancosRes.data || []);
-
-      if (apiRes.data) {
-        setApiConfig(apiRes.data);
-        setApiFormData({
-          url: apiRes.data.url || "",
-          api_key: apiRes.data.api_key || "",
-          ativo: apiRes.data.ativo,
-        });
-      }
+      if (error) throw error;
+      setBancos((data as Banco[]) || []);
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
       toast({
@@ -109,14 +94,19 @@ export default function FinanciamentoConfig() {
         throw new Error("Taxa inválida (deve ser entre 0.01 e 10%)");
       }
 
+      const updateData = {
+        nome: formData.nome,
+        taxa_mensal: taxa,
+        max_parcelas: parcelas,
+        codigo_bcb: formData.codigo_bcb || null,
+        api_customizada_url: formData.api_customizada_url || null,
+        fonte_sync: 'manual' as const,
+      };
+
       if (editingBanco) {
         const { error } = await supabase
           .from("financiamento_bancos")
-          .update({
-            nome: formData.nome,
-            taxa_mensal: taxa,
-            max_parcelas: parcelas,
-          })
+          .update(updateData)
           .eq("id", editingBanco.id);
 
         if (error) throw error;
@@ -126,9 +116,7 @@ export default function FinanciamentoConfig() {
         const { error } = await supabase
           .from("financiamento_bancos")
           .insert({
-            nome: formData.nome,
-            taxa_mensal: taxa,
-            max_parcelas: parcelas,
+            ...updateData,
             ordem: maxOrdem + 1,
           });
 
@@ -138,7 +126,7 @@ export default function FinanciamentoConfig() {
 
       setIsDialogOpen(false);
       setEditingBanco(null);
-      setFormData({ nome: "", taxa_mensal: "", max_parcelas: "60" });
+      setFormData({ nome: "", taxa_mensal: "", max_parcelas: "60", codigo_bcb: "", api_customizada_url: "" });
       fetchData();
     } catch (error: any) {
       console.error("Erro ao salvar banco:", error);
@@ -204,48 +192,38 @@ export default function FinanciamentoConfig() {
     }
   };
 
-  const handleSaveApiConfig = async () => {
-    if (!apiConfig) return;
-
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("financiamento_api_config")
-        .update({
-          url: apiFormData.url || null,
-          api_key: apiFormData.api_key || null,
-          ativo: apiFormData.ativo,
-        })
-        .eq("id", apiConfig.id);
-
-      if (error) throw error;
-      
-      toast({ title: "Configuração de API salva!" });
-      fetchData();
-    } catch (error) {
-      console.error("Erro ao salvar API config:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível salvar a configuração.",
-        variant: "destructive",
-      });
-    } finally {
-      setSaving(false);
+  const handleSyncBCB = async (bankId?: string) => {
+    if (bankId) {
+      setSyncingBankId(bankId);
+    } else {
+      setSyncingAll(true);
     }
-  };
 
-  const handleSyncBCB = async () => {
-    setSyncing(true);
     try {
-      // Chamar a edge function que sincroniza com o Banco Central
-      const { data, error } = await supabase.functions.invoke('sync-taxas-bcb');
+      const { data, error } = await supabase.functions.invoke('sync-taxas-bcb', {
+        body: bankId ? { bank_id: bankId } : undefined,
+      });
 
       if (error) throw error;
 
       if (data?.success) {
+        const resultCount = data.resultados?.length || 0;
+        const errorCount = data.erros?.length || 0;
+        
+        let description = "";
+        if (resultCount > 0) {
+          const bancosSincronizados = data.resultados.map((r: any) => `${r.banco} (${r.taxa_nova}%)`).join(", ");
+          description = `Sincronizados: ${bancosSincronizados}`;
+        }
+        if (errorCount > 0) {
+          const bancosComErro = data.erros.map((e: any) => e.banco).join(", ");
+          description += description ? `\n\nNão encontrados: ${bancosComErro}` : `Não encontrados: ${bancosComErro}`;
+        }
+
         toast({ 
-          title: "Sincronização concluída!",
-          description: `${data.resultados?.length || 0} bancos atualizados com taxas do Banco Central.`,
+          title: resultCount > 0 ? "Sincronização concluída!" : "Nenhum banco sincronizado",
+          description: description || "Verifique se os códigos BCB estão configurados.",
+          variant: resultCount > 0 ? "default" : "destructive",
         });
         fetchData();
       } else {
@@ -259,22 +237,24 @@ export default function FinanciamentoConfig() {
         variant: "destructive",
       });
     } finally {
-      setSyncing(false);
+      setSyncingBankId(null);
+      setSyncingAll(false);
     }
   };
 
-  const handleSyncApi = async () => {
-    if (!apiFormData.url) {
-      // Se não tem URL customizada, usar API do Banco Central
-      return handleSyncBCB();
+  const handleSyncCustomApi = async (banco: Banco) => {
+    if (!banco.api_customizada_url) {
+      toast({
+        title: "URL não configurada",
+        description: "Configure a URL da API customizada para este banco.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    setSyncing(true);
+    setSyncingBankId(banco.id);
     try {
-      // Chamar API customizada do usuário
-      const response = await fetch(apiFormData.url, {
-        headers: apiFormData.api_key ? { 'Authorization': `Bearer ${apiFormData.api_key}` } : {},
-      });
+      const response = await fetch(banco.api_customizada_url);
 
       if (!response.ok) {
         throw new Error(`Erro na API: ${response.status}`);
@@ -282,31 +262,27 @@ export default function FinanciamentoConfig() {
 
       const data = await response.json();
       
-      // Espera um array de { nome, taxa_mensal, max_parcelas }
-      if (Array.isArray(data)) {
-        for (const banco of data) {
-          if (banco.nome && banco.taxa_mensal) {
-            await supabase
-              .from("financiamento_bancos")
-              .update({ 
-                taxa_mensal: banco.taxa_mensal,
-                max_parcelas: banco.max_parcelas || 60,
-              })
-              .ilike("nome", `%${banco.nome}%`);
-          }
-        }
+      // Espera { taxa_mensal: number } ou { rate: number }
+      const novaTaxa = data.taxa_mensal || data.rate || data.taxa;
+      
+      if (typeof novaTaxa !== 'number' || novaTaxa <= 0) {
+        throw new Error("Formato de resposta inválido. Esperado: { taxa_mensal: number }");
       }
 
-      if (apiConfig) {
-        await supabase
-          .from("financiamento_api_config")
-          .update({ ultima_sincronizacao: new Date().toISOString() })
-          .eq("id", apiConfig.id);
-      }
+      const { error } = await supabase
+        .from("financiamento_bancos")
+        .update({ 
+          taxa_mensal: novaTaxa,
+          fonte_sync: 'api_customizada',
+          ultima_sync: new Date().toISOString(),
+        })
+        .eq("id", banco.id);
+
+      if (error) throw error;
 
       toast({ 
-        title: "Sincronização concluída!",
-        description: "As taxas foram atualizadas com sucesso.",
+        title: "Taxa atualizada!",
+        description: `${banco.nome}: ${novaTaxa.toFixed(2)}% a.m.`,
       });
       fetchData();
     } catch (error: any) {
@@ -317,7 +293,7 @@ export default function FinanciamentoConfig() {
         variant: "destructive",
       });
     } finally {
-      setSyncing(false);
+      setSyncingBankId(null);
     }
   };
 
@@ -327,14 +303,44 @@ export default function FinanciamentoConfig() {
       nome: banco.nome,
       taxa_mensal: banco.taxa_mensal.toString(),
       max_parcelas: banco.max_parcelas.toString(),
+      codigo_bcb: banco.codigo_bcb || "",
+      api_customizada_url: banco.api_customizada_url || "",
     });
     setIsDialogOpen(true);
   };
 
   const openNewDialog = () => {
     setEditingBanco(null);
-    setFormData({ nome: "", taxa_mensal: "", max_parcelas: "60" });
+    setFormData({ nome: "", taxa_mensal: "", max_parcelas: "60", codigo_bcb: "", api_customizada_url: "" });
     setIsDialogOpen(true);
+  };
+
+  const getFonteSyncBadge = (banco: Banco) => {
+    if (!banco.fonte_sync || banco.fonte_sync === 'manual') {
+      return (
+        <Badge variant="outline" className="gap-1 text-muted-foreground">
+          <Edit2 className="w-3 h-3" />
+          Manual
+        </Badge>
+      );
+    }
+    if (banco.fonte_sync === 'bcb') {
+      return (
+        <Badge variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-200">
+          <Check className="w-3 h-3" />
+          BCB
+        </Badge>
+      );
+    }
+    if (banco.fonte_sync === 'api_customizada') {
+      return (
+        <Badge variant="outline" className="gap-1 bg-blue-50 text-blue-700 border-blue-200">
+          <Globe className="w-3 h-3" />
+          API
+        </Badge>
+      );
+    }
+    return null;
   };
 
   if (loading) {
@@ -349,6 +355,35 @@ export default function FinanciamentoConfig() {
 
   return (
     <div className="space-y-6">
+      {/* Header with Sync All Button */}
+      <Card className="border-green-200 bg-green-50/30">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-green-700">
+                <RefreshCw className="w-5 h-5" />
+                Sincronização Automática
+              </CardTitle>
+              <CardDescription>
+                Atualize as taxas de todos os bancos configurados com código BCB
+              </CardDescription>
+            </div>
+            <Button
+              onClick={() => handleSyncBCB()}
+              disabled={syncingAll || !!syncingBankId}
+              className="gap-2 bg-green-600 hover:bg-green-700"
+            >
+              {syncingAll ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              Sincronizar Todos com BCB
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
+
       {/* Bancos Table */}
       <Card>
         <CardHeader>
@@ -359,7 +394,7 @@ export default function FinanciamentoConfig() {
                 Bancos e Taxas
               </CardTitle>
               <CardDescription>
-                Configure os bancos disponíveis no simulador de financiamento
+                Configure os bancos, códigos BCB e APIs customizadas
               </CardDescription>
             </div>
             <Button onClick={openNewDialog} className="gap-2">
@@ -386,6 +421,8 @@ export default function FinanciamentoConfig() {
                     <TableHead>Banco</TableHead>
                     <TableHead>Taxa Mensal</TableHead>
                     <TableHead>Máx. Parcelas</TableHead>
+                    <TableHead>Fonte</TableHead>
+                    <TableHead>Última Sync</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -396,7 +433,19 @@ export default function FinanciamentoConfig() {
                       <TableCell>
                         <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
                       </TableCell>
-                      <TableCell className="font-medium">{banco.nome}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{banco.nome}</p>
+                          {banco.codigo_bcb && (
+                            <p className="text-xs text-muted-foreground">BCB: {banco.codigo_bcb}</p>
+                          )}
+                          {banco.api_customizada_url && (
+                            <p className="text-xs text-blue-600 truncate max-w-[150px]">
+                              API: {banco.api_customizada_url}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="bg-secondary/10 text-secondary border-secondary/20">
                           <Percent className="w-3 h-3 mr-1" />
@@ -410,6 +459,28 @@ export default function FinanciamentoConfig() {
                         </Badge>
                       </TableCell>
                       <TableCell>
+                        {getFonteSyncBadge(banco)}
+                      </TableCell>
+                      <TableCell>
+                        {banco.ultima_sync ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Clock className="w-3 h-3" />
+                                  {format(new Date(banco.ultima_sync), "dd/MM HH:mm", { locale: ptBR })}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {format(new Date(banco.ultima_sync), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={banco.ativo}
@@ -421,7 +492,51 @@ export default function FinanciamentoConfig() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1">
+                          {banco.codigo_bcb && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleSyncBCB(banco.id)}
+                                    disabled={syncingBankId === banco.id}
+                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  >
+                                    {syncingBankId === banco.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <RefreshCw className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Sincronizar com BCB</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          {banco.api_customizada_url && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleSyncCustomApi(banco)}
+                                    disabled={syncingBankId === banco.id}
+                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                  >
+                                    {syncingBankId === banco.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Globe className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Sincronizar com API customizada</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -451,133 +566,44 @@ export default function FinanciamentoConfig() {
         </CardContent>
       </Card>
 
-      {/* Banco Central Integration */}
-      <Card className="border-green-200 bg-green-50/30">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-green-700">
-            <RefreshCw className="w-5 h-5" />
-            API do Banco Central do Brasil
-          </CardTitle>
-          <CardDescription>
-            Sincronize automaticamente com as taxas oficiais do Banco Central (gratuito e sem configuração)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
-            <div>
-              <p className="font-medium">Taxas de Juros - Dados Abertos BCB</p>
-              <p className="text-sm text-muted-foreground">
-                {apiConfig?.ultima_sincronizacao 
-                  ? `Última sincronização: ${new Date(apiConfig.ultima_sincronizacao).toLocaleString('pt-BR')}`
-                  : "Nunca sincronizado"
-                }
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Fonte: olinda.bcb.gov.br/olinda/servico/taxaJuros
-              </p>
-            </div>
-            <Button
-              onClick={handleSyncBCB}
-              disabled={syncing}
-              className="gap-2 bg-green-600 hover:bg-green-700"
-            >
-              {syncing ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4" />
-              )}
-              Sincronizar com BCB
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Custom API Configuration */}
+      {/* Legenda */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-brand-blue">
-            <Link2 className="w-5 h-5" />
-            API Customizada (Opcional)
-          </CardTitle>
-          <CardDescription>
-            Configure sua própria API para buscar taxas de parceiros ou sistemas internos
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="api_url">URL da API</Label>
-              <Input
-                id="api_url"
-                value={apiFormData.url}
-                onChange={(e) => setApiFormData(prev => ({ ...prev, url: e.target.value }))}
-                placeholder="https://api.exemplo.com/taxas"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="api_key">Chave da API (opcional)</Label>
-              <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="api_key"
-                  type="password"
-                  value={apiFormData.api_key}
-                  onChange={(e) => setApiFormData(prev => ({ ...prev, api_key: e.target.value }))}
-                  placeholder="sk-..."
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-            <div>
-              <p className="font-medium">Sincronização com API customizada</p>
-              <p className="text-sm text-muted-foreground">
-                Configure a URL acima para usar sua própria fonte de dados
-              </p>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="gap-1 text-muted-foreground">
+                <Edit2 className="w-3 h-3" />
+                Manual
+              </Badge>
+              <span className="text-muted-foreground">Taxa inserida manualmente</span>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={handleSyncApi}
-                disabled={syncing || !apiFormData.url}
-                className="gap-2"
-              >
-                {syncing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="w-4 h-4" />
-                )}
-                Sincronizar
-              </Button>
-              <Button onClick={handleSaveApiConfig} disabled={saving}>
-                {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                Salvar
-              </Button>
+              <Badge variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-200">
+                <Check className="w-3 h-3" />
+                BCB
+              </Badge>
+              <span className="text-muted-foreground">Sincronizado com Banco Central</span>
             </div>
-          </div>
-
-          <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-            <p className="text-sm text-muted-foreground">
-              <strong>Formato esperado:</strong> A API deve retornar um array JSON com objetos contendo: 
-              <code className="bg-muted px-1 rounded mx-1">nome</code>, 
-              <code className="bg-muted px-1 rounded mx-1">taxa_mensal</code> e 
-              <code className="bg-muted px-1 rounded mx-1">max_parcelas</code>.
-            </p>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="gap-1 bg-blue-50 text-blue-700 border-blue-200">
+                <Globe className="w-3 h-3" />
+                API
+              </Badge>
+              <span className="text-muted-foreground">Sincronizado com API customizada</span>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Add/Edit Dialog */}
+      {/* Edit/Create Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingBanco ? "Editar Banco" : "Novo Banco"}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="nome">Nome do Banco *</Label>
               <Input
@@ -585,30 +611,77 @@ export default function FinanciamentoConfig() {
                 value={formData.nome}
                 onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
                 placeholder="Ex: Santander Solar"
-                maxLength={100}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="taxa_mensal">Taxa Mensal (%) *</Label>
+                <Label htmlFor="taxa">Taxa Mensal (%) *</Label>
                 <Input
-                  id="taxa_mensal"
+                  id="taxa"
                   value={formData.taxa_mensal}
                   onChange={(e) => setFormData(prev => ({ ...prev, taxa_mensal: e.target.value }))}
-                  placeholder="1.29"
-                  maxLength={5}
+                  placeholder="Ex: 1.29"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="max_parcelas">Máx. Parcelas</Label>
+                <Label htmlFor="parcelas">Máx. Parcelas</Label>
                 <Input
-                  id="max_parcelas"
+                  id="parcelas"
                   type="number"
                   value={formData.max_parcelas}
                   onChange={(e) => setFormData(prev => ({ ...prev, max_parcelas: e.target.value }))}
-                  min={6}
-                  max={120}
                 />
+              </div>
+            </div>
+            
+            <div className="border-t pt-4 mt-4">
+              <p className="text-sm font-medium mb-3">Sincronização Automática (Opcional)</p>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="codigo_bcb" className="flex items-center gap-2">
+                    Código BCB
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <AlertCircle className="w-3 h-3 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Código da instituição no Banco Central. Ex: 033 (Santander), 001 (BB), 104 (Caixa)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </Label>
+                  <Input
+                    id="codigo_bcb"
+                    value={formData.codigo_bcb}
+                    onChange={(e) => setFormData(prev => ({ ...prev, codigo_bcb: e.target.value }))}
+                    placeholder="Ex: 033"
+                    maxLength={5}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="api_url" className="flex items-center gap-2">
+                    URL da API Customizada
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <AlertCircle className="w-3 h-3 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>URL que retorna JSON com taxa_mensal. Ex: {"{ taxa_mensal: 1.29 }"}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </Label>
+                  <Input
+                    id="api_url"
+                    value={formData.api_customizada_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, api_customizada_url: e.target.value }))}
+                    placeholder="https://api.exemplo.com/taxa"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -617,7 +690,7 @@ export default function FinanciamentoConfig() {
               Cancelar
             </Button>
             <Button onClick={handleSaveBanco} disabled={saving}>
-              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingBanco ? "Salvar" : "Cadastrar"}
             </Button>
           </DialogFooter>
@@ -628,18 +701,14 @@ export default function FinanciamentoConfig() {
       <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Banco</AlertDialogTitle>
+            <AlertDialogTitle>Excluir banco?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir {bancoToDelete?.nome}? 
-              Esta ação não pode ser desfeita.
+              Esta ação não pode ser desfeita. O banco "{bancoToDelete?.nome}" será removido permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

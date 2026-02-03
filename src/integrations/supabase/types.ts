@@ -85,33 +85,45 @@ export type Database = {
       }
       financiamento_bancos: {
         Row: {
+          api_customizada_url: string | null
           ativo: boolean
+          codigo_bcb: string | null
           created_at: string
+          fonte_sync: string | null
           id: string
           max_parcelas: number
           nome: string
           ordem: number
           taxa_mensal: number
+          ultima_sync: string | null
           updated_at: string
         }
         Insert: {
+          api_customizada_url?: string | null
           ativo?: boolean
+          codigo_bcb?: string | null
           created_at?: string
+          fonte_sync?: string | null
           id?: string
           max_parcelas?: number
           nome: string
           ordem?: number
           taxa_mensal: number
+          ultima_sync?: string | null
           updated_at?: string
         }
         Update: {
+          api_customizada_url?: string | null
           ativo?: boolean
+          codigo_bcb?: string | null
           created_at?: string
+          fonte_sync?: string | null
           id?: string
           max_parcelas?: number
           nome?: string
           ordem?: number
           taxa_mensal?: number
+          ultima_sync?: string | null
           updated_at?: string
         }
         Relationships: []
