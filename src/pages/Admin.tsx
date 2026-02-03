@@ -10,12 +10,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink, BarChart3, Kanban, Calculator, Webhook, Bell, Building2, Filter, UserCheck, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logo from "@/assets/logo.png";
 import VendedoresManager from "@/components/admin/VendedoresManager";
-
+import DashboardCharts from "@/components/admin/DashboardCharts";
+import LeadsPipeline from "@/components/admin/LeadsPipeline";
+import CalculadoraConfig from "@/components/admin/CalculadoraConfig";
+import WebhookManager from "@/components/admin/WebhookManager";
+import FollowUpManager from "@/components/admin/FollowUpManager";
+import FinanciamentoConfig from "@/components/admin/FinanciamentoConfig";
+import { ClientesManager } from "@/components/admin/ClientesManager";
+import { RecebimentosManager } from "@/components/admin/RecebimentosManager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Footer from "@/components/layout/Footer";
 interface Lead {
   id: string;
   lead_code: string | null;
@@ -36,6 +47,8 @@ interface Lead {
   observacoes: string | null;
   vendedor: string | null;
   arquivos_urls: string[] | null;
+  status_id: string | null;
+  visto: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +58,10 @@ export default function Admin() {
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterVisto, setFilterVisto] = useState<string>("nao_visto");
+  const [activeTab, setActiveTab] = useState<string>("leads");
+  const [filterVendedor, setFilterVendedor] = useState<string>("todos");
+  const [filterEstado, setFilterEstado] = useState<string>("todos");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -67,15 +84,66 @@ export default function Admin() {
   }, [user]);
 
   useEffect(() => {
-    const filtered = leads.filter((lead) =>
+    let filtered = leads.filter((lead) =>
       lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.telefone.includes(searchTerm) ||
       lead.cidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.estado.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (lead.vendedor && lead.vendedor.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+    
+    // Filter by visto
+    if (filterVisto === "visto") {
+      filtered = filtered.filter((lead) => lead.visto);
+    } else if (filterVisto === "nao_visto") {
+      filtered = filtered.filter((lead) => !lead.visto);
+    }
+    
+    // Filter by vendedor
+    if (filterVendedor !== "todos") {
+      filtered = filtered.filter((lead) => lead.vendedor === filterVendedor);
+    }
+    
+    // Filter by estado
+    if (filterEstado !== "todos") {
+      filtered = filtered.filter((lead) => lead.estado === filterEstado);
+    }
+    
     setFilteredLeads(filtered);
-  }, [searchTerm, leads]);
+  }, [searchTerm, leads, filterVisto, filterVendedor, filterEstado]);
+  
+  // Get unique vendedores and estados for filters
+  const uniqueVendedores = [...new Set(leads.map((l) => l.vendedor).filter(Boolean))] as string[];
+  const uniqueEstados = [...new Set(leads.map((l) => l.estado))].sort();
+  
+  const handleToggleVisto = async (lead: Lead) => {
+    const newVisto = !lead.visto;
+    
+    // Optimistic update
+    setLeads((prev) =>
+      prev.map((l) => (l.id === lead.id ? { ...l, visto: newVisto } : l))
+    );
+    
+    try {
+      const { error } = await supabase
+        .from("leads")
+        .update({ visto: newVisto })
+        .eq("id", lead.id);
+        
+      if (error) throw error;
+    } catch (error) {
+      console.error("Erro ao atualizar visto:", error);
+      // Revert on error
+      setLeads((prev) =>
+        prev.map((l) => (l.id === lead.id ? { ...l, visto: lead.visto } : l))
+      );
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchLeads = async () => {
     try {
@@ -144,10 +212,10 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header */}
-      <header className="bg-white border-b border-border sticky top-0 z-50">
+      <header className="bg-white/80 backdrop-blur-md border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src={logo} alt="Mais Energia Solar" className="h-10 w-auto" />
+            <img src={logo} alt="Mais Energia Solar" className="h-12 w-auto" />
             <div className="hidden sm:block">
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
@@ -201,116 +269,295 @@ export default function Admin() {
           </Card>
         </div>
 
-        {/* Search and Table */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <CardTitle className="text-brand-blue">Leads Cadastrados</CardTitle>
-              <div className="relative w-full md:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome, telefone, cidade..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-24">Código</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead>Vendedor</TableHead>
-                    <TableHead>Localização</TableHead>
-                    <TableHead>Consumo</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLeads.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                        Nenhum lead encontrado
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredLeads.map((lead) => (
-                      <TableRow key={lead.id}>
-                        <TableCell>
-                          <Badge variant="outline" className="font-mono text-xs">
-                            {lead.lead_code || "-"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{lead.nome}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-muted-foreground" />
-                            {lead.telefone}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {lead.vendedor ? (
-                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                              {lead.vendedor}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="bg-secondary/10 text-secondary">
-                            {lead.cidade}, {lead.estado}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{lead.media_consumo} kWh</TableCell>
-                        <TableCell>
-                          {format(new Date(lead.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-secondary hover:text-secondary"
-                              onClick={() => {
-                                setSelectedLead(lead);
-                                setIsViewOpen(true);
-                              }}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => {
-                                setLeadToDelete(lead);
-                                setIsDeleteOpen(true);
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Tabs Navigation */}
+        <Tabs value={activeTab} onValueChange={(value) => {
+          setActiveTab(value);
+          // Recarrega leads ao entrar na aba
+          if (value === "leads") {
+            fetchLeads();
+          }
+        }} className="space-y-6">
+          <TabsList className="flex flex-wrap gap-1 h-auto p-1 lg:inline-flex">
+            <TabsTrigger value="leads" className="gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Leads</span>
+            </TabsTrigger>
+            <TabsTrigger value="pipeline" className="gap-2">
+              <Kanban className="w-4 h-4" />
+              <span className="hidden sm:inline">Pipeline</span>
+            </TabsTrigger>
+            <TabsTrigger value="followup" className="gap-2">
+              <Bell className="w-4 h-4" />
+              <span className="hidden sm:inline">Follow-up</span>
+            </TabsTrigger>
+            <TabsTrigger value="clientes" className="gap-2">
+              <UserCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">Clientes</span>
+            </TabsTrigger>
+            <TabsTrigger value="recebimentos" className="gap-2">
+              <DollarSign className="w-4 h-4" />
+              <span className="hidden sm:inline">Recebimentos</span>
+            </TabsTrigger>
+            <TabsTrigger value="dashboard" className="gap-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="vendedores" className="gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Vendedores</span>
+            </TabsTrigger>
+            <TabsTrigger value="config" className="gap-2">
+              <Calculator className="w-4 h-4" />
+              <span className="hidden sm:inline">Calculadora</span>
+            </TabsTrigger>
+            <TabsTrigger value="financiamento" className="gap-2">
+              <Building2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Bancos</span>
+            </TabsTrigger>
+            <TabsTrigger value="webhooks" className="gap-2">
+              <Webhook className="w-4 h-4" />
+              <span className="hidden sm:inline">Webhooks</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Vendedores Section */}
-        <div className="mt-8">
-          <VendedoresManager leads={leads} />
-        </div>
+          {/* Leads Tab */}
+          <TabsContent value="leads">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <CardTitle className="text-brand-blue">Leads Cadastrados</CardTitle>
+                    <div className="relative w-full md:w-80">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar por nome, telefone, cidade..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Filters */}
+                  <div className="flex flex-wrap items-center gap-3 pt-2 border-t">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Filter className="w-4 h-4" />
+                      <span>Filtros:</span>
+                    </div>
+                    
+                    <Select value={filterVisto} onValueChange={setFilterVisto}>
+                      <SelectTrigger className="w-[140px] h-9">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos</SelectItem>
+                        <SelectItem value="visto">Vistos</SelectItem>
+                        <SelectItem value="nao_visto">Não Vistos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={filterVendedor} onValueChange={setFilterVendedor}>
+                      <SelectTrigger className="w-[160px] h-9">
+                        <SelectValue placeholder="Vendedor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos Vendedores</SelectItem>
+                        {uniqueVendedores.map((v) => (
+                          <SelectItem key={v} value={v}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={filterEstado} onValueChange={setFilterEstado}>
+                      <SelectTrigger className="w-[120px] h-9">
+                        <SelectValue placeholder="Estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos Estados</SelectItem>
+                        {uniqueEstados.map((e) => (
+                          <SelectItem key={e} value={e}>{e}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {(filterVisto !== "todos" || filterVendedor !== "todos" || filterEstado !== "todos") && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setFilterVisto("todos");
+                          setFilterVendedor("todos");
+                          setFilterEstado("todos");
+                        }}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        Limpar filtros
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">Visto</TableHead>
+                        <TableHead className="w-24">Código</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Telefone</TableHead>
+                        <TableHead>Vendedor</TableHead>
+                        <TableHead>Localização</TableHead>
+                        <TableHead>Consumo</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredLeads.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                            Nenhum lead encontrado
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredLeads.map((lead) => (
+                          <TableRow 
+                            key={lead.id} 
+                            className={lead.visto ? "bg-green-50 dark:bg-green-950/20" : ""}
+                          >
+                            <TableCell>
+                              <Checkbox
+                                checked={lead.visto}
+                                onCheckedChange={() => handleToggleVisto(lead)}
+                                className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="font-mono text-xs">
+                                {lead.lead_code || "-"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-medium">{lead.nome}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Phone className="w-3 h-3 text-muted-foreground" />
+                                {lead.telefone}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {lead.vendedor ? (
+                                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                                  {lead.vendedor}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="bg-secondary/10 text-secondary">
+                                {lead.cidade}, {lead.estado}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{lead.media_consumo} kWh</TableCell>
+                            <TableCell>
+                              {format(new Date(lead.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-secondary hover:text-secondary"
+                                  onClick={() => {
+                                    setSelectedLead(lead);
+                                    setIsViewOpen(true);
+                                  }}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => {
+                                    setLeadToDelete(lead);
+                                    setIsDeleteOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Pipeline Tab */}
+          <TabsContent value="pipeline">
+            <LeadsPipeline />
+          </TabsContent>
+
+          {/* Follow-up Tab */}
+          <TabsContent value="followup">
+            <FollowUpManager diasAlerta={3} />
+          </TabsContent>
+
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard">
+            <DashboardCharts leads={leads} />
+          </TabsContent>
+
+          {/* Vendedores Tab */}
+          <TabsContent value="vendedores">
+            <VendedoresManager leads={leads} />
+          </TabsContent>
+
+          {/* Calculadora Config Tab */}
+          <TabsContent value="config">
+            <CalculadoraConfig />
+          </TabsContent>
+
+          {/* Financiamento Tab */}
+          <TabsContent value="financiamento">
+            <FinanciamentoConfig />
+          </TabsContent>
+
+          {/* Webhooks Tab */}
+          <TabsContent value="webhooks">
+            <WebhookManager />
+          </TabsContent>
+
+          {/* Clientes Tab */}
+          <TabsContent value="clientes">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gestão de Clientes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ClientesManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Recebimentos Tab */}
+          <TabsContent value="recebimentos">
+            <Card>
+              <CardHeader>
+                <CardTitle>Controle de Recebimentos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RecebimentosManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* View Lead Dialog */}
@@ -495,6 +742,8 @@ export default function Admin() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Footer />
     </div>
   );
 }
