@@ -122,6 +122,92 @@ export type Database = {
         }
         Relationships: []
       }
+      clientes: {
+        Row: {
+          ativo: boolean
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          data_instalacao: string | null
+          data_nascimento: string | null
+          email: string | null
+          estado: string | null
+          id: string
+          lead_id: string | null
+          modelo_inversor: string | null
+          nome: string
+          numero: string | null
+          numero_placas: number | null
+          observacoes: string | null
+          potencia_kwp: number | null
+          rua: string | null
+          telefone: string
+          updated_at: string
+          valor_projeto: number | null
+        }
+        Insert: {
+          ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          data_instalacao?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          estado?: string | null
+          id?: string
+          lead_id?: string | null
+          modelo_inversor?: string | null
+          nome: string
+          numero?: string | null
+          numero_placas?: number | null
+          observacoes?: string | null
+          potencia_kwp?: number | null
+          rua?: string | null
+          telefone: string
+          updated_at?: string
+          valor_projeto?: number | null
+        }
+        Update: {
+          ativo?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          data_instalacao?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          estado?: string | null
+          id?: string
+          lead_id?: string | null
+          modelo_inversor?: string | null
+          nome?: string
+          numero?: string | null
+          numero_placas?: number | null
+          observacoes?: string | null
+          potencia_kwp?: number | null
+          rua?: string | null
+          telefone?: string
+          updated_at?: string
+          valor_projeto?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financiamento_api_config: {
         Row: {
           api_key: string | null
@@ -315,6 +401,94 @@ export type Database = {
             columns: ["status_id"]
             isOneToOne: false
             referencedRelation: "lead_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pagamentos: {
+        Row: {
+          comprovante_url: string | null
+          created_at: string
+          data_pagamento: string
+          forma_pagamento: string
+          id: string
+          observacoes: string | null
+          recebimento_id: string
+          valor_pago: number
+        }
+        Insert: {
+          comprovante_url?: string | null
+          created_at?: string
+          data_pagamento?: string
+          forma_pagamento: string
+          id?: string
+          observacoes?: string | null
+          recebimento_id: string
+          valor_pago: number
+        }
+        Update: {
+          comprovante_url?: string | null
+          created_at?: string
+          data_pagamento?: string
+          forma_pagamento?: string
+          id?: string
+          observacoes?: string | null
+          recebimento_id?: string
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_recebimento_id_fkey"
+            columns: ["recebimento_id"]
+            isOneToOne: false
+            referencedRelation: "recebimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recebimentos: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          data_acordo: string
+          descricao: string | null
+          forma_pagamento_acordada: string
+          id: string
+          numero_parcelas: number
+          status: string
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          data_acordo?: string
+          descricao?: string | null
+          forma_pagamento_acordada: string
+          id?: string
+          numero_parcelas?: number
+          status?: string
+          updated_at?: string
+          valor_total: number
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          data_acordo?: string
+          descricao?: string | null
+          forma_pagamento_acordada?: string
+          id?: string
+          numero_parcelas?: number
+          status?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recebimentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
         ]
