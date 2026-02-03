@@ -36,8 +36,7 @@ import {
 const STEPS = [
   { id: 1, title: "Dados Pessoais", icon: <User className="w-4 h-4" /> },
   { id: 2, title: "Endereço", icon: <MapPin className="w-4 h-4" /> },
-  { id: 3, title: "Imóvel", icon: <Home className="w-4 h-4" /> },
-  { id: 4, title: "Finalizar", icon: <Send className="w-4 h-4" /> },
+  { id: 3, title: "Imóvel e Consumo", icon: <Home className="w-4 h-4" /> },
 ];
 
 const slideVariants = {
@@ -133,22 +132,26 @@ export default function LeadFormWizard() {
     }
   };
 
-  const validateCurrentStep = async () => {
-    let isValid = false;
-    
-    switch (currentStep) {
+  const getFieldsForStep = (step: number): (keyof LeadFormData)[] => {
+    switch (step) {
       case 1:
-        isValid = await trigger(["nome", "telefone"]);
-        break;
+        return ["nome", "telefone"];
       case 2:
-        isValid = await trigger(["estado", "cidade"]);
-        break;
+        return ["estado", "cidade"];
       case 3:
-        isValid = await trigger(["area", "tipo_telhado", "rede_atendimento", "media_consumo", "consumo_previsto"]);
-        break;
-      case 4:
-        isValid = true;
-        break;
+        return ["area", "tipo_telhado", "rede_atendimento", "media_consumo", "consumo_previsto"];
+      default:
+        return [];
+    }
+  };
+
+  const validateCurrentStep = async () => {
+    const fields = getFieldsForStep(currentStep);
+    const isValid = await trigger(fields);
+    
+    // Mark all fields as touched to show errors
+    if (!isValid) {
+      fields.forEach(field => markFieldTouched(field));
     }
     
     return isValid;
@@ -156,7 +159,16 @@ export default function LeadFormWizard() {
 
   const nextStep = async () => {
     const isValid = await validateCurrentStep();
-    if (isValid && currentStep < STEPS.length) {
+    if (!isValid) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (currentStep < STEPS.length) {
       setDirection(1);
       setCurrentStep(prev => prev + 1);
     }
@@ -525,15 +537,11 @@ export default function LeadFormWizard() {
                       />
                     </motion.div>
                   )}
-                </div>
-              )}
 
-              {/* Step 4: Arquivos e Observações */}
-              {currentStep === 4 && (
-                <div className="space-y-5">
-                  <motion.div custom={0} variants={fieldVariants} initial="hidden" animate="visible">
+                  {/* Upload de Arquivos */}
+                  <motion.div custom={4} variants={fieldVariants} initial="hidden" animate="visible">
                     <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                      <FileText className="w-4 h-4 text-secondary" /> Contas de Luz
+                      <FileText className="w-4 h-4 text-secondary" /> Contas de Luz (opcional)
                     </label>
                     <FileUpload
                       onFilesChange={setUploadedFiles}
@@ -542,13 +550,14 @@ export default function LeadFormWizard() {
                     />
                   </motion.div>
 
-                  <motion.div custom={1} variants={fieldVariants} initial="hidden" animate="visible">
+                  {/* Observações */}
+                  <motion.div custom={5} variants={fieldVariants} initial="hidden" animate="visible">
                     <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                      <MessageSquare className="w-4 h-4 text-secondary" /> Observações
+                      <MessageSquare className="w-4 h-4 text-secondary" /> Observações (opcional)
                     </label>
                     <Textarea
                       placeholder="Informações adicionais..."
-                      className="min-h-[100px] rounded-xl border-2 border-muted-foreground/25 focus:border-primary transition-colors"
+                      className="min-h-[80px] rounded-xl border-2 border-muted-foreground/25 focus:border-primary transition-colors"
                       value={watchedValues.observacoes}
                       onChange={(e) => setValue("observacoes", e.target.value)}
                     />
