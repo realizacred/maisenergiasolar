@@ -16,6 +16,7 @@ import FinanciamentoConfig from "@/components/admin/FinanciamentoConfig";
 import WebhookManager from "@/components/admin/WebhookManager";
 import { ClientesManager } from "@/components/admin/ClientesManager";
 import { RecebimentosManager } from "@/components/admin/RecebimentosManager";
+import { InstagramConfig } from "@/components/admin/InstagramConfig";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Footer from "@/components/layout/Footer";
 
@@ -89,6 +90,8 @@ export default function Admin() {
         return <CalculadoraConfig />;
       case "financiamento":
         return <FinanciamentoConfig />;
+      case "instagram":
+        return <InstagramConfig />;
       case "webhooks":
         return <WebhookManager />;
       default:

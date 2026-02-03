@@ -11,6 +11,7 @@ import {
   Webhook,
   LogOut,
   Sun,
+  Instagram,
 } from "lucide-react";
 import {
   Sidebar,
@@ -48,6 +49,7 @@ const configMenuItems = [
   { id: "vendedores", title: "Vendedores", icon: Users },
   { id: "config", title: "Calculadora", icon: Calculator },
   { id: "financiamento", title: "Bancos", icon: Building2 },
+  { id: "instagram", title: "Instagram", icon: Instagram },
   { id: "webhooks", title: "Webhooks", icon: Webhook },
 ];
 

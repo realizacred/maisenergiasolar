@@ -819,6 +819,75 @@ export type Database = {
         }
         Relationships: []
       }
+      instagram_config: {
+        Row: {
+          access_token: string | null
+          ativo: boolean
+          created_at: string
+          id: string
+          ultima_sincronizacao: string | null
+          updated_at: string
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          ultima_sincronizacao?: string | null
+          updated_at?: string
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          ultima_sincronizacao?: string | null
+          updated_at?: string
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      instagram_posts: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          instagram_id: string
+          media_type: string | null
+          media_url: string
+          permalink: string | null
+          thumbnail_url: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          instagram_id: string
+          media_type?: string | null
+          media_url: string
+          permalink?: string | null
+          thumbnail_url?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          instagram_id?: string
+          media_type?: string | null
+          media_url?: string
+          permalink?: string | null
+          thumbnail_url?: string | null
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
       lead_atividades: {
         Row: {
           concluido: boolean | null
