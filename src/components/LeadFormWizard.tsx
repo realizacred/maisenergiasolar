@@ -7,7 +7,7 @@ import confetti from "canvas-confetti";
 import { 
   User, Phone, MapPin, Home, Zap, BarChart3, MessageSquare, 
   Send, Loader2, CheckCircle, FileText, ArrowLeft, ArrowRight,
-  Building, Hash
+  Building, Hash, WifiOff, RefreshCw, Cloud
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,10 @@ import { useToast } from "@/hooks/use-toast";
 import { FloatingInput } from "@/components/ui/floating-input";
 import { FloatingSelect } from "@/components/ui/floating-select";
 import { StepIndicator } from "@/components/ui/step-indicator";
+import { Badge } from "@/components/ui/badge";
 import ConsumptionChart from "./ConsumptionChart";
 import FileUpload from "./FileUpload";
+import { useOfflineLeadSync } from "@/hooks/useOfflineLeadSync";
 import logo from "@/assets/logo.png";
 import {
   leadFormSchema,
@@ -73,11 +75,20 @@ export default function LeadFormWizard() {
   const [direction, setDirection] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [savedOffline, setSavedOffline] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [vendedorCodigo, setVendedorCodigo] = useState<string | null>(null);
   const [vendedorNome, setVendedorNome] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  const { 
+    isOnline, 
+    pendingCount, 
+    isSyncing, 
+    saveLead, 
+    retrySync 
+  } = useOfflineLeadSync();
 
   // Captura e valida o vendedor da URL
   useEffect(() => {
@@ -247,8 +258,10 @@ export default function LeadFormWizard() {
 
   const onSubmit = async (data: LeadFormData) => {
     setIsSubmitting(true);
+    setSavedOffline(false);
+    
     try {
-      const { error } = await supabase.from("leads").insert({
+      const leadData = {
         nome: data.nome,
         telefone: data.telefone,
         cep: data.cep || null,
@@ -266,17 +279,29 @@ export default function LeadFormWizard() {
         observacoes: data.observacoes || null,
         arquivos_urls: uploadedFiles,
         vendedor: vendedorNome,
-      });
+      };
 
-      if (error) throw error;
+      const result = await saveLead(leadData);
 
-      setIsSuccess(true);
-      triggerConfetti();
-      
-      toast({
-        title: "Cadastro enviado com sucesso! ☀️",
-        description: "Entraremos em contato em breve.",
-      });
+      if (result.success) {
+        setIsSuccess(true);
+        setSavedOffline(result.offline);
+        
+        if (!result.offline) {
+          triggerConfetti();
+        }
+        
+        toast({
+          title: result.offline 
+            ? "Cadastro salvo localmente! 📴" 
+            : "Cadastro enviado com sucesso! ☀️",
+          description: result.offline
+            ? "Será sincronizado automaticamente quando a conexão voltar."
+            : "Entraremos em contato em breve.",
+        });
+      } else {
+        throw new Error("Falha ao salvar lead");
+      }
     } catch (error) {
       console.error("Erro ao enviar cadastro:", error);
       toast({
@@ -293,6 +318,7 @@ export default function LeadFormWizard() {
     form.reset();
     setCurrentStep(1);
     setIsSuccess(false);
+    setSavedOffline(false);
     setUploadedFiles([]);
     setTouchedFields(new Set());
   };
@@ -305,9 +331,15 @@ export default function LeadFormWizard() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
-            className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center mb-6"
+            className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 ${
+              savedOffline ? "bg-amber-100" : "bg-emerald-100"
+            }`}
           >
-            <CheckCircle className="w-12 h-12 text-green-600" />
+            {savedOffline ? (
+              <WifiOff className="w-12 h-12 text-amber-600" />
+            ) : (
+              <CheckCircle className="w-12 h-12 text-emerald-600" />
+            )}
           </motion.div>
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -315,7 +347,7 @@ export default function LeadFormWizard() {
             transition={{ delay: 0.2 }}
             className="text-2xl font-bold text-foreground mb-2"
           >
-            Cadastro Enviado!
+            {savedOffline ? "Salvo Localmente!" : "Cadastro Enviado!"}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -323,16 +355,34 @@ export default function LeadFormWizard() {
             transition={{ delay: 0.4 }}
             className="text-muted-foreground text-center mb-6"
           >
-            Obrigado pelo interesse! Nossa equipe entrará em contato em breve.
+            {savedOffline 
+              ? "Seu cadastro foi salvo e será enviado automaticamente quando a conexão for restabelecida."
+              : "Obrigado pelo interesse! Nossa equipe entrará em contato em breve."
+            }
           </motion.p>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
+            className="flex gap-3"
           >
             <Button onClick={resetForm} variant="outline">
               Fazer novo cadastro
             </Button>
+            {savedOffline && pendingCount > 0 && isOnline && (
+              <Button 
+                onClick={retrySync} 
+                disabled={isSyncing}
+                className="gap-2"
+              >
+                {isSyncing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                Sincronizar Agora
+              </Button>
+            )}
           </motion.div>
         </CardContent>
       </Card>
@@ -341,7 +391,35 @@ export default function LeadFormWizard() {
 
   return (
     <Card className="max-w-2xl mx-auto border-0 shadow-2xl overflow-hidden">
-      <CardHeader className="text-center pb-4 bg-gradient-to-b from-primary/5 to-transparent">
+      <CardHeader className="text-center pb-4 bg-gradient-to-b from-primary/5 to-transparent relative">
+        {/* Offline/Pending Status Indicator */}
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          {!isOnline && (
+            <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300 bg-amber-50">
+              <WifiOff className="w-3 h-3" />
+              Offline
+            </Badge>
+          )}
+          {pendingCount > 0 && (
+            <Badge 
+              variant="outline" 
+              className={`gap-1 cursor-pointer transition-colors ${
+                isOnline 
+                  ? "text-primary border-primary/30 bg-primary/5 hover:bg-primary/10" 
+                  : "text-amber-600 border-amber-300 bg-amber-50"
+              }`}
+              onClick={isOnline && !isSyncing ? retrySync : undefined}
+            >
+              {isSyncing ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Cloud className="w-3 h-3" />
+              )}
+              {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
+            </Badge>
+          )}
+        </div>
+
         <motion.img
           src={logo}
           alt="Mais Energia Solar"
