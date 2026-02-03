@@ -113,7 +113,15 @@ export default function Calculadora() {
 
   return (
     <div className="min-h-screen gradient-solar-soft flex flex-col">
-      <Header showCalculadora={false} />
+      <Header showCalculadora={false}>
+        <Link to="/">
+          <Button variant="default" size="sm" className="gap-2">
+            <ArrowRight className="w-4 h-4 rotate-180" />
+            <span className="hidden sm:inline">Solicitar Orçamento</span>
+            <span className="sm:hidden">Orçamento</span>
+          </Button>
+        </Link>
+      </Header>
 
       <main className="container mx-auto px-4 py-8 max-w-5xl flex-1">
         {/* Hero Section */}
