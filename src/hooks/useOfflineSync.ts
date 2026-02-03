@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -20,8 +20,14 @@ interface ChecklistData {
   observacoes?: string;
   fotos_urls: string[];
   assinatura_instalador_url?: string;
-  instalador_id: string; // UUID do usuário ou ID público "00000000-0000-0000-0000-000000000000"
+  instalador_id: string;
   synced: boolean;
+}
+
+interface SyncResult {
+  total: number;
+  synced: number;
+  failed: number;
 }
 
 const STORAGE_KEY = "offline_checklists";
@@ -30,58 +36,23 @@ export function useOfflineSync() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingCount, setPendingCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Monitor online status
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      syncPendingChecklists();
-    };
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    // Count pending on mount
-    countPending();
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
-  const countPending = () => {
+  const countPending = useCallback(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       const checklists: ChecklistData[] = stored ? JSON.parse(stored) : [];
-      setPendingCount(checklists.filter((c) => !c.synced).length);
+      const count = checklists.filter((c) => !c.synced).length;
+      setPendingCount(count);
+      return count;
     } catch {
       setPendingCount(0);
+      return 0;
     }
-  };
-
-  const saveLocally = (checklist: ChecklistData): string => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const checklists: ChecklistData[] = stored ? JSON.parse(stored) : [];
-      
-      const localId = `local_${Date.now()}`;
-      const newChecklist = { ...checklist, id: localId, synced: false };
-      checklists.push(newChecklist);
-      
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(checklists));
-      countPending();
-      
-      return localId;
-    } catch (error) {
-      console.error("Error saving locally:", error);
-      throw new Error("Falha ao salvar localmente");
-    }
-  };
+  }, []);
 
   const uploadAsset = async (dataUrl: string, path: string): Promise<string> => {
-    // Convert base64 to blob
     const response = await fetch(dataUrl);
     const blob = await response.blob();
     
@@ -105,7 +76,6 @@ export function useOfflineSync() {
     try {
       const timestamp = Date.now();
       
-      // Upload client signature if exists
       let clientSignatureUrl = checklist.assinatura_cliente_url;
       if (clientSignatureUrl?.startsWith("data:")) {
         clientSignatureUrl = await uploadAsset(
@@ -114,7 +84,6 @@ export function useOfflineSync() {
         );
       }
 
-      // Upload installer signature if exists
       let installerSignatureUrl = checklist.assinatura_instalador_url;
       if (installerSignatureUrl?.startsWith("data:")) {
         installerSignatureUrl = await uploadAsset(
@@ -123,7 +92,6 @@ export function useOfflineSync() {
         );
       }
 
-      // Upload photos
       const uploadedPhotos: string[] = [];
       for (let i = 0; i < checklist.fotos_urls.length; i++) {
         const photo = checklist.fotos_urls[i];
@@ -135,7 +103,6 @@ export function useOfflineSync() {
         }
       }
 
-      // Insert into database
       const { error } = await supabase.from("checklists_instalacao").insert({
         data_instalacao: checklist.data_instalacao,
         endereco: checklist.endereco,
@@ -165,51 +132,127 @@ export function useOfflineSync() {
     }
   };
 
-  const syncPendingChecklists = useCallback(async () => {
-    if (!isOnline || isSyncing) return;
+  const syncPendingChecklists = useCallback(async (showToast = true): Promise<SyncResult> => {
+    const result: SyncResult = { total: 0, synced: 0, failed: 0 };
+    
+    if (!navigator.onLine || isSyncing) {
+      if (showToast && !navigator.onLine) {
+        toast({
+          title: "Sem conexão",
+          description: "Aguarde a conexão ser restabelecida para sincronizar.",
+          variant: "destructive",
+        });
+      }
+      return result;
+    }
 
     try {
       setIsSyncing(true);
+      
+      if (showToast) {
+        toast({
+          title: "Sincronizando...",
+          description: "Enviando checklists pendentes.",
+        });
+      }
+
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return;
+      if (!stored) {
+        setIsSyncing(false);
+        return result;
+      }
 
       const checklists: ChecklistData[] = JSON.parse(stored);
       const pending = checklists.filter((c) => !c.synced);
+      result.total = pending.length;
 
-      if (pending.length === 0) return;
+      if (pending.length === 0) {
+        if (showToast) {
+          toast({
+            title: "Tudo sincronizado! ✓",
+            description: "Não há checklists pendentes.",
+          });
+        }
+        setIsSyncing(false);
+        return result;
+      }
 
-      let syncedCount = 0;
       for (const checklist of pending) {
         const success = await syncChecklist(checklist);
         if (success) {
-          // Mark as synced
           const index = checklists.findIndex((c) => c.id === checklist.id);
           if (index >= 0) {
             checklists[index].synced = true;
-            syncedCount++;
+            result.synced++;
           }
+        } else {
+          result.failed++;
         }
       }
 
-      // Update storage
       localStorage.setItem(STORAGE_KEY, JSON.stringify(checklists));
       countPending();
+      setLastSyncResult(result);
 
-      if (syncedCount > 0) {
-        toast({
-          title: "Sincronização concluída",
-          description: `${syncedCount} checklist(s) sincronizado(s) com sucesso!`,
-        });
+      // Mostrar resultado da sincronização
+      if (showToast) {
+        if (result.failed === 0 && result.synced > 0) {
+          toast({
+            title: "Sincronização concluída! ✓",
+            description: `${result.synced} checklist${result.synced > 1 ? 's' : ''} enviado${result.synced > 1 ? 's' : ''} com sucesso.`,
+          });
+        } else if (result.synced > 0 && result.failed > 0) {
+          toast({
+            title: "Sincronização parcial",
+            description: `${result.synced} enviado${result.synced > 1 ? 's' : ''}, ${result.failed} falhou${result.failed > 1 ? 'ram' : ''}. Tente novamente.`,
+            variant: "destructive",
+          });
+        } else if (result.failed > 0) {
+          toast({
+            title: "Falha na sincronização",
+            description: `${result.failed} checklist${result.failed > 1 ? 's' : ''} não pôde${result.failed > 1 ? 'ram' : ''} ser enviado${result.failed > 1 ? 's' : ''}. Tente novamente.`,
+            variant: "destructive",
+          });
+        }
       }
+
+      return result;
     } catch (error) {
       console.error("Error syncing:", error);
+      if (showToast) {
+        toast({
+          title: "Erro na sincronização",
+          description: "Ocorreu um erro. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      }
+      return result;
     } finally {
       setIsSyncing(false);
     }
-  }, [isOnline, isSyncing]);
+  }, [isSyncing, countPending]);
+
+  const saveLocally = (checklist: ChecklistData): string => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      const checklists: ChecklistData[] = stored ? JSON.parse(stored) : [];
+      
+      const localId = `local_${Date.now()}`;
+      const newChecklist = { ...checklist, id: localId, synced: false };
+      checklists.push(newChecklist);
+      
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(checklists));
+      countPending();
+      
+      return localId;
+    } catch (error) {
+      console.error("Error saving locally:", error);
+      throw new Error("Falha ao salvar localmente");
+    }
+  };
 
   const saveChecklist = async (checklist: Omit<ChecklistData, "id" | "synced">): Promise<{ success: boolean; offline: boolean }> => {
-    if (isOnline) {
+    if (navigator.onLine) {
       try {
         const success = await syncChecklist({ ...checklist, synced: true });
         if (success) {
@@ -220,7 +263,6 @@ export function useOfflineSync() {
       }
     }
 
-    // Save offline
     try {
       saveLocally({ ...checklist, synced: false });
       return { success: true, offline: true };
@@ -229,11 +271,69 @@ export function useOfflineSync() {
     }
   };
 
+  // Sincronização automática quando internet volta
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      
+      // Pequeno delay para garantir que a conexão está estável
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+      
+      syncTimeoutRef.current = setTimeout(() => {
+        const pending = countPending();
+        if (pending > 0) {
+          toast({
+            title: "Conexão restabelecida! 📶",
+            description: `${pending} checklist${pending > 1 ? 's' : ''} pendente${pending > 1 ? 's' : ''}. Sincronizando automaticamente...`,
+          });
+          
+          // Sincroniza automaticamente
+          syncPendingChecklists(true);
+        }
+      }, 1500);
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+      toast({
+        title: "Você está offline 📴",
+        description: "Os checklists serão salvos localmente e sincronizados quando a conexão voltar.",
+        variant: "destructive",
+      });
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    // Contar pendentes ao montar
+    countPending();
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, [countPending, syncPendingChecklists]);
+
+  // Retry function para tentar novamente
+  const retrySync = useCallback(() => {
+    return syncPendingChecklists(true);
+  }, [syncPendingChecklists]);
+
   return {
     isOnline,
     pendingCount,
     isSyncing,
+    lastSyncResult,
     saveChecklist,
     syncPendingChecklists,
+    retrySync,
   };
 }
