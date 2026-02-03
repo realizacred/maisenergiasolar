@@ -2,7 +2,11 @@ import { Link } from "react-router-dom";
 import { Zap, Leaf, TrendingDown, Shield, LogIn, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LeadFormWizard from "@/components/LeadFormWizard";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import logo from "@/assets/logo.png";
+
+// Configure your WhatsApp number here (with country code, e.g., 5511999999999)
+const WHATSAPP_NUMBER = "5511999999999";
 
 export default function Index() {
   return (
@@ -100,6 +104,9 @@ export default function Index() {
           </p>
         </div>
       </footer>
+
+      {/* WhatsApp Button */}
+      <WhatsAppButton phoneNumber={WHATSAPP_NUMBER} />
     </div>
   );
 }
