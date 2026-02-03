@@ -14,6 +14,7 @@ import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileTe
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logo from "@/assets/logo.png";
+import VendedoresManager from "@/components/admin/VendedoresManager";
 
 interface Lead {
   id: string;
@@ -305,6 +306,11 @@ export default function Admin() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Vendedores Section */}
+        <div className="mt-8">
+          <VendedoresManager leads={leads} />
+        </div>
       </main>
 
       {/* View Lead Dialog */}

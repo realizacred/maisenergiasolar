@@ -75,15 +75,34 @@ export default function LeadFormWizard() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
-  const [vendedor, setVendedor] = useState<string | null>(null);
+  const [vendedorCodigo, setVendedorCodigo] = useState<string | null>(null);
+  const [vendedorNome, setVendedorNome] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Captura o vendedor da URL
+  // Captura e valida o vendedor da URL
   useEffect(() => {
-    const vendedorParam = searchParams.get("vendedor");
-    if (vendedorParam) {
-      setVendedor(vendedorParam);
-    }
+    const validateVendedor = async () => {
+      const codigo = searchParams.get("v") || searchParams.get("vendedor");
+      if (!codigo) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("vendedores")
+          .select("codigo, nome, ativo")
+          .eq("codigo", codigo)
+          .eq("ativo", true)
+          .single();
+
+        if (data && !error) {
+          setVendedorCodigo(data.codigo);
+          setVendedorNome(data.nome);
+        }
+      } catch (error) {
+        console.error("Erro ao validar vendedor:", error);
+      }
+    };
+
+    validateVendedor();
   }, [searchParams]);
 
   const form = useForm<LeadFormData>({
@@ -241,7 +260,7 @@ export default function LeadFormWizard() {
         consumo_previsto: data.consumo_previsto,
         observacoes: data.observacoes || null,
         arquivos_urls: uploadedFiles,
-        vendedor: vendedor,
+        vendedor: vendedorCodigo,
       });
 
       if (error) throw error;

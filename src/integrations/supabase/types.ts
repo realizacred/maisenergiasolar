@@ -86,6 +86,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vendedores: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          email: string | null
+          id: string
+          nome: string
+          telefone: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome: string
+          telefone: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string
+          telefone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
