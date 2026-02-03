@@ -39,6 +39,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
+import { LeadAlerts } from "@/components/vendor/LeadAlerts";
 import logo from "@/assets/logo.png";
 
 interface Lead {
@@ -49,6 +50,7 @@ interface Lead {
   estado: string;
   media_consumo: number;
   created_at: string;
+  ultimo_contato: string | null;
   visto: boolean;
   lead_code: string | null;
   status_id: string | null;
@@ -110,10 +112,10 @@ export default function VendedorPortal() {
 
       setVendedor(vendedorData);
 
-      // Load leads for this vendedor
+      // Load leads for this vendedor (include ultimo_contato for AI alerts)
       const { data: leadsData, error: leadsError } = await supabase
         .from("leads")
-        .select("*")
+        .select("id, nome, telefone, cidade, estado, media_consumo, created_at, ultimo_contato, visto, lead_code, status_id")
         .eq("vendedor", vendedorData.nome)
         .order("created_at", { ascending: false });
 
@@ -256,6 +258,9 @@ export default function VendedorPortal() {
             </CardContent>
           </Card>
         </div>
+
+        {/* AI Assistant Alerts */}
+        <LeadAlerts leads={leads} diasAlerta={3} />
 
         {/* Share Link Card */}
         <Card className="bg-primary/5 border-primary/20">
