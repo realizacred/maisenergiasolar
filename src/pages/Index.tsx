@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import Header from "@/components/layout/Header";
@@ -13,6 +13,7 @@ import {
   TestimonialsSection,
   CTASection,
 } from "@/components/institutional";
+import { VendorLandingPage } from "@/components/vendor/VendorLandingPage";
 
 // WhatsApp da Mais Energia Solar
 const WHATSAPP_NUMBER = "5532998437675";
@@ -25,25 +26,17 @@ export default function Index() {
     return !!(searchParams.get("v") || searchParams.get("vendedor"));
   }, [searchParams]);
 
-  // Auto-scroll to form when accessing via salesperson link
-  useEffect(() => {
-    if (isVendorLink) {
-      // Small delay to ensure the page has rendered
-      setTimeout(() => {
-        const formSection = document.getElementById("orcamento");
-        if (formSection) {
-          formSection.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 300);
-    }
-  }, [isVendorLink]);
+  // Página dedicada para links de vendedores
+  if (isVendorLink) {
+    return <VendorLandingPage />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <HeroBanner />
       <AboutSection />
-      {!isVendorLink && <CTASection />}
+      <CTASection />
       <ServicesSection />
       <ProjectsSection />
       <InstagramSection />
