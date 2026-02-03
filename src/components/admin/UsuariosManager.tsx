@@ -4,6 +4,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   Table, 
   TableBody, 
@@ -35,6 +37,7 @@ import {
   Users,
   ShieldCheck,
   ShieldAlert,
+  Plus,
 } from "lucide-react";
 
 interface UserRole {
@@ -57,6 +60,13 @@ interface UserWithRoles {
   roles: string[];
 }
 
+interface NewUserForm {
+  nome: string;
+  email: string;
+  password: string;
+  role: string;
+}
+
 const ROLE_LABELS: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   admin: { label: "Administrador", color: "bg-red-100 text-red-800 border-red-200", icon: ShieldAlert },
   gerente: { label: "Gerente", color: "bg-purple-100 text-purple-800 border-purple-200", icon: ShieldCheck },
@@ -69,9 +79,16 @@ export function UsuariosManager() {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [newUserForm, setNewUserForm] = useState<NewUserForm>({
+    nome: "",
+    email: "",
+    password: "",
+    role: "vendedor",
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -185,6 +202,66 @@ export function UsuariosManager() {
     setIsDialogOpen(true);
   };
 
+  const handleCreateUser = async () => {
+    if (!newUserForm.nome || !newUserForm.email || !newUserForm.password) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newUserForm.password.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("create-vendedor-user", {
+        body: {
+          nome: newUserForm.nome,
+          email: newUserForm.email,
+          password: newUserForm.password,
+          role: newUserForm.role,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Erro ao criar usuário");
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      toast({ 
+        title: "Usuário criado com sucesso!",
+        description: `${newUserForm.nome} foi adicionado como ${ROLE_LABELS[newUserForm.role]?.label || newUserForm.role}.`,
+      });
+      
+      setIsCreateDialogOpen(false);
+      setNewUserForm({ nome: "", email: "", password: "", role: "vendedor" });
+      fetchUsers();
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      toast({
+        title: "Erro ao criar usuário",
+        description: error.message || "Não foi possível criar o usuário.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Get available roles for user (ones they don't have yet)
   const getAvailableRoles = (user: UserWithRoles) => {
     return Object.keys(ROLE_LABELS).filter(role => !user.roles.includes(role));
@@ -203,11 +280,15 @@ export function UsuariosManager() {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-brand-blue">
-            <Shield className="w-5 h-5" />
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-primary" />
             Gestão de Usuários e Perfis
           </CardTitle>
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Novo Usuário
+          </Button>
         </CardHeader>
         <CardContent>
           {users.length === 0 ? (
@@ -325,6 +406,82 @@ export function UsuariosManager() {
             <Button onClick={handleAddRole} disabled={!selectedRole || saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create User Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Criar Novo Usuário</DialogTitle>
+            <DialogDescription>
+              Preencha os dados para criar um novo usuário no sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome completo *</Label>
+              <Input
+                id="nome"
+                value={newUserForm.nome}
+                onChange={(e) => setNewUserForm({ ...newUserForm, nome: e.target.value })}
+                placeholder="Nome do usuário"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={newUserForm.email}
+                onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
+                placeholder="email@exemplo.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha *</Label>
+              <Input
+                id="password"
+                type="password"
+                value={newUserForm.password}
+                onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Perfil inicial</Label>
+              <Select 
+                value={newUserForm.role} 
+                onValueChange={(value) => setNewUserForm({ ...newUserForm, role: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(ROLE_LABELS).map(([role, info]) => (
+                    <SelectItem key={role} value={role}>
+                      {info.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsCreateDialogOpen(false);
+                setNewUserForm({ nome: "", email: "", password: "", role: "vendedor" });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateUser} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Criar Usuário
             </Button>
           </DialogFooter>
         </DialogContent>
