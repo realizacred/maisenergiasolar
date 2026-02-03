@@ -18,6 +18,7 @@ interface ChecklistData {
   configuracao_wifi: boolean;
   foto_servico: boolean;
   observacoes?: string;
+  // Photos stored as base64 when offline, converted to URLs on sync
   fotos_urls: string[];
   assinatura_instalador_url?: string;
   instalador_id: string;
