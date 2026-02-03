@@ -7,10 +7,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-interface CreateVendedorUserRequest {
+interface CreateUserRequest {
   email: string;
   password: string;
   nome: string;
+  role?: "admin" | "gerente" | "vendedor" | "instalador" | "financeiro";
 }
 
 serve(async (req) => {
@@ -51,10 +52,16 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { email, password, nome }: CreateVendedorUserRequest = await req.json();
+    const { email, password, nome, role = "vendedor" }: CreateUserRequest = await req.json();
 
     if (!email || !password || !nome) {
       throw new Error("Email, password and nome are required");
+    }
+
+    // Validate role
+    const validRoles = ["admin", "gerente", "vendedor", "instalador", "financeiro"];
+    if (!validRoles.includes(role)) {
+      throw new Error(`Invalid role: ${role}`);
     }
 
     // Create admin client with service role key
@@ -94,12 +101,12 @@ serve(async (req) => {
       // Don't fail - profile can be created later
     }
 
-    // Assign 'vendedor' role to the new user
+    // Assign role to the new user
     const { error: roleError } = await adminClient
       .from("user_roles")
       .insert({
         user_id: newUser.user.id,
-        role: "vendedor",
+        role: role,
         created_by: requestingUser.id,
       });
 
@@ -108,13 +115,14 @@ serve(async (req) => {
       // Don't fail - role can be assigned later
     }
 
-    console.log(`User created successfully: ${newUser.user.id}`);
+    console.log(`User created successfully: ${newUser.user.id} with role: ${role}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         user_id: newUser.user.id,
         email: newUser.user.email,
+        role: role,
       }),
       {
         status: 200,
@@ -122,7 +130,7 @@ serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error("Error creating vendedor user:", error);
+    console.error("Error creating user:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
