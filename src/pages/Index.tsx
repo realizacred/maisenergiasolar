@@ -7,8 +7,8 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 import ProjectGallery from "@/components/ProjectGallery";
 import logo from "@/assets/logo.png";
 
-// Configure your WhatsApp number here (with country code, e.g., 5511999999999)
-const WHATSAPP_NUMBER = "5511999999999";
+// WhatsApp da Mais Energia Solar
+const WHATSAPP_NUMBER = "5532998437675";
 
 export default function Index() {
   return (
@@ -43,12 +43,12 @@ export default function Index() {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-12">
             <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-              Economize na Conta de Luz com{" "}
-              <span className="text-brand-orange">Energia Solar</span>
+              Economize até 90% na sua{" "}
+              <span className="text-brand-orange">Conta de Energia!</span>
             </h1>
             <p className="text-lg text-muted-foreground mb-8">
-              Reduza até 95% da sua conta de energia com a instalação de painéis
-              solares. Solicite já seu orçamento gratuito!
+              Desde 2009 gerando economia, autonomia e impacto positivo. 
+              Soluções em energia solar para residências, comércios, indústrias e propriedades rurais.
             </p>
           </div>
 

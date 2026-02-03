@@ -12,27 +12,27 @@ interface Testimonial {
 
 const testimonials: Testimonial[] = [
   {
-    nome: "Carlos Silva",
-    cidade: "São Paulo",
-    estado: "SP",
-    texto: "Instalei o sistema há 6 meses e minha conta de luz caiu de R$450 para R$80. Melhor investimento que fiz!",
-    economia: "82%",
-    rating: 5,
-  },
-  {
-    nome: "Maria Santos",
-    cidade: "Belo Horizonte",
+    nome: "Ricardo Nunes",
+    cidade: "Cataguases",
     estado: "MG",
-    texto: "Equipe super profissional, instalação rápida e limpa. O sistema funciona perfeitamente desde o primeiro dia.",
+    texto: "Atendimento maravilhoso, rápido e um pós venda excelente, um investimento que vale a pena fazer. Feliz demais em ver a economia que tenho a cada conta que chega.",
     economia: "90%",
     rating: 5,
   },
   {
-    nome: "Roberto Oliveira",
-    cidade: "Curitiba",
-    estado: "PR",
-    texto: "Fiz o financiamento e a parcela é menor que a economia na conta. Já estou lucrando!",
+    nome: "Maria Lucia",
+    cidade: "Cataguases",
+    estado: "MG",
+    texto: "Não poderíamos ter feito um investimento melhor! Estamos muito satisfeitos com o serviço e com o sistema!!! Parabéns para toda a equipe! Nota mil!",
     economia: "95%",
+    rating: 5,
+  },
+  {
+    nome: "João Carlos",
+    cidade: "Argirita",
+    estado: "MG",
+    texto: "Equipe de engenheiros e técnicos muito capacitados. Projeto seguro, de alta eficiência e totalmente personalizado para minha necessidade.",
+    economia: "88%",
     rating: 5,
   },
 ];
@@ -46,7 +46,7 @@ export default function TestimonialsSection() {
             O Que Nossos Clientes Dizem
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Mais de 500 sistemas instalados em todo o Brasil. Veja o que nossos clientes dizem sobre a experiência.
+            Desde 2009 transformando energia em economia. Veja o que nossos clientes de Minas Gerais dizem sobre a experiência.
           </p>
         </div>
 
