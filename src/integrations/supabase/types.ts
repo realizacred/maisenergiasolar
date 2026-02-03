@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      calculadora_config: {
+        Row: {
+          created_at: string
+          custo_por_kwp: number
+          geracao_mensal_por_kwp: number
+          id: string
+          kg_co2_por_kwh: number
+          percentual_economia: number
+          tarifa_media_kwh: number
+          updated_at: string
+          vida_util_sistema: number
+        }
+        Insert: {
+          created_at?: string
+          custo_por_kwp?: number
+          geracao_mensal_por_kwp?: number
+          id?: string
+          kg_co2_por_kwh?: number
+          percentual_economia?: number
+          tarifa_media_kwh?: number
+          updated_at?: string
+          vida_util_sistema?: number
+        }
+        Update: {
+          created_at?: string
+          custo_por_kwp?: number
+          geracao_mensal_por_kwp?: number
+          id?: string
+          kg_co2_por_kwh?: number
+          percentual_economia?: number
+          tarifa_media_kwh?: number
+          updated_at?: string
+          vida_util_sistema?: number
+        }
+        Relationships: []
+      }
+      lead_status: {
+        Row: {
+          cor: string
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          cor?: string
+          created_at?: string
+          id?: string
+          nome: string
+          ordem: number
+        }
+        Update: {
+          cor?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           area: string
@@ -33,6 +93,7 @@ export type Database = {
           observacoes: string | null
           rede_atendimento: string
           rua: string | null
+          status_id: string | null
           telefone: string
           tipo_telhado: string
           updated_at: string
@@ -56,6 +117,7 @@ export type Database = {
           observacoes?: string | null
           rede_atendimento: string
           rua?: string | null
+          status_id?: string | null
           telefone: string
           tipo_telhado: string
           updated_at?: string
@@ -79,12 +141,21 @@ export type Database = {
           observacoes?: string | null
           rede_atendimento?: string
           rua?: string | null
+          status_id?: string | null
           telefone?: string
           tipo_telhado?: string
           updated_at?: string
           vendedor?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "lead_status"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendedores: {
         Row: {

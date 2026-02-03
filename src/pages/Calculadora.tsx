@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Sun, 
   Zap, 
@@ -16,7 +17,8 @@ import {
   DollarSign, 
   ArrowRight,
   Calculator,
-  Info
+  Info,
+  Loader2
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import {
@@ -25,15 +27,28 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Constants for calculations (average values for Brazil)
-const TARIFA_MEDIA_KWH = 0.85; // R$ per kWh (average Brazil 2024)
-const CUSTO_POR_KWP = 4500; // R$ per kWp installed (average)
-const GERACAO_MENSAL_POR_KWP = 120; // kWh per kWp per month (average Brazil)
-const KG_CO2_POR_KWH = 0.084; // kg CO2 per kWh (Brazilian grid)
+interface CalculadoraConfig {
+  tarifa_media_kwh: number;
+  custo_por_kwp: number;
+  geracao_mensal_por_kwp: number;
+  kg_co2_por_kwh: number;
+  percentual_economia: number;
+}
+
+// Default values (fallback)
+const DEFAULT_CONFIG: CalculadoraConfig = {
+  tarifa_media_kwh: 0.85,
+  custo_por_kwp: 4500,
+  geracao_mensal_por_kwp: 120,
+  kg_co2_por_kwh: 0.084,
+  percentual_economia: 95,
+};
 
 export default function Calculadora() {
+  const [config, setConfig] = useState<CalculadoraConfig>(DEFAULT_CONFIG);
+  const [configLoading, setConfigLoading] = useState(true);
   const [consumoMensal, setConsumoMensal] = useState<number>(300);
-  const [tarifaKwh, setTarifaKwh] = useState<number>(TARIFA_MEDIA_KWH);
+  const [tarifaKwh, setTarifaKwh] = useState<number>(DEFAULT_CONFIG.tarifa_media_kwh);
   
   // Calculated values
   const [economia, setEconomia] = useState({ mensal: 0, anual: 0 });
@@ -42,25 +57,49 @@ export default function Calculadora() {
   const [payback, setPayback] = useState(0);
   const [reducaoCO2, setReducaoCO2] = useState({ mensal: 0, anual: 0 });
 
+  // Fetch config from database
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("calculadora_config")
+          .select("tarifa_media_kwh, custo_por_kwp, geracao_mensal_por_kwp, kg_co2_por_kwh, percentual_economia")
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setConfig(data);
+          setTarifaKwh(Number(data.tarifa_media_kwh));
+        }
+      } catch (error) {
+        console.error("Erro ao buscar configuração:", error);
+      } finally {
+        setConfigLoading(false);
+      }
+    };
+
+    fetchConfig();
+  }, []);
+
   useEffect(() => {
     // Calculate system size (kWp)
-    const kWp = consumoMensal / GERACAO_MENSAL_POR_KWP;
+    const kWp = consumoMensal / config.geracao_mensal_por_kwp;
     setPotenciaSistema(kWp);
     
     // Calculate savings
-    const economiaMensal = consumoMensal * tarifaKwh * 0.95; // 95% savings (min grid fee)
+    const economiaMensal = consumoMensal * tarifaKwh * (config.percentual_economia / 100);
     const economiaAnual = economiaMensal * 12;
     setEconomia({ mensal: economiaMensal, anual: economiaAnual });
     
     // Calculate investment and payback
-    const investimentoTotal = kWp * CUSTO_POR_KWP;
+    const investimentoTotal = kWp * config.custo_por_kwp;
     setInvestimento(investimentoTotal);
     setPayback(investimentoTotal / economiaAnual);
     
     // Calculate CO2 reduction
-    const co2Mensal = consumoMensal * KG_CO2_POR_KWH;
+    const co2Mensal = consumoMensal * config.kg_co2_por_kwh;
     setReducaoCO2({ mensal: co2Mensal, anual: co2Mensal * 12 });
-  }, [consumoMensal, tarifaKwh]);
+  }, [consumoMensal, tarifaKwh, config]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
