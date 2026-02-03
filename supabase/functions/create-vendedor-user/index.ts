@@ -35,13 +35,23 @@ serve(async (req) => {
       );
     }
 
+    // IMPORTANT: In edge runtime there is no session storage; pass the JWT explicitly.
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (!token) {
+      console.error("Empty bearer token");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Empty token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Create client with user's token to verify they're admin
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
     // Verify the token using getUser
-    const { data: userData, error: userError } = await userClient.auth.getUser();
+    const { data: userData, error: userError } = await userClient.auth.getUser(token);
     
     if (userError || !userData?.user) {
       console.error("Token validation failed:", userError?.message);
