@@ -4,7 +4,6 @@ import { z } from "zod";
 const phoneRegex = /^\(\d{2}\) \d{4,5}-\d{4}$/;
 
 export const leadFormSchema = z.object({
-  // Step 1: Dados Pessoais
   nome: z
     .string()
     .trim()
@@ -14,8 +13,6 @@ export const leadFormSchema = z.object({
     .string()
     .trim()
     .regex(phoneRegex, "Telefone inválido. Use o formato (11) 99999-9999"),
-  
-  // Step 2: Endereço
   cep: z
     .string()
     .optional()
@@ -29,12 +26,6 @@ export const leadFormSchema = z.object({
     .trim()
     .min(2, "Cidade deve ter pelo menos 2 caracteres")
     .max(100, "Cidade deve ter no máximo 100 caracteres"),
-  bairro: z.string().max(100, "Bairro muito longo").optional(),
-  rua: z.string().max(200, "Endereço muito longo").optional(),
-  numero: z.string().max(20, "Número muito longo").optional(),
-  complemento: z.string().max(100, "Complemento muito longo").optional(),
-  
-  // Step 3: Imóvel e Consumo
   area: z.enum(["Urbana", "Rural"], { required_error: "Selecione uma área" }),
   tipo_telhado: z.string().min(1, "Selecione o tipo de telhado"),
   rede_atendimento: z.string().min(1, "Selecione a rede de atendimento"),
@@ -46,40 +37,10 @@ export const leadFormSchema = z.object({
     .number({ invalid_type_error: "Informe um valor numérico" })
     .min(1, "Consumo previsto deve ser maior que 0")
     .max(100000, "Consumo previsto muito alto"),
-  
-  // Step 4: Arquivos e Observações
   observacoes: z.string().max(1000, "Observações muito longas").optional(),
 });
 
 export type LeadFormData = z.infer<typeof leadFormSchema>;
-
-// Step-specific schemas for validation
-export const step1Schema = leadFormSchema.pick({
-  nome: true,
-  telefone: true,
-});
-
-export const step2Schema = leadFormSchema.pick({
-  cep: true,
-  estado: true,
-  cidade: true,
-  bairro: true,
-  rua: true,
-  numero: true,
-  complemento: true,
-});
-
-export const step3Schema = leadFormSchema.pick({
-  area: true,
-  tipo_telhado: true,
-  rede_atendimento: true,
-  media_consumo: true,
-  consumo_previsto: true,
-});
-
-export const step4Schema = leadFormSchema.pick({
-  observacoes: true,
-});
 
 export const loginSchema = z.object({
   email: z.string().email("Email inválido"),

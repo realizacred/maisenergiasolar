@@ -20,10 +20,10 @@ export default function ConsumptionChart({ mediaConsumo, consumoPrevisto }: Cons
   }, [mediaConsumo, consumoPrevisto]);
 
   return (
-    <Card className="bg-gradient-to-br from-secondary/5 to-primary/5 border-0">
+    <Card className="bg-gradient-to-br from-blue-50 to-green-50 border-0">
       <CardContent className="pt-6">
         <div className="flex items-center gap-2 mb-4 text-foreground font-semibold">
-          <BarChart3 className="w-5 h-5 text-secondary" />
+          <BarChart3 className="w-5 h-5 text-primary" />
           Comparativo de Consumo
         </div>
 
@@ -31,43 +31,43 @@ export default function ConsumptionChart({ mediaConsumo, consumoPrevisto }: Cons
         <div className="mb-4">
           <div className="flex justify-between items-center mb-2">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-secondary" />
-              <span className="text-sm font-medium text-foreground">Média Atual</span>
+              <div className="w-3 h-3 rounded-full bg-blue-500" />
+              <span className="text-sm font-medium">Média Atual</span>
             </div>
-            <span className="text-sm font-bold text-secondary">
+            <span className="text-sm font-bold text-blue-600">
               {mediaConsumo.toLocaleString()} kWh
             </span>
           </div>
-          <Progress value={mediaPercentage} className="h-3 bg-muted [&>div]:bg-secondary" />
+          <Progress value={mediaPercentage} className="h-3 bg-gray-200" />
         </div>
 
         {/* Consumo Previsto */}
         <div className="mb-4">
           <div className="flex justify-between items-center mb-2">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-primary" />
-              <span className="text-sm font-medium text-foreground">Consumo Previsto</span>
+              <div className="w-3 h-3 rounded-full bg-green-500" />
+              <span className="text-sm font-medium">Consumo Previsto</span>
             </div>
-            <span className="text-sm font-bold text-primary">
+            <span className="text-sm font-bold text-green-600">
               {consumoPrevisto.toLocaleString()} kWh
             </span>
           </div>
-          <Progress value={previstoPercentage} className="h-3 bg-muted [&>div]:bg-primary" />
+          <Progress value={previstoPercentage} className="h-3 bg-gray-200 [&>div]:bg-green-500" />
         </div>
 
         {/* Summary */}
-        <div className="bg-card rounded-lg p-4 mt-4 border border-border">
+        <div className="bg-white rounded-lg p-4 mt-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <div className="flex items-center gap-2 text-sm font-medium">
               {isIncrease ? (
-                <TrendingUp className="w-4 h-4 text-primary" />
+                <TrendingUp className="w-4 h-4 text-green-600" />
               ) : (
-                <TrendingDown className="w-4 h-4 text-destructive" />
+                <TrendingDown className="w-4 h-4 text-red-600" />
               )}
               Variação Prevista
             </div>
             <div className="text-right">
-              <div className={`text-xl font-bold ${isIncrease ? "text-primary" : "text-destructive"}`}>
+              <div className={`text-xl font-bold ${isIncrease ? "text-green-600" : "text-red-600"}`}>
                 {isIncrease ? "+" : ""}
                 {changePercentage.toFixed(1)}%
               </div>
