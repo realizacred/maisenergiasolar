@@ -56,7 +56,8 @@ export default function Admin() {
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterVisto, setFilterVisto] = useState<string>("todos");
+  const [filterVisto, setFilterVisto] = useState<string>("nao_visto");
+  const [activeTab, setActiveTab] = useState<string>("leads");
   const [filterVendedor, setFilterVendedor] = useState<string>("todos");
   const [filterEstado, setFilterEstado] = useState<string>("todos");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -267,7 +268,13 @@ export default function Admin() {
         </div>
 
         {/* Tabs Navigation */}
-        <Tabs defaultValue="leads" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(value) => {
+          setActiveTab(value);
+          // Recarrega leads ao entrar na aba
+          if (value === "leads") {
+            fetchLeads();
+          }
+        }} className="space-y-6">
           <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:inline-flex">
             <TabsTrigger value="leads" className="gap-2">
               <Users className="w-4 h-4" />
