@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface CreateUserRequest {
@@ -17,51 +17,82 @@ interface CreateUserRequest {
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Verify the requesting user is authenticated and is admin
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Authorization header required");
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Verify the requesting user is authenticated and is admin
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.error("Missing or invalid Authorization header");
+      return new Response(
+        JSON.stringify({ error: "Authorization header required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Create client with user's token to verify they're admin
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: { user: requestingUser }, error: userError } = await userClient.auth.getUser();
-    if (userError || !requestingUser) {
-      throw new Error("Unauthorized: Invalid token");
+    // Verify the token using getUser
+    const { data: userData, error: userError } = await userClient.auth.getUser();
+    
+    if (userError || !userData?.user) {
+      console.error("Token validation failed:", userError?.message);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
+    const requestingUserId = userData.user.id;
+    console.log("Authenticated user:", requestingUserId);
+
     // Check if requesting user has admin role
-    const { data: hasAdminRole } = await userClient.rpc("has_role", {
-      _user_id: requestingUser.id,
+    const { data: hasAdminRole, error: roleError } = await userClient.rpc("has_role", {
+      _user_id: requestingUserId,
       _role: "admin",
     });
 
+    if (roleError) {
+      console.error("Role check error:", roleError.message);
+      return new Response(
+        JSON.stringify({ error: "Failed to verify admin role" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (!hasAdminRole) {
-      throw new Error("Unauthorized: Admin role required");
+      console.error("User is not admin:", requestingUserId);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Admin role required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Parse request body
     const { email, password, nome, role = "vendedor" }: CreateUserRequest = await req.json();
 
     if (!email || !password || !nome) {
-      throw new Error("Email, password and nome are required");
+      return new Response(
+        JSON.stringify({ error: "Email, password and nome are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Validate role
     const validRoles = ["admin", "gerente", "vendedor", "instalador", "financeiro"];
     if (!validRoles.includes(role)) {
-      throw new Error(`Invalid role: ${role}`);
+      return new Response(
+        JSON.stringify({ error: `Invalid role: ${role}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Create admin client with service role key
@@ -81,12 +112,21 @@ serve(async (req) => {
     });
 
     if (createError) {
-      throw new Error(`Failed to create user: ${createError.message}`);
+      console.error("User creation error:", createError.message);
+      return new Response(
+        JSON.stringify({ error: `Failed to create user: ${createError.message}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     if (!newUser.user) {
-      throw new Error("User creation failed");
+      return new Response(
+        JSON.stringify({ error: "User creation failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    console.log("User created:", newUser.user.id);
 
     // Create profile for the new user
     const { error: profileError } = await adminClient
@@ -97,21 +137,21 @@ serve(async (req) => {
       });
 
     if (profileError) {
-      console.error("Profile creation error:", profileError);
+      console.error("Profile creation error:", profileError.message);
       // Don't fail - profile can be created later
     }
 
     // Assign role to the new user
-    const { error: roleError } = await adminClient
+    const { error: roleAssignError } = await adminClient
       .from("user_roles")
       .insert({
         user_id: newUser.user.id,
         role: role,
-        created_by: requestingUser.id,
+        created_by: requestingUserId,
       });
 
-    if (roleError) {
-      console.error("Role assignment error:", roleError);
+    if (roleAssignError) {
+      console.error("Role assignment error:", roleAssignError.message);
       // Don't fail - role can be assigned later
     }
 
@@ -134,7 +174,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        status: 400,
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
