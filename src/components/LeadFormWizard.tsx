@@ -260,7 +260,7 @@ export default function LeadFormWizard() {
         consumo_previsto: data.consumo_previsto,
         observacoes: data.observacoes || null,
         arquivos_urls: uploadedFiles,
-        vendedor: vendedorCodigo,
+        vendedor: vendedorNome,
       });
 
       if (error) throw error;
