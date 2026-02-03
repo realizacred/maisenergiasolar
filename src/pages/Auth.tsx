@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Sun, Mail, Lock, Loader2, ArrowLeft } from "lucide-react";
+import { Mail, Lock, Loader2, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { loginSchema, LoginData } from "@/lib/validations";
+import logo from "@/assets/logo.png";
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -103,10 +104,8 @@ export default function Auth() {
 
       <Card className="w-full max-w-md border-0 shadow-2xl">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 rounded-full gradient-solar flex items-center justify-center mx-auto mb-4">
-            <Sun className="w-8 h-8 text-white" />
-          </div>
-          <CardTitle className="text-2xl font-bold">Área Administrativa</CardTitle>
+          <img src={logo} alt="Mais Energia Solar" className="h-20 w-auto mx-auto mb-4" />
+          <CardTitle className="text-2xl font-bold text-brand-blue">Área Administrativa</CardTitle>
           <CardDescription>Acesse para gerenciar os leads</CardDescription>
         </CardHeader>
 
