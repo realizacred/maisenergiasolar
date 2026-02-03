@@ -10,12 +10,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink } from "lucide-react";
+import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink, BarChart3, Kanban, Settings, Calculator } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logo from "@/assets/logo.png";
 import VendedoresManager from "@/components/admin/VendedoresManager";
-
+import DashboardCharts from "@/components/admin/DashboardCharts";
+import LeadsPipeline from "@/components/admin/LeadsPipeline";
+import CalculadoraConfig from "@/components/admin/CalculadoraConfig";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface Lead {
   id: string;
   lead_code: string | null;
@@ -36,6 +39,7 @@ interface Lead {
   observacoes: string | null;
   vendedor: string | null;
   arquivos_urls: string[] | null;
+  status_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -201,116 +205,159 @@ export default function Admin() {
           </Card>
         </div>
 
-        {/* Search and Table */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <CardTitle className="text-brand-blue">Leads Cadastrados</CardTitle>
-              <div className="relative w-full md:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome, telefone, cidade..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-24">Código</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead>Vendedor</TableHead>
-                    <TableHead>Localização</TableHead>
-                    <TableHead>Consumo</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLeads.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                        Nenhum lead encontrado
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredLeads.map((lead) => (
-                      <TableRow key={lead.id}>
-                        <TableCell>
-                          <Badge variant="outline" className="font-mono text-xs">
-                            {lead.lead_code || "-"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{lead.nome}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-muted-foreground" />
-                            {lead.telefone}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {lead.vendedor ? (
-                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                              {lead.vendedor}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="bg-secondary/10 text-secondary">
-                            {lead.cidade}, {lead.estado}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{lead.media_consumo} kWh</TableCell>
-                        <TableCell>
-                          {format(new Date(lead.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-secondary hover:text-secondary"
-                              onClick={() => {
-                                setSelectedLead(lead);
-                                setIsViewOpen(true);
-                              }}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => {
-                                setLeadToDelete(lead);
-                                setIsDeleteOpen(true);
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Tabs Navigation */}
+        <Tabs defaultValue="leads" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
+            <TabsTrigger value="leads" className="gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Leads</span>
+            </TabsTrigger>
+            <TabsTrigger value="pipeline" className="gap-2">
+              <Kanban className="w-4 h-4" />
+              <span className="hidden sm:inline">Pipeline</span>
+            </TabsTrigger>
+            <TabsTrigger value="dashboard" className="gap-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="vendedores" className="gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Vendedores</span>
+            </TabsTrigger>
+            <TabsTrigger value="config" className="gap-2">
+              <Calculator className="w-4 h-4" />
+              <span className="hidden sm:inline">Calculadora</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Vendedores Section */}
-        <div className="mt-8">
-          <VendedoresManager leads={leads} />
-        </div>
+          {/* Leads Tab */}
+          <TabsContent value="leads">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <CardTitle className="text-brand-blue">Leads Cadastrados</CardTitle>
+                  <div className="relative w-full md:w-80">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por nome, telefone, cidade..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-24">Código</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Telefone</TableHead>
+                        <TableHead>Vendedor</TableHead>
+                        <TableHead>Localização</TableHead>
+                        <TableHead>Consumo</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredLeads.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                            Nenhum lead encontrado
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredLeads.map((lead) => (
+                          <TableRow key={lead.id}>
+                            <TableCell>
+                              <Badge variant="outline" className="font-mono text-xs">
+                                {lead.lead_code || "-"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-medium">{lead.nome}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Phone className="w-3 h-3 text-muted-foreground" />
+                                {lead.telefone}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {lead.vendedor ? (
+                                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                                  {lead.vendedor}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="bg-secondary/10 text-secondary">
+                                {lead.cidade}, {lead.estado}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{lead.media_consumo} kWh</TableCell>
+                            <TableCell>
+                              {format(new Date(lead.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-secondary hover:text-secondary"
+                                  onClick={() => {
+                                    setSelectedLead(lead);
+                                    setIsViewOpen(true);
+                                  }}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => {
+                                    setLeadToDelete(lead);
+                                    setIsDeleteOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Pipeline Tab */}
+          <TabsContent value="pipeline">
+            <LeadsPipeline />
+          </TabsContent>
+
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard">
+            <DashboardCharts leads={leads} />
+          </TabsContent>
+
+          {/* Vendedores Tab */}
+          <TabsContent value="vendedores">
+            <VendedoresManager leads={leads} />
+          </TabsContent>
+
+          {/* Calculadora Config Tab */}
+          <TabsContent value="config">
+            <CalculadoraConfig />
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* View Lead Dialog */}
