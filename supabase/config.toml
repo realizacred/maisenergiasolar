@@ -2,3 +2,6 @@ project_id = "wkvfjghgjowbcxjrzrpc"
 
 [functions.webhook-lead]
 verify_jwt = false
+
+[functions.sync-taxas-bcb]
+verify_jwt = false
