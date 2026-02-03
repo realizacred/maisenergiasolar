@@ -8,19 +8,26 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Sun, LogOut, Search, Edit, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye } from "lucide-react";
+import { LogOut, Search, Trash2, Users, Loader2, Phone, MapPin, Zap, Eye, FileText, Image, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import logo from "@/assets/logo.png";
+import VendedoresManager from "@/components/admin/VendedoresManager";
 
 interface Lead {
   id: string;
+  lead_code: string | null;
   nome: string;
   telefone: string;
   cep: string | null;
   estado: string;
   cidade: string;
+  rua: string | null;
+  numero: string | null;
+  bairro: string | null;
+  complemento: string | null;
   area: string;
   tipo_telhado: string;
   rede_atendimento: string;
@@ -28,6 +35,7 @@ interface Lead {
   consumo_previsto: number;
   observacoes: string | null;
   vendedor: string | null;
+  arquivos_urls: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -63,7 +71,8 @@ export default function Admin() {
       lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.telefone.includes(searchTerm) ||
       lead.cidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.estado.toLowerCase().includes(searchTerm.toLowerCase())
+      lead.estado.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (lead.vendedor && lead.vendedor.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     setFilteredLeads(filtered);
   }, [searchTerm, leads]);
@@ -133,20 +142,17 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted/30">
       {/* Header */}
       <header className="bg-white border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full gradient-solar flex items-center justify-center">
-              <Sun className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <span className="text-xl font-bold text-foreground">Painel Admin</span>
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img src={logo} alt="Mais Energia Solar" className="h-10 w-auto" />
+            <div className="hidden sm:block">
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleSignOut} className="gap-2">
+          <Button variant="outline" onClick={handleSignOut} className="gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
             <LogOut className="w-4 h-4" />
             Sair
           </Button>
@@ -156,37 +162,37 @@ export default function Admin() {
       <main className="container mx-auto px-4 py-8">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card>
+          <Card className="border-l-4 border-l-primary">
             <CardContent className="flex items-center gap-4 pt-6">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <Users className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{leads.length}</p>
+                <p className="text-2xl font-bold text-foreground">{leads.length}</p>
                 <p className="text-sm text-muted-foreground">Total de Leads</p>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-green-500">
             <CardContent className="flex items-center gap-4 pt-6">
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
                 <Zap className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-bold text-foreground">
                   {leads.reduce((acc, l) => acc + l.media_consumo, 0).toLocaleString()}
                 </p>
                 <p className="text-sm text-muted-foreground">kWh Total</p>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-secondary">
             <CardContent className="flex items-center gap-4 pt-6">
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <MapPin className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
+                <MapPin className="w-6 h-6 text-secondary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-bold text-foreground">
                   {new Set(leads.map((l) => l.estado)).size}
                 </p>
                 <p className="text-sm text-muted-foreground">Estados</p>
@@ -199,7 +205,7 @@ export default function Admin() {
         <Card>
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <CardTitle>Leads Cadastrados</CardTitle>
+              <CardTitle className="text-brand-blue">Leads Cadastrados</CardTitle>
               <div className="relative w-full md:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -216,8 +222,10 @@ export default function Admin() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-24">Código</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Telefone</TableHead>
+                    <TableHead>Vendedor</TableHead>
                     <TableHead>Localização</TableHead>
                     <TableHead>Consumo</TableHead>
                     <TableHead>Data</TableHead>
@@ -227,13 +235,18 @@ export default function Admin() {
                 <TableBody>
                   {filteredLeads.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         Nenhum lead encontrado
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredLeads.map((lead) => (
                       <TableRow key={lead.id}>
+                        <TableCell>
+                          <Badge variant="outline" className="font-mono text-xs">
+                            {lead.lead_code || "-"}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="font-medium">{lead.nome}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
@@ -242,7 +255,16 @@ export default function Admin() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary">
+                          {lead.vendedor ? (
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                              {lead.vendedor}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="bg-secondary/10 text-secondary">
                             {lead.cidade}, {lead.estado}
                           </Badge>
                         </TableCell>
@@ -255,6 +277,7 @@ export default function Admin() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="text-secondary hover:text-secondary"
                               onClick={() => {
                                 setSelectedLead(lead);
                                 setIsViewOpen(true);
@@ -283,16 +306,28 @@ export default function Admin() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Vendedores Section */}
+        <div className="mt-8">
+          <VendedoresManager leads={leads} />
+        </div>
       </main>
 
       {/* View Lead Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Detalhes do Lead</DialogTitle>
+            <DialogTitle className="text-brand-blue">Detalhes do Lead</DialogTitle>
           </DialogHeader>
           {selectedLead && (
             <div className="space-y-4">
+              {selectedLead.lead_code && (
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="font-mono text-sm px-3 py-1">
+                    {selectedLead.lead_code}
+                  </Badge>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Nome</p>
@@ -302,49 +337,136 @@ export default function Admin() {
                   <p className="text-sm text-muted-foreground">Telefone</p>
                   <p className="font-medium">{selectedLead.telefone}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">CEP</p>
-                  <p className="font-medium">{selectedLead.cep || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Localização</p>
-                  <p className="font-medium">
-                    {selectedLead.cidade}, {selectedLead.estado}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Área</p>
-                  <p className="font-medium">{selectedLead.area}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Tipo de Telhado</p>
-                  <p className="font-medium">{selectedLead.tipo_telhado}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Rede</p>
-                  <p className="font-medium">{selectedLead.rede_atendimento}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Consumo Médio</p>
-                  <p className="font-medium">{selectedLead.media_consumo} kWh</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Consumo Previsto</p>
-                  <p className="font-medium">{selectedLead.consumo_previsto} kWh</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Data de Cadastro</p>
-                  <p className="font-medium">
-                    {format(new Date(selectedLead.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                      locale: ptBR,
-                    })}
-                  </p>
+              </div>
+              
+              {/* Endereço */}
+              <div className="pt-2 border-t">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Endereço</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">CEP</p>
+                    <p className="font-medium text-sm">{selectedLead.cep || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cidade/Estado</p>
+                    <p className="font-medium text-sm">{selectedLead.cidade}, {selectedLead.estado}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Bairro</p>
+                    <p className="font-medium text-sm">{selectedLead.bairro || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Rua</p>
+                    <p className="font-medium text-sm">{selectedLead.rua || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Número</p>
+                    <p className="font-medium text-sm">{selectedLead.numero || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Complemento</p>
+                    <p className="font-medium text-sm">{selectedLead.complemento || "-"}</p>
+                  </div>
                 </div>
               </div>
+              
+              {/* Imóvel */}
+              <div className="pt-2 border-t">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Imóvel e Consumo</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Área</p>
+                    <p className="font-medium text-sm">{selectedLead.area}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Tipo de Telhado</p>
+                    <p className="font-medium text-sm">{selectedLead.tipo_telhado}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Rede</p>
+                    <p className="font-medium text-sm">{selectedLead.rede_atendimento}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Consumo Médio</p>
+                    <p className="font-medium text-sm">{selectedLead.media_consumo} kWh</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Consumo Previsto</p>
+                    <p className="font-medium text-sm">{selectedLead.consumo_previsto} kWh</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Data de Cadastro</p>
+                    <p className="font-medium text-sm">
+                      {format(new Date(selectedLead.created_at), "dd/MM/yyyy 'às' HH:mm", {
+                        locale: ptBR,
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
               {selectedLead.observacoes && (
-                <div>
+                <div className="pt-2 border-t">
                   <p className="text-sm text-muted-foreground">Observações</p>
-                  <p className="font-medium">{selectedLead.observacoes}</p>
+                  <p className="font-medium text-sm">{selectedLead.observacoes}</p>
+                </div>
+              )}
+              
+              {/* Arquivos Anexados */}
+              {selectedLead.arquivos_urls && selectedLead.arquivos_urls.length > 0 && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Arquivos Anexados ({selectedLead.arquivos_urls.length})
+                  </p>
+                  <div className="space-y-2">
+                    {selectedLead.arquivos_urls.map((filePath, index) => {
+                      const fileName = filePath.split('/').pop() || `Arquivo ${index + 1}`;
+                      const isImage = /\.(jpg|jpeg|png)$/i.test(fileName);
+                      
+                      const handleOpenFile = async () => {
+                        const { data, error } = await supabase.storage
+                          .from('contas-luz')
+                          .createSignedUrl(filePath, 3600); // 1 hour expiry
+                        
+                        if (data?.signedUrl) {
+                          window.open(data.signedUrl, '_blank');
+                        } else {
+                          toast({
+                            title: "Erro",
+                            description: "Não foi possível abrir o arquivo.",
+                            variant: "destructive",
+                          });
+                        }
+                      };
+                      
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            {isImage ? (
+                              <Image className="w-5 h-5 text-primary" />
+                            ) : (
+                              <FileText className="w-5 h-5 text-destructive" />
+                            )}
+                            <span className="text-sm font-medium truncate">
+                              {fileName}
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleOpenFile}
+                            className="flex items-center gap-1 text-primary hover:text-primary"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Abrir
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Sun, User, Phone, MapPin, Home, Zap, BarChart3, MessageSquare, Send, Loader2, CheckCircle } from "lucide-react";
+import { User, Phone, MapPin, Home, Zap, BarChart3, MessageSquare, Send, Loader2, CheckCircle, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,10 +21,13 @@ import {
   REDES_ATENDIMENTO,
 } from "@/lib/validations";
 import ConsumptionChart from "./ConsumptionChart";
+import FileUpload from "./FileUpload";
+import logo from "@/assets/logo.png";
 
 export default function LeadForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const { toast } = useToast();
 
   const form = useForm<LeadFormData>({
@@ -79,6 +82,7 @@ export default function LeadForm() {
         media_consumo: data.media_consumo,
         consumo_previsto: data.consumo_previsto,
         observacoes: data.observacoes || null,
+        arquivos_urls: uploadedFiles,
       });
 
       if (error) throw error;
@@ -89,6 +93,7 @@ export default function LeadForm() {
         description: "Entraremos em contato em breve.",
       });
       form.reset();
+      setUploadedFiles([]);
       
       setTimeout(() => setIsSuccess(false), 3000);
     } catch (error) {
@@ -122,10 +127,8 @@ export default function LeadForm() {
   return (
     <Card className="max-w-2xl mx-auto border-0 shadow-2xl">
       <CardHeader className="text-center pb-2">
-        <div className="w-16 h-16 rounded-full gradient-solar flex items-center justify-center mx-auto mb-4">
-          <Sun className="w-8 h-8 text-white" />
-        </div>
-        <CardTitle className="text-2xl md:text-3xl font-bold">
+        <img src={logo} alt="Mais Energia Solar" className="h-16 w-auto mx-auto mb-4" />
+        <CardTitle className="text-2xl md:text-3xl font-bold text-brand-blue">
           Solicite seu Orçamento
         </CardTitle>
         <CardDescription className="text-base">
@@ -143,7 +146,7 @@ export default function LeadForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">
-                    <User className="w-4 h-4" /> Nome Completo
+                    <User className="w-4 h-4 text-secondary" /> Nome Completo
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -164,7 +167,7 @@ export default function LeadForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">
-                    <Phone className="w-4 h-4" /> Telefone
+                    <Phone className="w-4 h-4 text-secondary" /> Telefone
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -186,7 +189,7 @@ export default function LeadForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" /> CEP
+                    <MapPin className="w-4 h-4 text-secondary" /> CEP
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -251,7 +254,7 @@ export default function LeadForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">
-                    <Home className="w-4 h-4" /> Área
+                    <Home className="w-4 h-4 text-secondary" /> Área
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
@@ -276,7 +279,7 @@ export default function LeadForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">
-                    <Home className="w-4 h-4" /> Tipo de Telhado
+                    <Home className="w-4 h-4 text-secondary" /> Tipo de Telhado
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
@@ -304,7 +307,7 @@ export default function LeadForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">
-                    <Zap className="w-4 h-4" /> Rede de Atendimento
+                    <Zap className="w-4 h-4 text-primary" /> Rede de Atendimento
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
@@ -333,7 +336,7 @@ export default function LeadForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4" /> Média de Consumo (kWh)
+                      <BarChart3 className="w-4 h-4 text-primary" /> Média de Consumo (kWh)
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -354,7 +357,7 @@ export default function LeadForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4" /> Consumo Previsto (kWh)
+                      <BarChart3 className="w-4 h-4 text-primary" /> Consumo Previsto (kWh)
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -378,6 +381,18 @@ export default function LeadForm() {
               />
             )}
 
+            {/* Upload de Contas de Luz */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <FileText className="w-4 h-4 text-secondary" /> Contas de Luz
+              </label>
+              <FileUpload 
+                onFilesChange={setUploadedFiles}
+                maxFiles={10}
+                maxSizeMB={10}
+              />
+            </div>
+
             {/* Observações */}
             <FormField
               control={form.control}
@@ -385,7 +400,7 @@ export default function LeadForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4" /> Observações
+                    <MessageSquare className="w-4 h-4 text-secondary" /> Observações
                   </FormLabel>
                   <FormControl>
                     <Textarea
