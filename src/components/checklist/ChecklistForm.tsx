@@ -67,6 +67,10 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSuccess, setIsSuccess] = useState(false);
   
+  // Store signatures in state to persist across step changes
+  const [clientSignature, setClientSignature] = useState<string | null>(null);
+  const [installerSignature, setInstallerSignature] = useState<string | null>(null);
+  
   const clientSignatureRef = useRef<SignaturePadRef>(null);
   const installerSignatureRef = useRef<SignaturePadRef>(null);
 
@@ -98,16 +102,14 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
       return;
     }
 
-    // Validate signatures
-    const clientSignature = clientSignatureRef.current?.getSignatureDataUrl();
-    const installerSignature = installerSignatureRef.current?.getSignatureDataUrl();
-
+    // Get signatures from state (already saved when user drew them)
     if (!clientSignature) {
       toast({
         title: "Assinatura do cliente obrigatória",
         description: "Por favor, peça ao cliente para assinar.",
         variant: "destructive",
       });
+      setCurrentStep(2); // Go back to client step
       return;
     }
 
@@ -155,6 +157,8 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
         setTimeout(() => {
           form.reset();
           setPhotos([]);
+          setClientSignature(null);
+          setInstallerSignature(null);
           clientSignatureRef.current?.clear();
           installerSignatureRef.current?.clear();
           setCurrentStep(1);
@@ -176,10 +180,20 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
   };
 
   const nextStep = () => {
+    // Save client signature before moving to next step
+    if (currentStep === 2 && clientSignatureRef.current) {
+      const sig = clientSignatureRef.current.getSignatureDataUrl();
+      if (sig) setClientSignature(sig);
+    }
     if (currentStep < 3) setCurrentStep(currentStep + 1);
   };
 
   const prevStep = () => {
+    // Save installer signature before going back
+    if (currentStep === 3 && installerSignatureRef.current) {
+      const sig = installerSignatureRef.current.getSignatureDataUrl();
+      if (sig) setInstallerSignature(sig);
+    }
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
@@ -464,6 +478,7 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
                 <SignaturePad
                   ref={clientSignatureRef}
                   label="Assinatura do Cliente"
+                  onSignatureChange={(sig) => setClientSignature(sig)}
                 />
               </CardContent>
             </Card>
@@ -541,6 +556,7 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
                 <SignaturePad
                   ref={installerSignatureRef}
                   label="Assinatura do Instalador"
+                  onSignatureChange={(sig) => setInstallerSignature(sig)}
                 />
               </CardContent>
             </Card>
