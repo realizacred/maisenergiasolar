@@ -456,6 +456,7 @@ export default function LeadFormWizard() {
                       onValueChange={(value) => {
                         setValue("area", value as "Urbana" | "Rural");
                         markFieldTouched("area");
+                        trigger("area");
                       }}
                       options={[
                         { value: "Urbana", label: "Urbana" },
@@ -474,6 +475,7 @@ export default function LeadFormWizard() {
                       onValueChange={(value) => {
                         setValue("tipo_telhado", value);
                         markFieldTouched("tipo_telhado");
+                        trigger("tipo_telhado");
                       }}
                       options={TIPOS_TELHADO.map(t => ({ value: t, label: t }))}
                       error={touchedFields.has("tipo_telhado") ? errors.tipo_telhado?.message : undefined}
@@ -489,6 +491,7 @@ export default function LeadFormWizard() {
                       onValueChange={(value) => {
                         setValue("rede_atendimento", value);
                         markFieldTouched("rede_atendimento");
+                        trigger("rede_atendimento");
                       }}
                       options={REDES_ATENDIMENTO.map(r => ({ value: r, label: r }))}
                       error={touchedFields.has("rede_atendimento") ? errors.rede_atendimento?.message : undefined}
