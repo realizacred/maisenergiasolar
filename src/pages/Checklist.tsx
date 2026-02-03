@@ -11,11 +11,11 @@ import {
   X,
   History,
   Plus,
-  Loader2
+  Loader2,
+  LogIn
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 import logoImg from "@/assets/logo.png";
 
 interface ChecklistRecord {
@@ -34,11 +34,7 @@ export default function Checklist() {
   const [checklists, setChecklists] = useState<ChecklistRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate("/auth");
-    }
-  }, [user, loading, navigate]);
+  // Não redireciona mais para login - página é pública
 
   const fetchHistory = async () => {
     if (!user) return;
@@ -62,14 +58,14 @@ export default function Checklist() {
   };
 
   useEffect(() => {
-    if (view === "history") {
+    if (view === "history" && user) {
       fetchHistory();
     }
   }, [view, user]);
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/auth");
+    setView("form");
   };
 
   if (loading) {
@@ -78,10 +74,6 @@ export default function Checklist() {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
-  }
-
-  if (!user) {
-    return null;
   }
 
   return (
