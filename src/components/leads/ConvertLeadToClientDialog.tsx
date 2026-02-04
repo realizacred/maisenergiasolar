@@ -74,7 +74,7 @@ const formSchema = z.object({
   complemento: z.string().optional(),
   disjuntor_id: z.string().optional(),
   transformador_id: z.string().optional(),
-  localizacao: z.string().optional(),
+  localizacao: z.string().min(1, "Localização é obrigatória"),
   observacoes: z.string().optional(),
 });
 
@@ -242,7 +242,8 @@ export function ConvertLeadToClientDialog({
       identidadeFiles.length > 0 &&
       comprovanteFiles.length > 0 &&
       form.getValues("disjuntor_id") &&
-      form.getValues("transformador_id")
+      form.getValues("transformador_id") &&
+      form.getValues("localizacao")
     );
   };
 
@@ -253,6 +254,7 @@ export function ConvertLeadToClientDialog({
     if (comprovanteFiles.length === 0) missing.push("Comprovante de Endereço");
     if (!form.getValues("disjuntor_id")) missing.push("Disjuntor");
     if (!form.getValues("transformador_id")) missing.push("Transformador");
+    if (!form.getValues("localizacao")) missing.push("Localização");
     return missing;
   };
 

@@ -7,7 +7,7 @@ import { PendingDocumentationWidget, FollowUpNotifications } from "@/components/
 import type { Lead } from "@/types/lead";
 
 export function LeadsView() {
-  const { leads, toggleVisto, deleteLead, filters, fetchLeads } = useLeads();
+  const { leads, statuses, toggleVisto, deleteLead, filters, fetchLeads } = useLeads();
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterVisto, setFilterVisto] = useState("nao_visto");
@@ -97,6 +97,7 @@ export function LeadsView() {
         <CardContent>
           <LeadsTable
             leads={filteredLeads}
+            statuses={statuses}
             onToggleVisto={toggleVisto}
             onView={(lead) => {
               setSelectedLead(lead);

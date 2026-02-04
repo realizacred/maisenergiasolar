@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Phone, Eye, MapPin, Calendar, Trash2, ShoppingCart } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Phone, Eye, MapPin, Calendar, Trash2, ShoppingCart, UserCheck, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -91,10 +91,15 @@ export function VendorLeadsTable({
         </TableHeader>
         <TableBody>
           {leads.map((lead) => {
+            // Check if lead has been converted (status = "Convertido")
+            const convertidoStatus = statuses.find(s => s.nome === "Convertido");
+            const isConverted = convertidoStatus && lead.status_id === convertidoStatus.id;
+            
             // Cores: borda azul = admin viu, fundo verde = vendedor marcou
             const rowClasses = [
               lead.visto_admin && "border-l-4 border-l-blue-500",
               lead.visto && "bg-green-50 dark:bg-green-950/20",
+              isConverted && "bg-primary/5",
             ].filter(Boolean).join(" ");
             
             return (
@@ -174,7 +179,7 @@ export function VendorLeadsTable({
                       </TooltipTrigger>
                       <TooltipContent>Ver detalhes</TooltipContent>
                     </Tooltip>
-                    {onConvert && (
+                    {onConvert && !isConverted && (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -187,6 +192,16 @@ export function VendorLeadsTable({
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Converter em Venda</TooltipContent>
+                      </Tooltip>
+                    )}
+                    {isConverted && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center justify-center h-8 w-8 text-green-600">
+                            <UserCheck className="w-4 h-4" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Já convertido em cliente</TooltipContent>
                       </Tooltip>
                     )}
                     {onDelete && (
