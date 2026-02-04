@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Menu, X, Calculator, LogIn, Phone, Home } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, Calculator, LogIn, Phone, Home, LogOut, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.png";
 
 interface MobileNavProps {
@@ -14,10 +15,23 @@ const WHATSAPP_NUMBER = "5532998437675";
 
 export function MobileNav({ showCalculadora = true, showAdmin = true }: MobileNavProps) {
   const [open, setOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const handleWhatsApp = () => {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}`, "_blank");
     setOpen(false);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    setOpen(false);
+    navigate("/");
+  };
+
+  const handlePortal = () => {
+    setOpen(false);
+    navigate("/portal");
   };
 
   return (
@@ -67,17 +81,44 @@ export function MobileNav({ showCalculadora = true, showAdmin = true }: MobileNa
               <Phone className="h-5 w-5 text-primary" />
               <span className="font-medium">Contato via WhatsApp</span>
             </button>
+
+            {/* Show Portal option when logged in */}
+            {user && (
+              <button
+                onClick={handlePortal}
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors w-full text-left"
+              >
+                <LayoutDashboard className="h-5 w-5 text-primary" />
+                <span className="font-medium">Meu Portal</span>
+              </button>
+            )}
           </nav>
 
           {/* Footer */}
           <div className="p-4 border-t space-y-3">
-            {showAdmin && (
-              <Link to="/auth" onClick={() => setOpen(false)}>
-                <Button className="w-full gap-2">
-                  <LogIn className="h-4 w-4" />
-                  Acessar Sistema
+            {user ? (
+              <>
+                <p className="text-xs text-muted-foreground truncate px-1">
+                  {user.email}
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="w-full gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sair
                 </Button>
-              </Link>
+              </>
+            ) : (
+              showAdmin && (
+                <Link to="/auth" onClick={() => setOpen(false)}>
+                  <Button className="w-full gap-2">
+                    <LogIn className="h-4 w-4" />
+                    Acessar Sistema
+                  </Button>
+                </Link>
+              )
             )}
             <p className="text-xs text-center text-muted-foreground">
               © {new Date().getFullYear()} Mais Energia Solar
