@@ -362,6 +362,8 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
           orcamentoData
         );
 
+        console.log("[LeadFormWizard] submitOrcamento result:", result);
+
         if (result.error === "DUPLICATE_DETECTED") {
           // Duplicate detected - dialog will be shown
           setIsSubmitting(false);
@@ -369,11 +371,11 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
         }
 
         if (result.success) {
-          setIsSuccess(true);
-          setSavedOffline(false);
+          console.log("[LeadFormWizard] Success! Setting isSuccess to true");
           clearDraft();
           resetHoneypot();
           resetRateLimit();
+          setSavedOffline(false);
           triggerConfetti();
           
           toast({
@@ -384,6 +386,11 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
               ? "Entraremos em contato em breve."
               : "Orçamento adicionado ao cliente existente.",
           });
+          
+          // Set success state AFTER all other operations
+          setIsSubmitting(false);
+          setIsSuccess(true);
+          return;
         } else {
           console.error("[LeadFormWizard] Save failed:", result.error);
           toast({
