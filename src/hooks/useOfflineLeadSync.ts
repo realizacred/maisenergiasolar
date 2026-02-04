@@ -54,9 +54,11 @@ export function useOfflineLeadSync() {
     }
   }, []);
 
-  const syncLead = async (lead: LeadData): Promise<boolean> => {
+  const syncLead = async (lead: LeadData): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { error } = await supabase.from("leads").insert({
+      console.log("[syncLead] Attempting to sync lead:", lead.nome);
+      
+      const { data, error } = await supabase.from("leads").insert({
         nome: lead.nome,
         telefone: lead.telefone,
         cep: lead.cep || null,
@@ -74,13 +76,19 @@ export function useOfflineLeadSync() {
         observacoes: lead.observacoes || null,
         arquivos_urls: lead.arquivos_urls || [],
         vendedor: lead.vendedor || null,
-      });
+      }).select();
 
-      if (error) throw error;
-      return true;
+      if (error) {
+        console.error("[syncLead] Supabase error:", error.message, error.details);
+        return { success: false, error: error.message };
+      }
+      
+      console.log("[syncLead] Successfully synced lead:", data);
+      return { success: true };
     } catch (error) {
-      console.error("Error syncing lead:", error);
-      return false;
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("[syncLead] Exception:", errorMessage);
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -140,8 +148,8 @@ export function useOfflineLeadSync() {
           continue;
         }
         
-        const success = await syncLead(lead);
-        if (success) {
+        const syncResult = await syncLead(lead);
+        if (syncResult.success) {
           const index = leads.findIndex((l) => l.id === lead.id);
           if (index >= 0) {
             leads[index].synced = true;
@@ -152,6 +160,7 @@ export function useOfflineLeadSync() {
             result.synced++;
           }
         } else {
+          console.warn("[syncPendingLeads] Failed to sync lead:", lead.nome, syncResult.error);
           result.failed++;
         }
       }
@@ -217,23 +226,28 @@ export function useOfflineLeadSync() {
     }
   };
 
-  const saveLead = async (lead: Omit<LeadData, "id" | "synced">): Promise<{ success: boolean; offline: boolean }> => {
+  const saveLead = async (lead: Omit<LeadData, "id" | "synced">): Promise<{ success: boolean; offline: boolean; error?: string }> => {
+    console.log("[saveLead] Starting save, isOnline:", navigator.onLine);
+    
     if (navigator.onLine) {
-      try {
-        const success = await syncLead({ ...lead, synced: true });
-        if (success) {
-          return { success: true, offline: false };
-        }
-      } catch (error) {
-        console.error("Online save failed, saving offline:", error);
+      const syncResult = await syncLead({ ...lead, synced: true });
+      if (syncResult.success) {
+        console.log("[saveLead] Online save successful");
+        return { success: true, offline: false };
+      } else {
+        console.warn("[saveLead] Online save failed:", syncResult.error, "- falling back to offline");
       }
     }
 
+    // Fallback to offline storage
     try {
+      console.log("[saveLead] Saving offline...");
       saveLocally({ ...lead, synced: false });
       return { success: true, offline: true };
-    } catch {
-      return { success: false, offline: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("[saveLead] Offline save also failed:", errorMessage);
+      return { success: false, offline: true, error: errorMessage };
     }
   };
 
