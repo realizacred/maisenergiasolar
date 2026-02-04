@@ -96,8 +96,17 @@ export function useOfflineLeadSync() {
     const result: SyncResult = { total: 0, synced: 0, failed: 0 };
     
     // Prevent multiple simultaneous sync operations
-    if (!navigator.onLine || isSyncing || syncInProgressRef.current) {
-      if (showToast && !navigator.onLine) {
+    if (syncInProgressRef.current) {
+      console.log("[syncPendingLeads] Sync already in progress, skipping");
+      return result;
+    }
+
+    // Check online status at call time (not from stale state)
+    const currentlyOnline = navigator.onLine;
+    console.log("[syncPendingLeads] Online status check:", currentlyOnline);
+    
+    if (!currentlyOnline) {
+      if (showToast) {
         toast({
           title: "Sem conexão",
           description: "Aguarde a conexão ser restabelecida para sincronizar.",
@@ -205,7 +214,7 @@ export function useOfflineLeadSync() {
       setIsSyncing(false);
       syncInProgressRef.current = false;
     }
-  }, [isSyncing, countPending]);
+  }, [countPending]);
 
   const saveLocally = (lead: LeadData): string => {
     try {
