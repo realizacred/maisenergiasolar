@@ -25,7 +25,7 @@ import { LeadAlerts } from "@/components/vendor/LeadAlerts";
 import { VendorFollowUpManager } from "@/components/vendor/VendorFollowUpManager";
 import { VendorPendingDocumentation } from "@/components/vendor/VendorPendingDocumentation";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
-import { VendorLeadFilters, VendorOrcamentosTable } from "@/components/vendor/leads";
+import { VendorLeadFilters, VendorOrcamentosTable, VendorLeadViewDialog } from "@/components/vendor/leads";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
 import { OfflineConversionsManager } from "@/components/leads/OfflineConversionsManager";
 import { OfflineDuplicateResolver } from "@/components/vendor/OfflineDuplicateResolver";
@@ -422,7 +422,17 @@ export default function VendedorPortal() {
         lead={orcamentoToConvert ? orcamentoToLead(orcamentoToConvert) : null}
         open={isConvertOpen}
         onOpenChange={setIsConvertOpen}
+        orcamentoId={orcamentoToConvert?.id ?? null}
         onSuccess={fetchOrcamentos}
+      />
+
+      {/* Detalhes (botão do olho) */}
+      <VendorLeadViewDialog
+        lead={selectedOrcamento ? orcamentoToLead(selectedOrcamento) : null}
+        open={!!selectedOrcamento}
+        onOpenChange={(open) => {
+          if (!open) setSelectedOrcamento(null);
+        }}
       />
     </div>
   );
