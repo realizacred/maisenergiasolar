@@ -99,7 +99,7 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
     saveLead, 
     retrySync,
     refreshPendingCount,
-  } = useOfflineLeadSync();
+  } = useOfflineLeadSync({ vendedorNome });
 
   // Lead/Orcamento management with duplicate detection
   const {

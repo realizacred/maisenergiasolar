@@ -2,8 +2,12 @@ import { WifiOff, Wifi, RefreshCw, Loader2, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOfflineLeadSync } from "@/hooks/useOfflineLeadSync";
 
-export function OfflineStatusBar() {
-  const { isOnline, pendingCount, isSyncing, retrySync } = useOfflineLeadSync();
+interface OfflineStatusBarProps {
+  vendedorNome?: string | null;
+}
+
+export function OfflineStatusBar({ vendedorNome }: OfflineStatusBarProps = {}) {
+  const { isOnline, pendingCount, isSyncing, retrySync } = useOfflineLeadSync({ vendedorNome });
 
   return (
     <div 

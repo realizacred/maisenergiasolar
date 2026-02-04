@@ -20,12 +20,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useOfflineLeadSync } from "@/hooks/useOfflineLeadSync";
 import type { LeadSimplified } from "@/types/orcamento";
 
-export function OfflineDuplicateResolver() {
+interface OfflineDuplicateResolverProps {
+  vendedorNome?: string | null;
+}
+
+export function OfflineDuplicateResolver({ vendedorNome }: OfflineDuplicateResolverProps = {}) {
   const {
     duplicatesToResolve,
     resolveDuplicateAsNew,
     resolveDuplicateAsExisting,
-  } = useOfflineLeadSync();
+  } = useOfflineLeadSync({ vendedorNome });
 
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [selectedLeads, setSelectedLeads] = useState<Map<string, LeadSimplified>>(new Map());
