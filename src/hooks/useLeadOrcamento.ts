@@ -90,7 +90,6 @@ export function useLeadOrcamento() {
   const createLead = async (data: LeadData): Promise<{ success: boolean; leadId?: string; error?: string }> => {
     try {
       const leadId = crypto.randomUUID();
-      const telefone_normalized = normalizePhone(data.telefone);
 
       // Note: We still insert with the original required fields
       // The database may require certain fields even though we're moving them to orcamentos
@@ -101,7 +100,6 @@ export function useLeadOrcamento() {
           id: leadId,
           nome: data.nome,
           telefone: data.telefone,
-          telefone_normalized,
           // Minimal required fields with defaults
           estado: "N/A",
           cidade: "N/A",
