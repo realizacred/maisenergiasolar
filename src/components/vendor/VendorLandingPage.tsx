@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import LeadFormWizard from "@/components/LeadFormWizard";
 import { OfflineStatusBar } from "./OfflineStatusBar";
+import { OfflineDuplicateResolver } from "./OfflineDuplicateResolver";
 
 export function VendorLandingPage() {
   return (
@@ -11,6 +12,7 @@ export function VendorLandingPage() {
       {/* Form Section */}
       <main className="flex-1 py-12">
         <div className="container mx-auto px-4">
+          <OfflineDuplicateResolver />
           <LeadFormWizard />
         </div>
       </main>
