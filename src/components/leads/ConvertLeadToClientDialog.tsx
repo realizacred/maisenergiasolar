@@ -312,9 +312,13 @@ export function ConvertLeadToClientDialog({
         clearTimeout(fallbackTimeout);
         const { latitude, longitude } = position.coords;
         const googleMapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-        form.setValue("localizacao", googleMapsLink);
+        form.setValue("localizacao", googleMapsLink, { 
+          shouldValidate: true, 
+          shouldDirty: true,
+          shouldTouch: true 
+        });
         setGettingLocation(false);
-        console.log("[Geolocation] Success:", latitude, longitude);
+        console.log("[Geolocation] Success:", latitude, longitude, "Link:", googleMapsLink);
         toast({
           title: "Localização obtida!",
           description: `Coordenadas: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
