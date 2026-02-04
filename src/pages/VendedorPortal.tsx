@@ -93,6 +93,14 @@ export default function VendedorPortal() {
     if (!user) return;
 
     try {
+      // First check user roles to determine proper redirect
+      const { data: userRoles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      const isAdmin = userRoles?.some(r => r.role === "admin" || r.role === "gerente");
+      
       // Get vendedor profile linked to user
       const { data: vendedorData, error: vendedorError } = await supabase
         .from("vendedores")
@@ -101,11 +109,19 @@ export default function VendedorPortal() {
         .single();
 
       if (vendedorError || !vendedorData) {
+        // If user is admin/gerente, redirect to admin panel
+        if (isAdmin) {
+          navigate("/admin");
+          return;
+        }
+        
         toast({
           title: "Acesso negado",
-          description: "Seu usuário não está vinculado a um vendedor.",
+          description: "Seu usuário não está vinculado a um vendedor. Entre em contato com o administrador.",
           variant: "destructive",
         });
+        // Sign out to prevent redirect loop
+        await signOut();
         navigate("/auth");
         return;
       }
