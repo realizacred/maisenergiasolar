@@ -82,7 +82,7 @@ export default function VendedorPortal() {
 
   useEffect(() => {
     if (!user) {
-      navigate("/auth");
+      navigate("/auth?from=vendedor", { replace: true });
       return;
     }
     
