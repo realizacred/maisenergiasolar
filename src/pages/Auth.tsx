@@ -17,6 +17,10 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const [checkingRole, setCheckingRole] = useState(false);
 
+  const isRecoveryFlow =
+    searchParams.get("type") === "recovery" ||
+    (typeof window !== "undefined" && window.location.hash.includes("type=recovery"));
+
   // Show message if redirected from protected route
   useEffect(() => {
     const redirectFrom = searchParams.get("from");
@@ -34,7 +38,8 @@ export default function Auth() {
 
   useEffect(() => {
     const checkUserRoleAndRedirect = async () => {
-      if (!loading && user) {
+      // During password recovery, stay on /auth to allow the user to set a new password.
+      if (!loading && user && !isRecoveryFlow) {
         setCheckingRole(true);
         try {
           const savedPreference = localStorage.getItem(PORTAL_PREFERENCE_KEY);
@@ -82,7 +87,7 @@ export default function Auth() {
     };
 
     checkUserRoleAndRedirect();
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, isRecoveryFlow]);
 
   if (loading || checkingRole) {
     return (
