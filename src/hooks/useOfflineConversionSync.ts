@@ -19,6 +19,7 @@ interface FormData {
   transformador_id?: string;
   localizacao?: string;
   observacoes?: string;
+  simulacao_aceita_id?: string;
 }
 
 export interface OfflineConversion {
@@ -92,6 +93,7 @@ export function useOfflineConversionSync() {
           identidade_urls: identidadeUrls.length > 0 ? identidadeUrls : null,
           comprovante_endereco_urls: comprovanteUrls.length > 0 ? comprovanteUrls : null,
           comprovante_beneficiaria_urls: beneficiariaUrls.length > 0 ? beneficiariaUrls : null,
+          simulacao_aceita_id: conversion.formData.simulacao_aceita_id || null,
         })
         .select()
         .single();
