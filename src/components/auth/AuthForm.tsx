@@ -140,9 +140,16 @@ export function AuthForm() {
       });
 
       if (error) {
+        // Handle rate limiting errors specifically
+        const isRateLimited = error.message.includes("security purposes") || 
+                              error.message.includes("rate") ||
+                              error.status === 429;
+        
         toast({
-          title: "Erro",
-          description: "Não foi possível enviar o email. Tente novamente.",
+          title: isRateLimited ? "Aguarde um momento" : "Erro",
+          description: isRateLimited 
+            ? "Por segurança, aguarde alguns segundos antes de solicitar novamente."
+            : "Não foi possível enviar o email. Tente novamente.",
           variant: "destructive",
         });
       } else {
