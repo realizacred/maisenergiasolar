@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Sun } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthForm } from "@/components/auth";
@@ -37,21 +37,15 @@ export default function Auth() {
       if (!loading && user) {
         setCheckingRole(true);
         try {
-          // Check for saved preference first
           const savedPreference = localStorage.getItem(PORTAL_PREFERENCE_KEY);
-
-          // Check user roles
           const { data: roles, error: rolesError } = await supabase
             .from("user_roles")
             .select("role")
             .eq("user_id", user.id);
 
-          console.log("Auth: User roles fetched:", roles, "Error:", rolesError);
-
           const isVendedor = roles?.some(r => r.role === "vendedor");
           const isAdmin = roles?.some(r => r.role === "admin" || r.role === "gerente");
 
-          // Check if user has a vendedor record
           let hasVendedorRecord = false;
           if (isVendedor) {
             const { data: vendedorData } = await supabase
@@ -62,27 +56,20 @@ export default function Auth() {
             hasVendedorRecord = !!vendedorData;
           }
 
-          console.log("Auth: isVendedor:", isVendedor, "isAdmin:", isAdmin, "hasVendedorRecord:", hasVendedorRecord);
-
-          // If user has both roles, check for saved preference or redirect to portal selector
           if (isVendedor && isAdmin && hasVendedorRecord) {
             if (savedPreference === "vendedor") {
               navigate("/vendedor", { replace: true });
             } else if (savedPreference === "admin") {
               navigate("/admin", { replace: true });
             } else {
-              // No preference saved, go to portal selector
               navigate("/portal", { replace: true });
             }
             return;
           }
 
-          // Vendedor-only users go to vendor portal
           if (isVendedor && !isAdmin && hasVendedorRecord) {
-            console.log("Auth: Redirecting to /vendedor");
             navigate("/vendedor", { replace: true });
           } else {
-            console.log("Auth: Redirecting to /admin");
             navigate("/admin", { replace: true });
           }
         } catch (error) {
@@ -99,36 +86,44 @@ export default function Auth() {
 
   if (loading || checkingRole) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4 animate-pulse-soft">
+          <div className="p-4 rounded-2xl bg-primary/10">
+            <Sun className="w-8 h-8 text-primary animate-spin-slow" />
+          </div>
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen gradient-solar-soft flex flex-col">
+    <div className="min-h-screen flex flex-col gradient-mesh">
       <Header showCalculadora={false} showAdmin={false}>
         <Link
           to="/"
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-200"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Voltar ao site</span>
+          <span className="hidden sm:inline">Voltar</span>
         </Link>
       </Header>
 
-      <main className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-0 shadow-2xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-brand-blue">
+      <main className="flex-1 flex items-center justify-center p-4 py-12">
+        <Card className="w-full max-w-md border-border/50 shadow-xl animate-scale-in">
+          <CardHeader className="text-center pb-2">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Sun className="w-7 h-7 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-bold">
               Área Restrita
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-base">
               Faça login para acessar o sistema
             </CardDescription>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="pt-4">
             <AuthForm />
           </CardContent>
         </Card>

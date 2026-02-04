@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail, Lock, Loader2, CheckCircle, KeyRound } from "lucide-react";
+import { Mail, Lock, Loader2, CheckCircle, KeyRound, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,13 +19,15 @@ import { loginSchema, LoginData } from "@/lib/validations";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
-const newPasswordSchema = z.object({
-  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
-  confirmPassword: z.string().min(6, "Confirme sua senha"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "As senhas não coincidem",
-  path: ["confirmPassword"],
-});
+const newPasswordSchema = z
+  .object({
+    password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
+    confirmPassword: z.string().min(6, "Confirme sua senha"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "As senhas não coincidem",
+    path: ["confirmPassword"],
+  });
 
 type NewPasswordData = z.infer<typeof newPasswordSchema>;
 
@@ -55,7 +57,9 @@ export function AuthForm() {
 
   // Detecta o evento de recuperação de senha
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsPasswordRecovery(true);
       }
@@ -81,7 +85,8 @@ export function AuthForm() {
       if (error) {
         toast({
           title: "Erro ao atualizar senha",
-          description: error.message || "Não foi possível atualizar a senha. Tente novamente.",
+          description:
+            error.message || "Não foi possível atualizar a senha. Tente novamente.",
           variant: "destructive",
         });
       } else {
@@ -90,7 +95,7 @@ export function AuthForm() {
           title: "Senha atualizada! 🎉",
           description: "Sua senha foi alterada com sucesso.",
         });
-        
+
         // Limpa a URL e redireciona após alguns segundos
         setTimeout(() => {
           window.location.href = "/auth";
@@ -190,9 +195,9 @@ export function AuthForm() {
   if (isPasswordRecovery) {
     if (passwordUpdated) {
       return (
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mb-4">
-            <CheckCircle className="w-8 h-8 text-primary" />
+        <div className="flex flex-col items-center justify-center py-8 text-center animate-scale-in">
+          <div className="w-16 h-16 rounded-2xl bg-success/10 flex items-center justify-center mb-4">
+            <CheckCircle className="w-8 h-8 text-success" />
           </div>
           <h3 className="text-lg font-semibold text-foreground mb-2">
             Senha Atualizada!
@@ -205,35 +210,40 @@ export function AuthForm() {
     }
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         <div className="text-center">
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <KeyRound className="w-6 h-6 text-primary" />
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <KeyRound className="w-7 h-7 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground">
+          <h3 className="text-xl font-semibold text-foreground">
             Definir Nova Senha
           </h3>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-2">
             Digite sua nova senha abaixo
           </p>
         </div>
 
         <Form {...newPasswordForm}>
-          <form onSubmit={newPasswordForm.handleSubmit(handleUpdatePassword)} className="space-y-4">
+          <form
+            onSubmit={newPasswordForm.handleSubmit(handleUpdatePassword)}
+            className="space-y-4"
+          >
             <FormField
               control={newPasswordForm.control}
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Lock className="w-4 h-4" /> Nova Senha
-                  </FormLabel>
+                  <FormLabel className="text-sm font-medium">Nova Senha</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Mínimo 6 caracteres"
-                      {...field}
-                    />
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type="password"
+                        placeholder="Mínimo 6 caracteres"
+                        className="pl-10"
+                        {...field}
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -245,15 +255,17 @@ export function AuthForm() {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Lock className="w-4 h-4" /> Confirmar Senha
-                  </FormLabel>
+                  <FormLabel className="text-sm font-medium">Confirmar Senha</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Repita a senha"
-                      {...field}
-                    />
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type="password"
+                        placeholder="Repita a senha"
+                        className="pl-10"
+                        {...field}
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -262,13 +274,16 @@ export function AuthForm() {
 
             <Button
               type="submit"
-              className="w-full gradient-solar hover:opacity-90"
+              className="w-full h-11"
               disabled={isLoading}
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                "Atualizar Senha"
+                <>
+                  Atualizar Senha
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </>
               )}
             </Button>
           </form>
@@ -278,128 +293,157 @@ export function AuthForm() {
   }
 
   return (
-    <Tabs defaultValue="login" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-6">
-        <TabsTrigger value="login">Entrar</TabsTrigger>
-        <TabsTrigger value="signup">Criar Conta</TabsTrigger>
-      </TabsList>
+    <div className="animate-fade-in">
+      <Tabs defaultValue="login" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6 h-11 p-1 bg-muted/50">
+          <TabsTrigger value="login" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg font-medium">
+            Entrar
+          </TabsTrigger>
+          <TabsTrigger value="signup" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg font-medium">
+            Criar Conta
+          </TabsTrigger>
+        </TabsList>
 
-      <TabsContent value="login">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSignIn)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Mail className="w-4 h-4" /> Email
-                  </FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="seu@email.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+        <TabsContent value="login" className="animate-fade-in">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSignIn)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Email</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          type="email"
+                          placeholder="seu@email.com"
+                          className="pl-10"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Senha</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          className="pl-10"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" className="w-full h-11" disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    Entrar
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 underline-offset-4 hover:underline"
+                  disabled={isLoading}
+                >
+                  Esqueceu sua senha?
+                </button>
+              </div>
+
+              {resetEmailSent && (
+                <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-success/10 text-success text-sm font-medium animate-fade-in">
+                  <CheckCircle className="w-4 h-4" />
+                  Email de recuperação enviado!
+                </div>
               )}
-            />
+            </form>
+          </Form>
+        </TabsContent>
 
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Lock className="w-4 h-4" /> Senha
-                  </FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <TabsContent value="signup" className="animate-fade-in">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSignUp)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Email</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          type="email"
+                          placeholder="seu@email.com"
+                          className="pl-10"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button
-              type="submit"
-              className="w-full gradient-solar hover:opacity-90"
-              disabled={isLoading}
-            >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Entrar"}
-            </Button>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Senha</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          type="password"
+                          placeholder="Mínimo 6 caracteres"
+                          className="pl-10"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline"
-                disabled={isLoading}
-              >
-                Esqueceu sua senha?
-              </button>
-            </div>
-
-            {resetEmailSent && (
-              <p className="text-sm text-center text-primary font-medium">
-                ✓ Email de recuperação enviado!
-              </p>
-            )}
-          </form>
-        </Form>
-      </TabsContent>
-
-      <TabsContent value="signup">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSignUp)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Mail className="w-4 h-4" /> Email
-                  </FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="seu@email.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Lock className="w-4 h-4" /> Senha
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Mínimo 6 caracteres"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button
-              type="submit"
-              className="w-full gradient-solar hover:opacity-90"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                "Criar Conta"
-              )}
-            </Button>
-          </form>
-        </Form>
-      </TabsContent>
-    </Tabs>
+              <Button type="submit" className="w-full h-11" disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Criar Conta
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
