@@ -2,14 +2,12 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Upload, ShoppingCart, FileText, MapPin, Navigation, X, Plus } from "lucide-react";
+import { Loader2, ShoppingCart, FileText, MapPin, Navigation, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +31,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { DocumentUpload } from "./DocumentUpload";
 import type { Lead } from "@/types/lead";
 
 interface Disjuntor {
@@ -82,6 +81,7 @@ export function ConvertLeadToClientDialog({
 }: ConvertLeadToClientDialogProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [savingAsLead, setSavingAsLead] = useState(false);
   const [disjuntores, setDisjuntores] = useState<Disjuntor[]>([]);
   const [transformadores, setTransformadores] = useState<Transformador[]>([]);
   
@@ -230,21 +230,78 @@ export function ConvertLeadToClientDialog({
     );
   };
 
-  const handleAddFiles = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setFiles: React.Dispatch<React.SetStateAction<File[]>>
-  ) => {
-    const newFiles = Array.from(e.target.files || []);
-    setFiles((prev) => [...prev, ...newFiles]);
-    // Reset input so the same file can be selected again
-    e.target.value = "";
+  // Check if required documents are complete
+  const isDocumentationComplete = () => {
+    return (
+      identidadeFiles.length > 0 &&
+      comprovanteFiles.length > 0 &&
+      form.getValues("disjuntor_id") &&
+      form.getValues("transformador_id")
+    );
   };
 
-  const handleRemoveFile = (
-    index: number,
-    setFiles: React.Dispatch<React.SetStateAction<File[]>>
-  ) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+  // Save as lead with "Aguardando Documentação" status
+  const handleSaveAsLead = async () => {
+    if (!lead) return;
+
+    const isValid = await form.trigger();
+    if (!isValid) return;
+
+    setSavingAsLead(true);
+
+    try {
+      // Get "Aguardando Documentação" status
+      const { data: aguardandoStatus } = await supabase
+        .from("lead_status")
+        .select("id")
+        .eq("nome", "Aguardando Documentação")
+        .single();
+
+      if (!aguardandoStatus) {
+        throw new Error("Status 'Aguardando Documentação' não encontrado.");
+      }
+
+      // Build observation note about what's missing
+      const missing: string[] = [];
+      if (identidadeFiles.length === 0) missing.push("Identidade");
+      if (comprovanteFiles.length === 0) missing.push("Comprovante de Endereço");
+      if (!form.getValues("disjuntor_id")) missing.push("Disjuntor");
+      if (!form.getValues("transformador_id")) missing.push("Transformador");
+
+      const observacoesAtuais = form.getValues("observacoes") || "";
+      const novaObservacao = missing.length > 0 
+        ? `[Documentação Pendente: ${missing.join(", ")}] ${observacoesAtuais}`.trim()
+        : observacoesAtuais;
+
+      // Update lead with new data and status
+      const { error: updateError } = await supabase
+        .from("leads")
+        .update({
+          status_id: aguardandoStatus.id,
+          observacoes: novaObservacao,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", lead.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Lead atualizado!",
+        description: `${lead.nome} foi marcado como "Aguardando Documentação".`,
+      });
+
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error: any) {
+      console.error("Error saving lead:", error);
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar o lead.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingAsLead(false);
+    }
   };
 
   const handleSubmit = async (data: FormData) => {
@@ -322,65 +379,6 @@ export function ConvertLeadToClientDialog({
 
   if (!lead) return null;
 
-  const FileUploadSection = ({
-    label,
-    description,
-    files,
-    setFiles,
-  }: {
-    label: string;
-    description: string;
-    files: File[];
-    setFiles: React.Dispatch<React.SetStateAction<File[]>>;
-  }) => (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <p className="text-xs text-muted-foreground">{description}</p>
-      <div className="flex flex-wrap gap-2 mb-2">
-        {files.map((file, index) => (
-          <Badge
-            key={index}
-            variant="secondary"
-            className="flex items-center gap-1 py-1 px-2"
-          >
-            <span className="truncate max-w-[120px]">{file.name}</span>
-            <button
-              type="button"
-              onClick={() => handleRemoveFile(index, setFiles)}
-              className="ml-1 hover:text-destructive"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </Badge>
-        ))}
-      </div>
-      <div className="flex items-center gap-2">
-        <Input
-          type="file"
-          accept="image/*,.pdf"
-          multiple
-          onChange={(e) => handleAddFiles(e, setFiles)}
-          className="flex-1"
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={() => {
-            const input = document.createElement("input");
-            input.type = "file";
-            input.accept = "image/*,.pdf";
-            input.multiple = true;
-            input.onchange = (e) => handleAddFiles(e as any, setFiles);
-            input.click();
-          }}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -390,7 +388,7 @@ export function ConvertLeadToClientDialog({
             Converter Lead em Venda
           </DialogTitle>
           <DialogDescription>
-            Preencha os dados para transformar o lead em cliente
+            Preencha os dados para transformar o lead em cliente. Se faltarem documentos, você pode salvar como "Aguardando Documentação".
           </DialogDescription>
         </DialogHeader>
 
@@ -568,23 +566,25 @@ export function ConvertLeadToClientDialog({
                 Documentos
               </h3>
               <div className="space-y-4">
-                <FileUploadSection
+                <DocumentUpload
                   label="Identidade (RG/CNH)"
-                  description="Frente e verso - Pode adicionar várias fotos"
+                  description="Tire uma foto ou selecione arquivos (frente e verso)"
                   files={identidadeFiles}
-                  setFiles={setIdentidadeFiles}
+                  onFilesChange={setIdentidadeFiles}
+                  required
                 />
-                <FileUploadSection
+                <DocumentUpload
                   label="Comprovante de Endereço"
-                  description="Pode adicionar várias fotos/páginas"
+                  description="Tire uma foto ou selecione arquivos"
                   files={comprovanteFiles}
-                  setFiles={setComprovanteFiles}
+                  onFilesChange={setComprovanteFiles}
+                  required
                 />
-                <FileUploadSection
+                <DocumentUpload
                   label="Comprovante Beneficiária da UC"
-                  description="Comprovante da unidade consumidora - Pode adicionar vários"
+                  description="Comprovante da unidade consumidora (opcional)"
                   files={beneficiariaFiles}
-                  setFiles={setBeneficiariaFiles}
+                  onFilesChange={setBeneficiariaFiles}
                 />
               </div>
             </div>
@@ -600,7 +600,7 @@ export function ConvertLeadToClientDialog({
                   name="disjuntor_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Disjuntor</FormLabel>
+                      <FormLabel>Disjuntor *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -624,7 +624,7 @@ export function ConvertLeadToClientDialog({
                   name="transformador_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Transformador</FormLabel>
+                      <FormLabel>Transformador *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -703,16 +703,37 @@ export function ConvertLeadToClientDialog({
               )}
             />
 
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                disabled={loading}
+                disabled={loading || savingAsLead}
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={loading}>
+              
+              {/* Save as Lead button - shown when documentation is incomplete */}
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleSaveAsLead}
+                disabled={loading || savingAsLead}
+              >
+                {savingAsLead ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Aguardando Documentação
+                  </>
+                )}
+              </Button>
+
+              <Button type="submit" disabled={loading || savingAsLead}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
