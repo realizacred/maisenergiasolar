@@ -23,39 +23,39 @@ export default function SyncStatusWidget() {
 
   return (
     <Card className={!isOnline ? "border-yellow-200 bg-yellow-50/50" : undefined}>
-      <CardContent className="pt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <CardContent className="p-3 sm:pt-4 sm:px-6">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {isOnline ? (
-              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                <Cloud className="w-5 h-5 text-green-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                <Cloud className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               </div>
             ) : (
-              <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                <CloudOff className="w-5 h-5 text-yellow-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-yellow-100 flex items-center justify-center shrink-0">
+                <CloudOff className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
               </div>
             )}
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-sm">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                <span className="font-medium text-xs sm:text-sm">
                   {isOnline ? "Conectado" : "Offline"}
                 </span>
                 {pendingCount > 0 && (
-                  <Badge variant={isOnline ? "secondary" : "destructive"} className="text-xs">
+                  <Badge variant={isOnline ? "secondary" : "destructive"} className="text-xs px-1.5 py-0">
                     {pendingCount} pendente{pendingCount > 1 ? "s" : ""}
                   </Badge>
                 )}
                 {pendingCount === 0 && isOnline && (
-                  <Badge variant="outline" className="text-xs text-green-600 border-green-200">
-                    <Check className="w-3 h-3 mr-1" />
-                    Sincronizado
+                  <Badge variant="outline" className="text-xs text-green-600 border-green-200 px-1.5 py-0">
+                    <Check className="w-3 h-3 mr-0.5" />
+                    Sync
                   </Badge>
                 )}
               </div>
               {lastSyncTime && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  Última sync: {formatDistanceToNow(lastSyncTime, { addSuffix: true, locale: ptBR })}
+                <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+                  <Clock className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{formatDistanceToNow(lastSyncTime, { addSuffix: true, locale: ptBR })}</span>
                 </p>
               )}
             </div>
@@ -67,9 +67,10 @@ export default function SyncStatusWidget() {
               variant="outline" 
               onClick={handleSync}
               disabled={isSyncing}
+              className="h-8 px-2 sm:px-3 text-xs shrink-0"
             >
-              <RefreshCw className={`w-4 h-4 mr-1 ${isSyncing ? "animate-spin" : ""}`} />
-              {isSyncing ? "Sincronizando..." : "Sincronizar"}
+              <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isSyncing ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline ml-1">{isSyncing ? "Sincronizando..." : "Sincronizar"}</span>
             </Button>
           )}
         </div>

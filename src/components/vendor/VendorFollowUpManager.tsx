@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertTriangle, Clock, Phone, CheckCircle, Bell, MessageCircle } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Lead } from "@/types/lead";
 
 interface VendorFollowUpManagerProps {
@@ -14,6 +14,8 @@ interface VendorFollowUpManagerProps {
 }
 
 export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: VendorFollowUpManagerProps) {
+  const isMobile = useIsMobile();
+  
   const { urgentLeads, pendingLeads, upToDateLeads } = useMemo(() => {
     const now = new Date();
     
@@ -75,39 +77,39 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
   const hasIssues = urgentLeads.length > 0 || pendingLeads.length > 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Stats - always show */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <Card className="border-l-4 border-l-destructive">
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-destructive" />
+          <CardContent className="flex items-center gap-3 p-3 sm:pt-6">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-destructive" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{urgentLeads.length}</p>
-              <p className="text-sm text-muted-foreground">Urgentes ({diasAlerta * 2}+ dias)</p>
+            <div className="min-w-0">
+              <p className="text-xl sm:text-2xl font-bold text-foreground">{urgentLeads.length}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Urgentes ({diasAlerta * 2}+ dias)</p>
             </div>
           </CardContent>
         </Card>
         <Card className="border-l-4 border-l-yellow-500">
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
-              <Clock className="w-6 h-6 text-yellow-600" />
+          <CardContent className="flex items-center gap-3 p-3 sm:pt-6">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-yellow-100 flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{pendingLeads.length}</p>
-              <p className="text-sm text-muted-foreground">Pendentes ({diasAlerta}+ dias)</p>
+            <div className="min-w-0">
+              <p className="text-xl sm:text-2xl font-bold text-foreground">{pendingLeads.length}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Pendentes ({diasAlerta}+ dias)</p>
             </div>
           </CardContent>
         </Card>
         <Card className="border-l-4 border-l-green-500">
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+          <CardContent className="flex items-center gap-3 p-3 sm:pt-6">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{upToDateLeads.length}</p>
-              <p className="text-sm text-muted-foreground">Em dia</p>
+            <div className="min-w-0">
+              <p className="text-xl sm:text-2xl font-bold text-foreground">{upToDateLeads.length}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Em dia</p>
             </div>
           </CardContent>
         </Card>
@@ -116,66 +118,100 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
       {/* Urgent Leads */}
       {urgentLeads.length > 0 && (
         <Card className="border-destructive/50">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6">
             <div className="flex items-center gap-2">
-              <Bell className="w-5 h-5 text-destructive" />
-              <CardTitle className="text-destructive">Leads Urgentes - Precisam de Contato!</CardTitle>
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" />
+              <CardTitle className="text-sm sm:text-base text-destructive">Leads Urgentes</CardTitle>
             </div>
-            <CardDescription>
-              Estes leads estão há mais de {diasAlerta * 2} dias sem contato.
+            <CardDescription className="text-xs sm:text-sm">
+              Há mais de {diasAlerta * 2} dias sem contato.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Lead</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+          <CardContent className="px-3 sm:px-6">
+            {isMobile ? (
+              <div className="space-y-2">
                 {urgentLeads.map((lead) => (
-                  <TableRow key={lead.id} className="bg-destructive/5">
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{lead.nome}</p>
+                  <div key={lead.id} className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{lead.nome}</p>
                         <p className="text-xs text-muted-foreground">{lead.cidade}, {lead.estado}</p>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <a
-                        href={`tel:${lead.telefone}`}
-                        className="flex items-center gap-1 text-primary hover:underline"
+                      {getStatusBadge(lead)}
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openWhatsApp(lead.telefone, lead.nome)}
+                        className="gap-1 h-8 text-xs flex-1"
                       >
-                        <Phone className="w-3 h-3" />
-                        {lead.telefone}
-                      </a>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(lead)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openWhatsApp(lead.telefone, lead.nome)}
-                          className="gap-1"
-                        >
-                          <MessageCircle className="w-3 h-3" />
-                          WhatsApp
+                        <MessageCircle className="w-3 h-3" />
+                        WhatsApp
+                      </Button>
+                      {onViewLead && (
+                        <Button size="sm" onClick={() => onViewLead(lead)} className="h-8 text-xs flex-1">
+                          Ver Detalhes
                         </Button>
-                        {onViewLead && (
-                          <Button size="sm" onClick={() => onViewLead(lead)}>
-                            Ver Detalhes
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                      )}
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="text-left p-3 font-medium">Lead</th>
+                      <th className="text-left p-3 font-medium">Telefone</th>
+                      <th className="text-left p-3 font-medium">Status</th>
+                      <th className="text-right p-3 font-medium">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {urgentLeads.map((lead) => (
+                      <tr key={lead.id} className="bg-destructive/5 border-t">
+                        <td className="p-3">
+                          <div>
+                            <p className="font-medium">{lead.nome}</p>
+                            <p className="text-xs text-muted-foreground">{lead.cidade}, {lead.estado}</p>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <a
+                            href={`tel:${lead.telefone}`}
+                            className="flex items-center gap-1 text-primary hover:underline"
+                          >
+                            <Phone className="w-3 h-3" />
+                            {lead.telefone}
+                          </a>
+                        </td>
+                        <td className="p-3">{getStatusBadge(lead)}</td>
+                        <td className="p-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openWhatsApp(lead.telefone, lead.nome)}
+                              className="gap-1"
+                            >
+                              <MessageCircle className="w-3 h-3" />
+                              WhatsApp
+                            </Button>
+                            {onViewLead && (
+                              <Button size="sm" onClick={() => onViewLead(lead)}>
+                                Ver Detalhes
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -183,66 +219,100 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
       {/* Pending Leads */}
       {pendingLeads.length > 0 && (
         <Card className="border-yellow-500/50">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6">
             <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-yellow-600" />
-              <CardTitle className="text-yellow-700">Leads Pendentes</CardTitle>
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
+              <CardTitle className="text-sm sm:text-base text-yellow-700">Leads Pendentes</CardTitle>
             </div>
-            <CardDescription>
-              Estes leads estão há {diasAlerta} a {diasAlerta * 2} dias sem contato.
+            <CardDescription className="text-xs sm:text-sm">
+              Entre {diasAlerta} e {diasAlerta * 2} dias sem contato.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Lead</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+          <CardContent className="px-3 sm:px-6">
+            {isMobile ? (
+              <div className="space-y-2">
                 {pendingLeads.map((lead) => (
-                  <TableRow key={lead.id} className="bg-yellow-50/50">
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{lead.nome}</p>
+                  <div key={lead.id} className="p-3 rounded-lg bg-yellow-50/50 border border-yellow-200 dark:bg-yellow-950/20">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{lead.nome}</p>
                         <p className="text-xs text-muted-foreground">{lead.cidade}, {lead.estado}</p>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <a
-                        href={`tel:${lead.telefone}`}
-                        className="flex items-center gap-1 text-primary hover:underline"
+                      {getStatusBadge(lead)}
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openWhatsApp(lead.telefone, lead.nome)}
+                        className="gap-1 h-8 text-xs flex-1"
                       >
-                        <Phone className="w-3 h-3" />
-                        {lead.telefone}
-                      </a>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(lead)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openWhatsApp(lead.telefone, lead.nome)}
-                          className="gap-1"
-                        >
-                          <MessageCircle className="w-3 h-3" />
-                          WhatsApp
+                        <MessageCircle className="w-3 h-3" />
+                        WhatsApp
+                      </Button>
+                      {onViewLead && (
+                        <Button size="sm" variant="outline" onClick={() => onViewLead(lead)} className="h-8 text-xs flex-1">
+                          Ver Detalhes
                         </Button>
-                        {onViewLead && (
-                          <Button size="sm" variant="outline" onClick={() => onViewLead(lead)}>
-                            Ver Detalhes
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                      )}
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="text-left p-3 font-medium">Lead</th>
+                      <th className="text-left p-3 font-medium">Telefone</th>
+                      <th className="text-left p-3 font-medium">Status</th>
+                      <th className="text-right p-3 font-medium">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingLeads.map((lead) => (
+                      <tr key={lead.id} className="bg-yellow-50/50 border-t">
+                        <td className="p-3">
+                          <div>
+                            <p className="font-medium">{lead.nome}</p>
+                            <p className="text-xs text-muted-foreground">{lead.cidade}, {lead.estado}</p>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <a
+                            href={`tel:${lead.telefone}`}
+                            className="flex items-center gap-1 text-primary hover:underline"
+                          >
+                            <Phone className="w-3 h-3" />
+                            {lead.telefone}
+                          </a>
+                        </td>
+                        <td className="p-3">{getStatusBadge(lead)}</td>
+                        <td className="p-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openWhatsApp(lead.telefone, lead.nome)}
+                              className="gap-1"
+                            >
+                              <MessageCircle className="w-3 h-3" />
+                              WhatsApp
+                            </Button>
+                            {onViewLead && (
+                              <Button size="sm" variant="outline" onClick={() => onViewLead(lead)}>
+                                Ver Detalhes
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

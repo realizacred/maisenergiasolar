@@ -134,42 +134,42 @@ export function LeadAlerts({ leads, diasAlerta = 3 }: LeadAlertsProps) {
 
   return (
     <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/10">
-      <CardContent className="pt-4">
-        <div className="flex items-center gap-2 mb-3">
+      <CardContent className="pt-3 sm:pt-4 px-3 sm:px-6">
+        <div className="flex items-center gap-2 mb-2 sm:mb-3">
           <Sparkles className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium text-primary">Assistente Inteligente</span>
+          <span className="text-xs sm:text-sm font-medium text-primary">Assistente Inteligente</span>
         </div>
         
         {alertas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-6 text-center">
-            <div className="bg-primary/10 rounded-full p-3 mb-3">
-              <MessageSquare className="h-5 w-5 text-primary" />
+          <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-center">
+            <div className="bg-primary/10 rounded-full p-2 sm:p-3 mb-2 sm:mb-3">
+              <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
-            <p className="text-sm font-medium text-foreground">Tudo em dia! 🎉</p>
+            <p className="text-xs sm:text-sm font-medium text-foreground">Tudo em dia! 🎉</p>
             <p className="text-xs text-muted-foreground mt-1">
               Nenhum lead precisa de atenção urgente no momento.
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {alertas.map((alerta) => {
               const styles = getAlertStyles(alerta.tipo);
               
               return (
                 <div 
                   key={alerta.lead.id}
-                  className={`relative p-3 rounded-lg border ${styles.bg} transition-all duration-200`}
+                  className={`relative p-2.5 sm:p-3 rounded-lg border ${styles.bg} transition-all duration-200`}
                 >
                   <button
                     onClick={() => dismissAlert(alerta.lead.id)}
-                    className="absolute top-2 right-2 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-background/50 transition-colors"
+                    className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-background/50 transition-colors"
                     aria-label="Dispensar alerta"
                   >
                     <X className="h-3 w-3" />
                   </button>
 
-                  <div className="flex items-start gap-3 pr-6">
-                    <div className={`mt-0.5 ${styles.icon}`}>
+                  <div className="flex items-start gap-2 sm:gap-3 pr-6">
+                    <div className={`mt-0.5 ${styles.icon} shrink-0`}>
                       {alerta.tipo === 'critico' ? (
                         <AlertCircle className="h-4 w-4" />
                       ) : alerta.tipo === 'atencao' ? (
@@ -180,7 +180,7 @@ export function LeadAlerts({ leads, diasAlerta = 3 }: LeadAlertsProps) {
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <Badge variant="secondary" className={`text-xs ${styles.badge}`}>
                           {getTipoLabel(alerta.tipo)}
                         </Badge>
@@ -189,21 +189,21 @@ export function LeadAlerts({ leads, diasAlerta = 3 }: LeadAlertsProps) {
                         </span>
                       </div>
                       
-                      <p className="text-sm text-foreground/80 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-foreground/80 leading-relaxed line-clamp-2">
                         {alerta.mensagem}
                       </p>
                       
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
                         <Button
                           size="sm"
                           variant="secondary"
-                          className="h-7 text-xs gap-1.5"
+                          className="h-7 text-xs gap-1.5 w-full sm:w-auto"
                           onClick={() => openWhatsApp(alerta.lead.telefone, alerta.lead.nome)}
                         >
                           <Phone className="h-3 w-3" />
                           Enviar WhatsApp
                         </Button>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground text-center sm:text-left">
                           {alerta.lead.cidade}, {alerta.lead.estado}
                         </span>
                       </div>
@@ -215,8 +215,8 @@ export function LeadAlerts({ leads, diasAlerta = 3 }: LeadAlertsProps) {
           </div>
         )}
 
-        <p className="text-xs text-muted-foreground mt-3 text-center">
-          💡 Dica: Leads contactados regularmente têm 3x mais chance de fechar negócio
+        <p className="text-xs text-muted-foreground mt-2 sm:mt-3 text-center">
+          💡 Leads contactados regularmente têm 3x mais chance de fechar negócio
         </p>
       </CardContent>
     </Card>

@@ -168,14 +168,14 @@ export default function Admin() {
         />
         
         <SidebarInset className="flex-1 min-w-0">
-          <header className="flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6 sticky top-0 z-40">
-            <SidebarTrigger className="-ml-2">
+          <header className="flex h-12 sm:h-14 items-center gap-3 sm:gap-4 border-b bg-background px-3 sm:px-4 md:px-6 sticky top-0 z-40">
+            <SidebarTrigger className="-ml-1 sm:-ml-2 h-9 w-9 sm:h-10 sm:w-10">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
-            <h1 className="text-base md:text-lg font-semibold capitalize truncate">{activeTab}</h1>
+            <h1 className="text-sm sm:text-base md:text-lg font-semibold capitalize truncate">{activeTab}</h1>
           </header>
 
-          <main className="flex-1 p-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden">
+          <main className="flex-1 p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4 md:space-y-6 overflow-x-hidden">
             {activeTab === "leads" && (
               <StatsCards
                 totalLeads={stats.total}
