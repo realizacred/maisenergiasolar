@@ -596,26 +596,26 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
   if (isSuccess) {
     return (
       <Card className="max-w-2xl mx-auto border-0 shadow-2xl overflow-hidden">
-        <CardContent className="flex flex-col items-center justify-center py-16">
+        <CardContent className="flex flex-col items-center justify-center py-10 sm:py-16 px-4 sm:px-6">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
-            className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 ${
+            className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center mb-4 sm:mb-6 ${
               savedOffline ? "bg-secondary/20" : "bg-primary/20"
             }`}
           >
             {savedOffline ? (
-              <WifiOff className="w-12 h-12 text-secondary" />
+              <WifiOff className="w-10 h-10 sm:w-12 sm:h-12 text-secondary" />
             ) : (
-              <CheckCircle className="w-12 h-12 text-primary" />
+              <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
             )}
           </motion.div>
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-2xl font-bold text-foreground mb-2"
+            className="text-xl sm:text-2xl font-bold text-foreground mb-2 text-center"
           >
             {savedOffline ? "Salvo Localmente!" : "Cadastro Enviado!"}
           </motion.h2>
@@ -623,7 +623,7 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="text-muted-foreground text-center mb-6"
+            className="text-sm sm:text-base text-muted-foreground text-center mb-4 sm:mb-6"
           >
             {savedOffline 
               ? "Seu cadastro foi salvo e será enviado automaticamente quando a conexão for restabelecida."
@@ -634,16 +634,16 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex gap-3"
+            className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto"
           >
-            <Button onClick={resetForm} variant="outline">
+            <Button onClick={resetForm} variant="outline" className="w-full sm:w-auto">
               Fazer novo cadastro
             </Button>
             {savedOffline && pendingCount > 0 && isOnline && (
               <Button 
                 onClick={retrySync} 
                 disabled={isSyncing}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
               >
                 {isSyncing ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -661,32 +661,32 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
 
   return (
     <Card className="max-w-2xl mx-auto border-0 shadow-2xl overflow-hidden">
-      <CardHeader className="text-center pb-4 bg-gradient-to-b from-primary/5 to-transparent relative">
+      <CardHeader className="text-center pb-4 bg-gradient-to-b from-primary/5 to-transparent relative px-4 sm:px-6">
         <motion.img
           src={logo}
           alt="Mais Energia Solar"
-          className="h-16 w-auto mx-auto mb-4"
+          className="h-12 sm:h-16 w-auto mx-auto mb-3 sm:mb-4"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         />
         <div className="flex items-center justify-center gap-2 mb-1">
-          <CardTitle className="text-2xl md:text-3xl font-bold text-brand-blue">
+          <CardTitle className="text-xl sm:text-2xl md:text-3xl font-bold text-brand-blue">
             Solicite seu Orçamento
           </CardTitle>
         </div>
-        <CardDescription className="text-base">
+        <CardDescription className="text-sm sm:text-base">
           Preencha o formulário e receba uma proposta personalizada
         </CardDescription>
         
         {/* Auto-save indicator */}
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
           <AutoSaveIndicator hasDraft={hasDraft()} isOnline={isOnline} />
         </div>
       </CardHeader>
 
-      <CardContent className="pt-6">
+      <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
         {/* Enhanced Progress Bar */}
-        <FormProgressBar steps={STEPS} currentStep={currentStep} className="mb-8" />
+        <FormProgressBar steps={STEPS} currentStep={currentStep} className="mb-6 sm:mb-8" />
 
         {/* Rate limit warning */}
         <RateLimitWarning

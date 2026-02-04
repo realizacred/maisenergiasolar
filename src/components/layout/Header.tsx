@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { Calculator, LogIn, Phone, Sun } from "lucide-react";
+import { Calculator, LogIn, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MobileNav } from "./MobileNav";
 import logo from "@/assets/logo.png";
 
 interface HeaderProps {
@@ -31,13 +32,14 @@ export default function Header({
             <img
               src={logo}
               alt="Mais Energia Solar"
-              className="h-10 md:h-11 w-auto"
+              className="h-8 sm:h-10 md:h-11 w-auto"
             />
             <div className="absolute inset-0 bg-primary/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 -z-10" />
           </div>
         </Link>
 
-        <nav className="flex items-center gap-1.5 md:gap-2">
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-1.5 md:gap-2">
           {showCalculadora && (
             <Link to="/calculadora">
               <Button
@@ -46,7 +48,7 @@ export default function Header({
                 className="gap-2 font-medium hover:bg-primary/5 hover:text-primary"
               >
                 <Calculator className="w-4 h-4" />
-                <span className="hidden sm:inline">Simulador</span>
+                <span>Simulador</span>
               </Button>
             </Link>
           )}
@@ -55,10 +57,10 @@ export default function Header({
             variant="ghost"
             size="sm"
             onClick={handleWhatsApp}
-            className="gap-2 font-medium hover:bg-success/10 hover:text-success"
+            className="gap-2 font-medium hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950/30"
           >
             <Phone className="w-4 h-4" />
-            <span className="hidden md:inline">Contato</span>
+            <span>Contato</span>
           </Button>
 
           {showAdmin && (
@@ -69,13 +71,19 @@ export default function Header({
                 className="gap-2 font-medium shadow-sm ml-1"
               >
                 <LogIn className="w-4 h-4" />
-                <span className="hidden sm:inline">Acessar</span>
+                <span>Acessar</span>
               </Button>
             </Link>
           )}
 
           {children}
         </nav>
+
+        {/* Mobile Navigation */}
+        <div className="flex items-center gap-2 md:hidden">
+          {children}
+          <MobileNav showCalculadora={showCalculadora} showAdmin={showAdmin} />
+        </div>
       </div>
     </header>
   );

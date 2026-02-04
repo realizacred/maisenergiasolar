@@ -31,42 +31,43 @@ const services = [
 
 export function ServicesSection() {
   return (
-    <section id="servicos" className="py-16 bg-muted/30">
+    <section id="servicos" className="py-10 sm:py-16 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2 sm:mb-3">
             Serviços
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
+          <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
             Confira nossos serviços!
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 max-w-6xl mx-auto">
           {services.map((service, index) => (
             <Card 
               key={index} 
               className="group overflow-hidden hover:shadow-xl transition-all duration-300"
             >
-              <div className="relative h-48 overflow-hidden">
+              <div className="relative h-32 sm:h-48 overflow-hidden">
                 <img
                   src={service.image}
                   alt={service.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-4 left-4 w-12 h-12 rounded-full bg-brand-orange flex items-center justify-center">
-                  <service.icon className="w-6 h-6 text-white" />
+                <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-brand-orange flex items-center justify-center">
+                  <service.icon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                 </div>
               </div>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xl text-brand-blue">{service.title}</CardTitle>
+              <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-6">
+                <CardTitle className="text-base sm:text-xl text-brand-blue">{service.title}</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm mb-4">{service.description}</p>
+              <CardContent className="p-3 sm:p-6 pt-0">
+                <p className="text-muted-foreground text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-3">{service.description}</p>
                 <Button 
                   variant="outline" 
-                  className="w-full border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
+                  size="sm"
+                  className="w-full border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground text-xs sm:text-sm"
                 >
                   Confira
                 </Button>

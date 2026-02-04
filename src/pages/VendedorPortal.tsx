@@ -261,72 +261,72 @@ export default function VendedorPortal() {
       {/* Header */}
       <header className="bg-background border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="Logo" className="h-10" />
-            <div>
-              <h1 className="font-bold text-lg">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <img src={logo} alt="Logo" className="h-8 sm:h-10 shrink-0" />
+            <div className="min-w-0">
+              <h1 className="font-bold text-sm sm:text-lg truncate">
                 Portal do Vendedor
-                {isAdminMode && <span className="text-xs ml-2 text-primary">(Modo Admin)</span>}
+                {isAdminMode && <span className="text-xs ml-1 sm:ml-2 text-primary">(Admin)</span>}
               </h1>
-              <p className="text-sm text-muted-foreground">
-                {isAdminMode ? "Visualizando todos os orçamentos" : vendedor?.nome}
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                {isAdminMode ? "Todos os orçamentos" : vendedor?.nome}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <PortalSwitcher />
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
+            <Button variant="outline" size="sm" onClick={handleSignOut} className="gap-1 sm:gap-2">
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Sair</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 space-y-6">
+      <main className="container mx-auto px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Sync Status & Notifications Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <SyncStatusWidget />
           {vendedor && <NotificationSettings vendedorNome={vendedor.nome} />}
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Total de Orçamentos</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.total}</div>
               <p className="text-xs text-muted-foreground">
-                Orçamentos cadastrados com seu link
+                Orçamentos cadastrados
               </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Orçamentos Novos</CardTitle>
               <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">{stats.novos}</div>
               <p className="text-xs text-muted-foreground">
-                Aguardando primeiro contato
+                Aguardando contato
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <Card className="sm:col-span-2 lg:col-span-1">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Este Mês</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">{stats.esteMes}</div>
               <p className="text-xs text-muted-foreground">
-                Orçamentos captados no mês atual
+                Captados no mês atual
               </p>
             </CardContent>
           </Card>
