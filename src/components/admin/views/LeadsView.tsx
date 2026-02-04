@@ -28,9 +28,9 @@ export function LeadsView() {
     );
 
     if (filterVisto === "visto") {
-      filtered = filtered.filter((lead) => lead.visto);
+      filtered = filtered.filter((lead) => lead.visto_admin);
     } else if (filterVisto === "nao_visto") {
-      filtered = filtered.filter((lead) => !lead.visto);
+      filtered = filtered.filter((lead) => !lead.visto_admin);
     }
 
     if (filterVendedor !== "todos") {

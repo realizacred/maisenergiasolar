@@ -1041,6 +1041,7 @@ export type Database = {
           updated_at: string
           vendedor: string | null
           visto: boolean
+          visto_admin: boolean
         }
         Insert: {
           area: string
@@ -1069,6 +1070,7 @@ export type Database = {
           updated_at?: string
           vendedor?: string | null
           visto?: boolean
+          visto_admin?: boolean
         }
         Update: {
           area?: string
@@ -1097,6 +1099,7 @@ export type Database = {
           updated_at?: string
           vendedor?: string | null
           visto?: boolean
+          visto_admin?: boolean
         }
         Relationships: [
           {

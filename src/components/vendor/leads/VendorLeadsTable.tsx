@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, Eye, MapPin, Calendar, Trash2, CheckCircle2 } from "lucide-react";
+import { Phone, Eye, MapPin, Calendar, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ interface Lead {
   created_at: string;
   ultimo_contato: string | null;
   visto: boolean;
+  visto_admin: boolean;
   lead_code: string | null;
   status_id: string | null;
   observacoes?: string | null;
@@ -104,7 +105,7 @@ export function VendorLeadsTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-20">Admin</TableHead>
+            <TableHead className="w-12">Visto</TableHead>
             <TableHead className="w-24">Código</TableHead>
             <TableHead>Nome</TableHead>
             <TableHead>Telefone</TableHead>
@@ -116,21 +117,25 @@ export function VendorLeadsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {leads.map((lead) => (
-            <TableRow
-              key={lead.id}
-              className={lead.visto ? "bg-green-50 dark:bg-green-950/20" : ""}
-            >
-              <TableCell>
-                {lead.visto ? (
-                  <div className="flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    <span className="text-xs text-green-600 font-medium">Visto</span>
-                  </div>
-                ) : (
-                  <span className="text-xs text-muted-foreground">Pendente</span>
-                )}
-              </TableCell>
+          {leads.map((lead) => {
+            // Cores: borda azul = admin viu, fundo verde = vendedor marcou
+            const rowClasses = [
+              lead.visto_admin && "border-l-4 border-l-blue-500",
+              lead.visto && "bg-green-50 dark:bg-green-950/20",
+            ].filter(Boolean).join(" ");
+            
+            return (
+              <TableRow
+                key={lead.id}
+                className={rowClasses}
+              >
+                <TableCell>
+                  <Checkbox
+                    checked={lead.visto}
+                    onCheckedChange={() => onToggleVisto(lead)}
+                    className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                  />
+                </TableCell>
               <TableCell>
                 <Badge variant="outline" className="font-mono text-xs">
                   {lead.lead_code || "-"}
@@ -205,7 +210,8 @@ export function VendorLeadsTable({
                 </div>
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
 
