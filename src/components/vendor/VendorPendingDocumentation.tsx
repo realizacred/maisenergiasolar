@@ -68,9 +68,7 @@ export function VendorPendingDocumentation({
     }
   };
 
-  if (pendingLeads.length === 0) {
-    return null;
-  }
+  // Always render - show empty state if no pending
 
   return (
     <Card className="border-primary/30 bg-primary/5">
@@ -85,78 +83,93 @@ export function VendorPendingDocumentation({
           </div>
         </div>
         <CardDescription>
-          Clique em um lead para completar a documentação e converter
+          {pendingLeads.length > 0 
+            ? "Clique em um lead para completar a documentação e converter"
+            : "Nenhum lead aguardando documentação no momento"
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="max-h-[350px]">
-          <div className="space-y-2">
-            {pendingLeads.map((lead) => {
-              const daysWaiting = getDaysWaiting(lead.updated_at);
-              const missingDocs = parseMissingDocs(lead.observacoes);
-              
-              return (
-                <div
-                  key={lead.id}
-                  className="flex flex-col p-3 border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer group"
-                  onClick={() => handleClick(lead)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="bg-primary/10 rounded-full p-2">
-                        <User className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate">{lead.nome}</p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {lead.cidade}/{lead.estado}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {lead.telefone}
-                          </span>
+        {pendingLeads.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <div className="bg-primary/10 rounded-full p-3 mb-3">
+              <FileWarning className="h-5 w-5 text-primary" />
+            </div>
+            <p className="text-sm font-medium text-foreground">Tudo certo! ✅</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Não há leads com documentação pendente.
+            </p>
+          </div>
+        ) : (
+          <>
+            <ScrollArea className="max-h-[350px]">
+              <div className="space-y-2">
+                {pendingLeads.map((lead) => {
+                  const daysWaiting = getDaysWaiting(lead.updated_at);
+                  const missingDocs = parseMissingDocs(lead.observacoes);
+                  
+                  return (
+                    <div
+                      key={lead.id}
+                      className="flex flex-col p-3 border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer group"
+                      onClick={() => handleClick(lead)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="bg-primary/10 rounded-full p-2">
+                            <User className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">{lead.nome}</p>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {lead.cidade}/{lead.estado}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Phone className="h-3 w-3" />
+                                {lead.telefone}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          {getUrgencyBadge(daysWaiting)}
+                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
                       </div>
+                      
+                      {/* Missing docs summary */}
+                      {missingDocs.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-dashed flex items-start gap-2">
+                          <FileX className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
+                          <div className="flex flex-wrap gap-1">
+                            {missingDocs.map((doc, idx) => (
+                              <Badge 
+                                key={idx} 
+                                variant="outline" 
+                                className="text-xs bg-destructive/10 text-destructive border-destructive/30"
+                              >
+                                {doc}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    
-                    <div className="flex items-center gap-2">
-                      {getUrgencyBadge(daysWaiting)}
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                  </div>
-                  
-                  {/* Missing docs summary */}
-                  {missingDocs.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-dashed flex items-start gap-2">
-                      <FileX className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
-                      <div className="flex flex-wrap gap-1">
-                        {missingDocs.map((doc, idx) => (
-                          <Badge 
-                            key={idx} 
-                            variant="outline" 
-                            className="text-xs bg-destructive/10 text-destructive border-destructive/30"
-                          >
-                            {doc}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
-        
-        {pendingLeads.length > 0 && (
-          <div className="mt-3 pt-3 border-t text-xs text-muted-foreground flex items-center gap-2">
-            <Clock className="h-3 w-3" />
-            <span>
-              Tempo médio de espera: {Math.round(pendingLeads.reduce((acc, lead) => acc + getDaysWaiting(lead.updated_at), 0) / pendingLeads.length)} dias
-            </span>
-          </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+            
+            <div className="mt-3 pt-3 border-t text-xs text-muted-foreground flex items-center gap-2">
+              <Clock className="h-3 w-3" />
+              <span>
+                Tempo médio de espera: {Math.round(pendingLeads.reduce((acc, lead) => acc + getDaysWaiting(lead.updated_at), 0) / pendingLeads.length)} dias
+              </span>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>

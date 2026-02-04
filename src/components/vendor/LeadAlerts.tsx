@@ -99,7 +99,7 @@ export function LeadAlerts({ leads, diasAlerta = 3 }: LeadAlertsProps) {
     window.open(`https://wa.me/55${numero}?text=${mensagem}`, '_blank');
   };
 
-  if (alertas.length === 0) return null;
+  // Always render, even when empty (show success state)
 
   const getAlertStyles = (tipo: LeadAlert['tipo']) => {
     switch (tipo) {
@@ -140,74 +140,84 @@ export function LeadAlerts({ leads, diasAlerta = 3 }: LeadAlertsProps) {
           <span className="text-sm font-medium text-primary">Assistente Inteligente</span>
         </div>
         
-        <div className="space-y-3">
-          {alertas.map((alerta) => {
-            const styles = getAlertStyles(alerta.tipo);
-            
-            return (
-              <div 
-                key={alerta.lead.id}
-                className={`relative p-3 rounded-lg border ${styles.bg} transition-all duration-200`}
-              >
-                <button
-                  onClick={() => dismissAlert(alerta.lead.id)}
-                  className="absolute top-2 right-2 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-background/50 transition-colors"
-                  aria-label="Dispensar alerta"
+        {alertas.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <div className="bg-primary/10 rounded-full p-3 mb-3">
+              <MessageSquare className="h-5 w-5 text-primary" />
+            </div>
+            <p className="text-sm font-medium text-foreground">Tudo em dia! 🎉</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Nenhum lead precisa de atenção urgente no momento.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {alertas.map((alerta) => {
+              const styles = getAlertStyles(alerta.tipo);
+              
+              return (
+                <div 
+                  key={alerta.lead.id}
+                  className={`relative p-3 rounded-lg border ${styles.bg} transition-all duration-200`}
                 >
-                  <X className="h-3 w-3" />
-                </button>
+                  <button
+                    onClick={() => dismissAlert(alerta.lead.id)}
+                    className="absolute top-2 right-2 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-background/50 transition-colors"
+                    aria-label="Dispensar alerta"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
 
-                <div className="flex items-start gap-3 pr-6">
-                  <div className={`mt-0.5 ${styles.icon}`}>
-                    {alerta.tipo === 'critico' ? (
-                      <AlertCircle className="h-4 w-4" />
-                    ) : alerta.tipo === 'atencao' ? (
-                      <Clock className="h-4 w-4" />
-                    ) : (
-                      <MessageSquare className="h-4 w-4" />
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="secondary" className={`text-xs ${styles.badge}`}>
-                        {getTipoLabel(alerta.tipo)}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {alerta.diasParado} {alerta.diasParado === 1 ? 'dia' : 'dias'}
-                      </span>
+                  <div className="flex items-start gap-3 pr-6">
+                    <div className={`mt-0.5 ${styles.icon}`}>
+                      {alerta.tipo === 'critico' ? (
+                        <AlertCircle className="h-4 w-4" />
+                      ) : alerta.tipo === 'atencao' ? (
+                        <Clock className="h-4 w-4" />
+                      ) : (
+                        <MessageSquare className="h-4 w-4" />
+                      )}
                     </div>
                     
-                    <p className="text-sm text-foreground/80 leading-relaxed">
-                      {alerta.mensagem}
-                    </p>
-                    
-                    <div className="flex items-center gap-2 mt-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="h-7 text-xs gap-1.5"
-                        onClick={() => openWhatsApp(alerta.lead.telefone, alerta.lead.nome)}
-                      >
-                        <Phone className="h-3 w-3" />
-                        Enviar WhatsApp
-                      </Button>
-                      <span className="text-xs text-muted-foreground">
-                        {alerta.lead.cidade}, {alerta.lead.estado}
-                      </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="secondary" className={`text-xs ${styles.badge}`}>
+                          {getTipoLabel(alerta.tipo)}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {alerta.diasParado} {alerta.diasParado === 1 ? 'dia' : 'dias'}
+                        </span>
+                      </div>
+                      
+                      <p className="text-sm text-foreground/80 leading-relaxed">
+                        {alerta.mensagem}
+                      </p>
+                      
+                      <div className="flex items-center gap-2 mt-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="h-7 text-xs gap-1.5"
+                          onClick={() => openWhatsApp(alerta.lead.telefone, alerta.lead.nome)}
+                        >
+                          <Phone className="h-3 w-3" />
+                          Enviar WhatsApp
+                        </Button>
+                        <span className="text-xs text-muted-foreground">
+                          {alerta.lead.cidade}, {alerta.lead.estado}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {alertas.length > 0 && (
-          <p className="text-xs text-muted-foreground mt-3 text-center">
-            💡 Dica: Leads contactados regularmente têm 3x mais chance de fechar negócio
-          </p>
+              );
+            })}
+          </div>
         )}
+
+        <p className="text-xs text-muted-foreground mt-3 text-center">
+          💡 Dica: Leads contactados regularmente têm 3x mais chance de fechar negócio
+        </p>
       </CardContent>
     </Card>
   );
