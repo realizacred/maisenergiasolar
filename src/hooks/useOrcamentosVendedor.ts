@@ -218,6 +218,32 @@ export function useOrcamentosVendedor({ vendedorNome, isAdminMode = false }: Use
     fetchOrcamentos();
   }, [fetchOrcamentos]);
 
+  // Realtime subscription for orcamentos updates
+  useEffect(() => {
+    if (!vendedorNome && !isAdminMode) return;
+
+    const channel = supabase
+      .channel(`orcamentos-vendedor-${vendedorNome || 'admin'}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orcamentos',
+        },
+        (payload) => {
+          console.log('Realtime update received:', payload.eventType);
+          // Refetch all data to ensure consistency with joins
+          fetchOrcamentos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [vendedorNome, isAdminMode, fetchOrcamentos]);
+
   // Computed stats
   const stats = {
     total: orcamentos.length,
