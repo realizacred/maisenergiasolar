@@ -83,7 +83,7 @@ const formSchema = z.object({
   complemento: z.string().optional(),
   disjuntor_id: z.string().optional(),
   transformador_id: z.string().optional(),
-  localizacao: z.string().min(1, "Localização é obrigatória"),
+  localizacao: z.string().optional(), // Optional - required only for final conversion
   observacoes: z.string().optional(),
   simulacao_aceita_id: z.string().optional(),
 });
@@ -358,7 +358,9 @@ export function ConvertLeadToClientDialog({
   const handleSaveAsLead = async () => {
     if (!lead) return;
 
-    const isValid = await form.trigger();
+    // Only validate basic required fields (nome, telefone, estado, cidade)
+    // Don't require documents or localizacao for partial save
+    const isValid = await form.trigger(["nome", "telefone", "estado", "cidade"]);
     if (!isValid) return;
 
     setSavingAsLead(true);
