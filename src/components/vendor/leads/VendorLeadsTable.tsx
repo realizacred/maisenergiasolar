@@ -1,4 +1,5 @@
-import { Phone, Eye, MapPin, Calendar } from "lucide-react";
+import { useState } from "react";
+import { Phone, Eye, MapPin, Calendar, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { LeadStatusSelector } from "@/components/vendor/LeadStatusSelector";
-
 interface Lead {
   id: string;
   nome: string;
@@ -51,6 +61,7 @@ interface VendorLeadsTableProps {
   onToggleVisto: (lead: Lead) => void;
   onView: (lead: Lead) => void;
   onStatusChange: (leadId: string, newStatusId: string | null) => void;
+  onDelete?: (lead: Lead) => void;
 }
 
 export function VendorLeadsTable({ 
@@ -58,8 +69,25 @@ export function VendorLeadsTable({
   statuses, 
   onToggleVisto, 
   onView,
-  onStatusChange 
+  onStatusChange,
+  onDelete
 }: VendorLeadsTableProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+
+  const handleDeleteClick = (lead: Lead) => {
+    setLeadToDelete(lead);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (leadToDelete && onDelete) {
+      onDelete(leadToDelete);
+    }
+    setDeleteDialogOpen(false);
+    setLeadToDelete(null);
+  };
+
   if (leads.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -150,19 +178,54 @@ export function VendorLeadsTable({
                 </div>
               </TableCell>
               <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-secondary hover:text-secondary"
-                  onClick={() => onView(lead)}
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-secondary hover:text-secondary"
+                    onClick={() => onView(lead)}
+                    title="Ver detalhes"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                  {onDelete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDeleteClick(lead)}
+                      title="Excluir lead"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Lead</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o lead <strong>{leadToDelete?.nome}</strong>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -223,6 +223,28 @@ export default function VendedorPortal() {
     );
   };
 
+  const handleDeleteLead = async (lead: Lead) => {
+    const { error } = await supabase
+      .from("leads")
+      .delete()
+      .eq("id", lead.id);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o lead.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLeads(prev => prev.filter(l => l.id !== lead.id));
+    toast({
+      title: "Lead excluído",
+      description: `O lead "${lead.nome}" foi excluído com sucesso.`,
+    });
+  };
+
   const handleClearFilters = () => {
     setFilterVisto("todos");
     setFilterEstado("todos");
@@ -406,6 +428,7 @@ export default function VendedorPortal() {
                 setIsViewOpen(true);
               }}
               onStatusChange={handleStatusChange}
+              onDelete={handleDeleteLead}
             />
           </CardContent>
         </Card>
