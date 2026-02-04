@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Phone, Eye, MapPin, Calendar, Trash2 } from "lucide-react";
+import { Phone, Eye, MapPin, Calendar, Trash2, ShoppingCart } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -24,37 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { LeadStatusSelector } from "@/components/vendor/LeadStatusSelector";
-interface Lead {
-  id: string;
-  nome: string;
-  telefone: string;
-  cidade: string;
-  estado: string;
-  bairro?: string | null;
-  rua?: string | null;
-  numero?: string | null;
-  complemento?: string | null;
-  cep?: string | null;
-  area: string;
-  tipo_telhado: string;
-  rede_atendimento: string;
-  media_consumo: number;
-  consumo_previsto: number;
-  created_at: string;
-  ultimo_contato: string | null;
-  visto: boolean;
-  visto_admin: boolean;
-  lead_code: string | null;
-  status_id: string | null;
-  observacoes?: string | null;
-  arquivos_urls?: string[] | null;
-}
-
-interface LeadStatus {
-  id: string;
-  nome: string;
-  cor: string;
-}
+import type { Lead, LeadStatus } from "@/types/lead";
 
 interface VendorLeadsTableProps {
   leads: Lead[];
@@ -63,6 +34,7 @@ interface VendorLeadsTableProps {
   onView: (lead: Lead) => void;
   onStatusChange: (leadId: string, newStatusId: string | null) => void;
   onDelete?: (lead: Lead) => void;
+  onConvert?: (lead: Lead) => void;
 }
 
 export function VendorLeadsTable({ 
@@ -71,7 +43,8 @@ export function VendorLeadsTable({
   onToggleVisto, 
   onView,
   onStatusChange,
-  onDelete
+  onDelete,
+  onConvert
 }: VendorLeadsTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
@@ -186,28 +159,53 @@ export function VendorLeadsTable({
                 </div>
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-secondary hover:text-secondary"
-                    onClick={() => onView(lead)}
-                    title="Ver detalhes"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  {onDelete && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => handleDeleteClick(lead)}
-                      title="Excluir lead"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
+                <TooltipProvider>
+                  <div className="flex items-center justify-end gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-secondary hover:text-secondary"
+                          onClick={() => onView(lead)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Ver detalhes</TooltipContent>
+                    </Tooltip>
+                    {onConvert && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => onConvert(lead)}
+                          >
+                            <ShoppingCart className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Converter em Venda</TooltipContent>
+                      </Tooltip>
+                    )}
+                    {onDelete && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDeleteClick(lead)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Excluir lead</TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
+                </TooltipProvider>
               </TableCell>
             </TableRow>
             );

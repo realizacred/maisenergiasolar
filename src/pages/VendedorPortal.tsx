@@ -24,33 +24,9 @@ import { toast } from "@/hooks/use-toast";
 import { LeadAlerts } from "@/components/vendor/LeadAlerts";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
 import { VendorLeadFilters, VendorLeadsTable, VendorLeadViewDialog } from "@/components/vendor/leads";
+import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
 import logo from "@/assets/logo.png";
-
-interface Lead {
-  id: string;
-  nome: string;
-  telefone: string;
-  cidade: string;
-  estado: string;
-  bairro?: string | null;
-  rua?: string | null;
-  numero?: string | null;
-  complemento?: string | null;
-  cep?: string | null;
-  area: string;
-  tipo_telhado: string;
-  rede_atendimento: string;
-  media_consumo: number;
-  consumo_previsto: number;
-  created_at: string;
-  ultimo_contato: string | null;
-  visto: boolean;
-  visto_admin: boolean;
-  lead_code: string | null;
-  status_id: string | null;
-  observacoes?: string | null;
-  arquivos_urls?: string[] | null;
-}
+import type { Lead, LeadStatus } from "@/types/lead";
 
 interface VendedorProfile {
   id: string;
@@ -58,12 +34,6 @@ interface VendedorProfile {
   codigo: string;
   telefone: string;
   email: string | null;
-}
-
-interface LeadStatus {
-  id: string;
-  nome: string;
-  cor: string;
 }
 
 export default function VendedorPortal() {
@@ -83,6 +53,8 @@ export default function VendedorPortal() {
   // Dialog states
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isConvertOpen, setIsConvertOpen] = useState(false);
+  const [leadToConvert, setLeadToConvert] = useState<Lead | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -430,6 +402,10 @@ export default function VendedorPortal() {
               }}
               onStatusChange={handleStatusChange}
               onDelete={handleDeleteLead}
+              onConvert={(lead) => {
+                setLeadToConvert(lead);
+                setIsConvertOpen(true);
+              }}
             />
           </CardContent>
         </Card>
@@ -439,6 +415,13 @@ export default function VendedorPortal() {
         lead={selectedLead}
         open={isViewOpen}
         onOpenChange={setIsViewOpen}
+      />
+
+      <ConvertLeadToClientDialog
+        lead={leadToConvert}
+        open={isConvertOpen}
+        onOpenChange={setIsConvertOpen}
+        onSuccess={loadVendedorData}
       />
     </div>
   );

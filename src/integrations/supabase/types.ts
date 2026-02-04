@@ -662,14 +662,18 @@ export type Database = {
           cep: string | null
           cidade: string | null
           complemento: string | null
+          comprovante_endereco_url: string | null
           cpf_cnpj: string | null
           created_at: string
           data_instalacao: string | null
           data_nascimento: string | null
+          disjuntor_id: string | null
           email: string | null
           estado: string | null
           id: string
+          identidade_url: string | null
           lead_id: string | null
+          localizacao: string | null
           modelo_inversor: string | null
           nome: string
           numero: string | null
@@ -678,6 +682,7 @@ export type Database = {
           potencia_kwp: number | null
           rua: string | null
           telefone: string
+          transformador_id: string | null
           updated_at: string
           valor_projeto: number | null
         }
@@ -687,14 +692,18 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           complemento?: string | null
+          comprovante_endereco_url?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           data_instalacao?: string | null
           data_nascimento?: string | null
+          disjuntor_id?: string | null
           email?: string | null
           estado?: string | null
           id?: string
+          identidade_url?: string | null
           lead_id?: string | null
+          localizacao?: string | null
           modelo_inversor?: string | null
           nome: string
           numero?: string | null
@@ -703,6 +712,7 @@ export type Database = {
           potencia_kwp?: number | null
           rua?: string | null
           telefone: string
+          transformador_id?: string | null
           updated_at?: string
           valor_projeto?: number | null
         }
@@ -712,14 +722,18 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           complemento?: string | null
+          comprovante_endereco_url?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           data_instalacao?: string | null
           data_nascimento?: string | null
+          disjuntor_id?: string | null
           email?: string | null
           estado?: string | null
           id?: string
+          identidade_url?: string | null
           lead_id?: string | null
+          localizacao?: string | null
           modelo_inversor?: string | null
           nome?: string
           numero?: string | null
@@ -728,15 +742,30 @@ export type Database = {
           potencia_kwp?: number | null
           rua?: string | null
           telefone?: string
+          transformador_id?: string | null
           updated_at?: string
           valor_projeto?: number | null
         }
         Relationships: [
           {
+            foreignKeyName: "clientes_disjuntor_id_fkey"
+            columns: ["disjuntor_id"]
+            isOneToOne: false
+            referencedRelation: "disjuntores"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "clientes_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_transformador_id_fkey"
+            columns: ["transformador_id"]
+            isOneToOne: false
+            referencedRelation: "transformadores"
             referencedColumns: ["id"]
           },
         ]
