@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, Eye, MapPin, Calendar, Trash2 } from "lucide-react";
+import { Phone, Eye, MapPin, Calendar, Trash2, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -104,7 +104,7 @@ export function VendorLeadsTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-12">Visto</TableHead>
+            <TableHead className="w-20">Admin</TableHead>
             <TableHead className="w-24">Código</TableHead>
             <TableHead>Nome</TableHead>
             <TableHead>Telefone</TableHead>
@@ -122,11 +122,14 @@ export function VendorLeadsTable({
               className={lead.visto ? "bg-green-50 dark:bg-green-950/20" : ""}
             >
               <TableCell>
-                <Checkbox
-                  checked={lead.visto}
-                  onCheckedChange={() => onToggleVisto(lead)}
-                  className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                />
+                {lead.visto ? (
+                  <div className="flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="text-xs text-green-600 font-medium">Visto</span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground">Pendente</span>
+                )}
               </TableCell>
               <TableCell>
                 <Badge variant="outline" className="font-mono text-xs">
