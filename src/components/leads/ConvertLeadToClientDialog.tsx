@@ -95,6 +95,8 @@ interface ConvertLeadToClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  /** Quando aberto a partir do portal do vendedor (lista de orçamentos), permite refletir status também no orçamento */
+  orcamentoId?: string | null;
 }
 
 export function ConvertLeadToClientDialog({
@@ -102,6 +104,7 @@ export function ConvertLeadToClientDialog({
   open,
   onOpenChange,
   onSuccess,
+  orcamentoId,
 }: ConvertLeadToClientDialogProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -416,22 +419,37 @@ export function ConvertLeadToClientDialog({
       const storageKey = `lead_conversion_${lead.id}`;
       localStorage.setItem(storageKey, JSON.stringify(partialData));
 
-      // Update ONLY the lead (not creating a client yet)
-      const { error: updateError } = await supabase
-        .from("leads")
-        .update({
-          status_id: aguardandoStatus.id,
-          cep: formData.cep || null,
-          bairro: formData.bairro || null,
-          rua: formData.rua || null,
-          numero: formData.numero || null,
-          complemento: formData.complemento || null,
-          observacoes: novaObservacao,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", lead.id);
+      // Update lead status (and also the current orcamento when provided)
+      const nowIso = new Date().toISOString();
 
-      if (updateError) throw updateError;
+      const [{ error: leadUpdateError }, { error: orcUpdateError }] = await Promise.all([
+        supabase
+          .from("leads")
+          .update({
+            status_id: aguardandoStatus.id,
+            cep: formData.cep || null,
+            bairro: formData.bairro || null,
+            rua: formData.rua || null,
+            numero: formData.numero || null,
+            complemento: formData.complemento || null,
+            observacoes: novaObservacao,
+            updated_at: nowIso,
+          })
+          .eq("id", lead.id),
+        orcamentoId
+          ? supabase
+              .from("orcamentos")
+              .update({
+                status_id: aguardandoStatus.id,
+                ultimo_contato: nowIso,
+                updated_at: nowIso,
+              })
+              .eq("id", orcamentoId)
+          : Promise.resolve({ error: null } as any),
+      ]);
+
+      // If BOTH failed, treat as error. If at least one succeeded, keep UX flowing.
+      if (leadUpdateError && orcUpdateError) throw leadUpdateError;
 
       toast({
         title: "Lead atualizado!",
@@ -519,10 +537,20 @@ export function ConvertLeadToClientDialog({
         .single();
 
       if (convertidoStatus) {
-        await supabase
-          .from("leads")
-          .update({ status_id: convertidoStatus.id })
-          .eq("id", lead.id);
+        const nowIso = new Date().toISOString();
+
+        await Promise.all([
+          supabase
+            .from("leads")
+            .update({ status_id: convertidoStatus.id, updated_at: nowIso })
+            .eq("id", lead.id),
+          orcamentoId
+            ? supabase
+                .from("orcamentos")
+                .update({ status_id: convertidoStatus.id, ultimo_contato: nowIso, updated_at: nowIso })
+                .eq("id", orcamentoId)
+            : Promise.resolve(null as any),
+        ]);
       }
 
       // Clear saved partial conversion data since conversion is complete
