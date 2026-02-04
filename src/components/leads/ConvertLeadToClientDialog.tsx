@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Upload, ShoppingCart, FileText, MapPin } from "lucide-react";
+import { Loader2, Upload, ShoppingCart, FileText, MapPin, Navigation, X, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -83,10 +84,13 @@ export function ConvertLeadToClientDialog({
   const [loading, setLoading] = useState(false);
   const [disjuntores, setDisjuntores] = useState<Disjuntor[]>([]);
   const [transformadores, setTransformadores] = useState<Transformador[]>([]);
-  const [identidadeFile, setIdentidadeFile] = useState<File | null>(null);
-  const [comprovanteFile, setComprovanteFile] = useState<File | null>(null);
-  const [uploadingIdentidade, setUploadingIdentidade] = useState(false);
-  const [uploadingComprovante, setUploadingComprovante] = useState(false);
+  
+  // Multiple files support
+  const [identidadeFiles, setIdentidadeFiles] = useState<File[]>([]);
+  const [comprovanteFiles, setComprovanteFiles] = useState<File[]>([]);
+  const [beneficiariaFiles, setBeneficiariaFiles] = useState<File[]>([]);
+  
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -144,8 +148,9 @@ export function ConvertLeadToClientDialog({
         localizacao: "",
         observacoes: lead.observacoes || "",
       });
-      setIdentidadeFile(null);
-      setComprovanteFile(null);
+      setIdentidadeFiles([]);
+      setComprovanteFiles([]);
+      setBeneficiariaFiles([]);
     }
   }, [lead, open, form]);
 
@@ -165,33 +170,93 @@ export function ConvertLeadToClientDialog({
     return fileName;
   };
 
+  const uploadMultipleFiles = async (files: File[], folder: string): Promise<string[]> => {
+    const urls: string[] = [];
+    for (const file of files) {
+      const url = await uploadFile(file, folder);
+      if (url) urls.push(url);
+    }
+    return urls;
+  };
+
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Erro",
+        description: "Geolocalização não é suportada pelo seu navegador.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGettingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const googleMapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        form.setValue("localizacao", googleMapsLink);
+        setGettingLocation(false);
+        toast({
+          title: "Localização obtida!",
+          description: `Coordenadas: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+        });
+      },
+      (error) => {
+        setGettingLocation(false);
+        let message = "Erro ao obter localização.";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = "Permissão de localização negada.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = "Localização indisponível.";
+            break;
+          case error.TIMEOUT:
+            message = "Tempo esgotado ao obter localização.";
+            break;
+        }
+        toast({
+          title: "Erro",
+          description: message,
+          variant: "destructive",
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
+
+  const handleAddFiles = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setFiles: React.Dispatch<React.SetStateAction<File[]>>
+  ) => {
+    const newFiles = Array.from(e.target.files || []);
+    setFiles((prev) => [...prev, ...newFiles]);
+    // Reset input so the same file can be selected again
+    e.target.value = "";
+  };
+
+  const handleRemoveFile = (
+    index: number,
+    setFiles: React.Dispatch<React.SetStateAction<File[]>>
+  ) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (data: FormData) => {
     if (!lead) return;
 
     setLoading(true);
 
     try {
-      let identidadeUrl: string | null = null;
-      let comprovanteUrl: string | null = null;
-
-      // Upload documents if provided
-      if (identidadeFile) {
-        setUploadingIdentidade(true);
-        identidadeUrl = await uploadFile(identidadeFile, "identidade");
-        setUploadingIdentidade(false);
-        if (!identidadeUrl) {
-          throw new Error("Erro ao enviar identidade");
-        }
-      }
-
-      if (comprovanteFile) {
-        setUploadingComprovante(true);
-        comprovanteUrl = await uploadFile(comprovanteFile, "comprovante");
-        setUploadingComprovante(false);
-        if (!comprovanteUrl) {
-          throw new Error("Erro ao enviar comprovante de endereço");
-        }
-      }
+      // Upload all documents
+      const identidadeUrls = await uploadMultipleFiles(identidadeFiles, "identidade");
+      const comprovanteUrls = await uploadMultipleFiles(comprovanteFiles, "comprovante");
+      const beneficiariaUrls = await uploadMultipleFiles(beneficiariaFiles, "beneficiaria");
 
       // Create client
       const { data: cliente, error: clienteError } = await supabase
@@ -213,8 +278,9 @@ export function ConvertLeadToClientDialog({
           transformador_id: data.transformador_id || null,
           localizacao: data.localizacao || null,
           observacoes: data.observacoes || null,
-          identidade_url: identidadeUrl,
-          comprovante_endereco_url: comprovanteUrl,
+          identidade_urls: identidadeUrls.length > 0 ? identidadeUrls : null,
+          comprovante_endereco_urls: comprovanteUrls.length > 0 ? comprovanteUrls : null,
+          comprovante_beneficiaria_urls: beneficiariaUrls.length > 0 ? beneficiariaUrls : null,
         })
         .select()
         .single();
@@ -255,6 +321,65 @@ export function ConvertLeadToClientDialog({
   };
 
   if (!lead) return null;
+
+  const FileUploadSection = ({
+    label,
+    description,
+    files,
+    setFiles,
+  }: {
+    label: string;
+    description: string;
+    files: File[];
+    setFiles: React.Dispatch<React.SetStateAction<File[]>>;
+  }) => (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <p className="text-xs text-muted-foreground">{description}</p>
+      <div className="flex flex-wrap gap-2 mb-2">
+        {files.map((file, index) => (
+          <Badge
+            key={index}
+            variant="secondary"
+            className="flex items-center gap-1 py-1 px-2"
+          >
+            <span className="truncate max-w-[120px]">{file.name}</span>
+            <button
+              type="button"
+              onClick={() => handleRemoveFile(index, setFiles)}
+              className="ml-1 hover:text-destructive"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <Input
+          type="file"
+          accept="image/*,.pdf"
+          multiple
+          onChange={(e) => handleAddFiles(e, setFiles)}
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={() => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "image/*,.pdf";
+            input.multiple = true;
+            input.onchange = (e) => handleAddFiles(e as any, setFiles);
+            input.click();
+          }}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -442,39 +567,25 @@ export function ConvertLeadToClientDialog({
                 <FileText className="h-4 w-4" />
                 Documentos
               </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Identidade (RG/CNH)</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => setIdentidadeFile(e.target.files?.[0] || null)}
-                      className="flex-1"
-                    />
-                    {identidadeFile && (
-                      <span className="text-xs text-muted-foreground truncate max-w-[100px]">
-                        {identidadeFile.name}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Comprovante de Endereço</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => setComprovanteFile(e.target.files?.[0] || null)}
-                      className="flex-1"
-                    />
-                    {comprovanteFile && (
-                      <span className="text-xs text-muted-foreground truncate max-w-[100px]">
-                        {comprovanteFile.name}
-                      </span>
-                    )}
-                  </div>
-                </div>
+              <div className="space-y-4">
+                <FileUploadSection
+                  label="Identidade (RG/CNH)"
+                  description="Frente e verso - Pode adicionar várias fotos"
+                  files={identidadeFiles}
+                  setFiles={setIdentidadeFiles}
+                />
+                <FileUploadSection
+                  label="Comprovante de Endereço"
+                  description="Pode adicionar várias fotos/páginas"
+                  files={comprovanteFiles}
+                  setFiles={setComprovanteFiles}
+                />
+                <FileUploadSection
+                  label="Comprovante Beneficiária da UC"
+                  description="Comprovante da unidade consumidora - Pode adicionar vários"
+                  files={beneficiariaFiles}
+                  setFiles={setBeneficiariaFiles}
+                />
               </div>
             </div>
 
@@ -542,12 +653,31 @@ export function ConvertLeadToClientDialog({
                       <MapPin className="h-4 w-4" />
                       Localização (Coordenadas/Link do Mapa)
                     </FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="Ex: -23.5505, -46.6333 ou link do Google Maps"
-                      />
-                    </FormControl>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Ex: -23.5505, -46.6333 ou link do Google Maps"
+                          className="flex-1"
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={getCurrentLocation}
+                        disabled={gettingLocation}
+                        className="shrink-0"
+                      >
+                        {gettingLocation ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Navigation className="h-4 w-4" />
+                        )}
+                        <span className="ml-2 hidden sm:inline">
+                          {gettingLocation ? "Obtendo..." : "Minha Localização"}
+                        </span>
+                      </Button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}

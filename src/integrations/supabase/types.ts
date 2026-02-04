@@ -662,7 +662,9 @@ export type Database = {
           cep: string | null
           cidade: string | null
           complemento: string | null
+          comprovante_beneficiaria_urls: string[] | null
           comprovante_endereco_url: string | null
+          comprovante_endereco_urls: string[] | null
           cpf_cnpj: string | null
           created_at: string
           data_instalacao: string | null
@@ -672,6 +674,7 @@ export type Database = {
           estado: string | null
           id: string
           identidade_url: string | null
+          identidade_urls: string[] | null
           lead_id: string | null
           localizacao: string | null
           modelo_inversor: string | null
@@ -692,7 +695,9 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           complemento?: string | null
+          comprovante_beneficiaria_urls?: string[] | null
           comprovante_endereco_url?: string | null
+          comprovante_endereco_urls?: string[] | null
           cpf_cnpj?: string | null
           created_at?: string
           data_instalacao?: string | null
@@ -702,6 +707,7 @@ export type Database = {
           estado?: string | null
           id?: string
           identidade_url?: string | null
+          identidade_urls?: string[] | null
           lead_id?: string | null
           localizacao?: string | null
           modelo_inversor?: string | null
@@ -722,7 +728,9 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           complemento?: string | null
+          comprovante_beneficiaria_urls?: string[] | null
           comprovante_endereco_url?: string | null
+          comprovante_endereco_urls?: string[] | null
           cpf_cnpj?: string | null
           created_at?: string
           data_instalacao?: string | null
@@ -732,6 +740,7 @@ export type Database = {
           estado?: string | null
           id?: string
           identidade_url?: string | null
+          identidade_urls?: string[] | null
           lead_id?: string | null
           localizacao?: string | null
           modelo_inversor?: string | null
