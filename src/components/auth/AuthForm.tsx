@@ -37,6 +37,7 @@ export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [recoveryStep, setRecoveryStep] = useState<RecoveryStep>("idle");
   const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [hasRecoverySession, setHasRecoverySession] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
 
@@ -47,23 +48,28 @@ export function AuthForm() {
   }, []);
 
   useEffect(() => {
-    const enterRecovery = () => {
-      setRecoveryStep("new_password");
-    };
-
-    // If user landed here from the recovery link, enable the new password screen
-    if (isRecoveryFlow) {
-      enterRecovery();
-    }
-
-    // Also listen for the PASSWORD_RECOVERY event (covers cases where the session is detected after initial render)
+    // Listen for the PASSWORD_RECOVERY event - this fires when Supabase processes the token
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        enterRecovery();
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" && session) {
+        setHasRecoverySession(true);
+        setRecoveryStep("new_password");
       }
     });
+
+    // If we detect recovery flow in URL, check if we already have a session
+    if (isRecoveryFlow) {
+      // Show loading state while Supabase processes the token from URL
+      setRecoveryStep("new_password");
+      
+      // Check if session already exists (page refresh scenario)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setHasRecoverySession(true);
+        }
+      });
+    }
 
     return () => subscription.unsubscribe();
   }, [isRecoveryFlow]);
@@ -85,6 +91,18 @@ export function AuthForm() {
   });
 
   const handleUpdatePassword = async (data: NewPasswordData) => {
+    // Ensure we have a valid session before updating
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      toast({
+        title: "Sessão expirada",
+        description: "Por favor, solicite um novo link de redefinição de senha.",
+        variant: "destructive",
+      });
+      setRecoveryStep("idle");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({
@@ -104,7 +122,7 @@ export function AuthForm() {
           description: "Sua senha foi alterada com sucesso.",
         });
 
-        // Remove recovery tokens from the URL (avoid keeping sensitive data in the address bar)
+        // Remove recovery tokens from the URL
         try {
           window.history.replaceState({}, document.title, "/auth");
         } catch {
