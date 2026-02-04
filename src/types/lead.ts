@@ -21,6 +21,7 @@ export interface Lead {
   status_id: string | null;
   visto: boolean;
   visto_admin: boolean;
+  ultimo_contato: string | null;
   created_at: string;
   updated_at: string;
 }

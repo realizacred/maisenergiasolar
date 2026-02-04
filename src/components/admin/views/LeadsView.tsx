@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLeads } from "@/hooks/useLeads";
 import { LeadsTable, LeadFilters, LeadViewDialog, LeadDeleteDialog } from "@/components/admin/leads";
+import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
 import type { Lead } from "@/types/lead";
 
 export function LeadsView() {
-  const { leads, toggleVisto, deleteLead, filters } = useLeads();
+  const { leads, toggleVisto, deleteLead, filters, fetchLeads } = useLeads();
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterVisto, setFilterVisto] = useState("nao_visto");
@@ -15,6 +16,8 @@ export function LeadsView() {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+  const [isConvertOpen, setIsConvertOpen] = useState(false);
+  const [leadToConvert, setLeadToConvert] = useState<Lead | null>(null);
 
   useEffect(() => {
     let filtered = leads.filter(
@@ -91,6 +94,10 @@ export function LeadsView() {
               setLeadToDelete(lead);
               setIsDeleteOpen(true);
             }}
+            onConvert={(lead) => {
+              setLeadToConvert(lead);
+              setIsConvertOpen(true);
+            }}
           />
         </CardContent>
       </Card>
@@ -106,6 +113,13 @@ export function LeadsView() {
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         onConfirm={handleDelete}
+      />
+
+      <ConvertLeadToClientDialog
+        lead={leadToConvert}
+        open={isConvertOpen}
+        onOpenChange={setIsConvertOpen}
+        onSuccess={fetchLeads}
       />
     </>
   );

@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Phone, Eye, Trash2 } from "lucide-react";
+import { Phone, Eye, Trash2, ShoppingCart } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -20,9 +21,10 @@ interface LeadsTableProps {
   onToggleVisto: (lead: Lead) => void;
   onView: (lead: Lead) => void;
   onDelete: (lead: Lead) => void;
+  onConvert?: (lead: Lead) => void;
 }
 
-export function LeadsTable({ leads, onToggleVisto, onView, onDelete }: LeadsTableProps) {
+export function LeadsTable({ leads, onToggleVisto, onView, onDelete, onConvert }: LeadsTableProps) {
   if (leads.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -97,24 +99,51 @@ export function LeadsTable({ leads, onToggleVisto, onView, onDelete }: LeadsTabl
                 {format(new Date(lead.created_at), "dd/MM/yyyy", { locale: ptBR })}
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-secondary hover:text-secondary"
-                    onClick={() => onView(lead)}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => onDelete(lead)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                <TooltipProvider>
+                  <div className="flex items-center justify-end gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-secondary hover:text-secondary"
+                          onClick={() => onView(lead)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Ver detalhes</TooltipContent>
+                    </Tooltip>
+                    {onConvert && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => onConvert(lead)}
+                          >
+                            <ShoppingCart className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Converter em Venda</TooltipContent>
+                      </Tooltip>
+                    )}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => onDelete(lead)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Excluir lead</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TooltipProvider>
               </TableCell>
             </TableRow>
           ))}
