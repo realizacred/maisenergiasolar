@@ -10,6 +10,7 @@ import Admin from "./pages/Admin";
 import Calculadora from "./pages/Calculadora";
 import Checklist from "./pages/Checklist";
 import VendedorPortal from "./pages/VendedorPortal";
+import PortalSelector from "./pages/PortalSelector";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/portal" element={<PortalSelector />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/vendedor" element={<VendedorPortal />} />
             <Route path="/calculadora" element={<Calculadora />} />

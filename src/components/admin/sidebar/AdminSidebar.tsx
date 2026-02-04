@@ -1,4 +1,4 @@
-import { useLocation, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Users,
   Kanban,
@@ -28,6 +28,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
 import logo from "@/assets/logo.png";
 
 interface AdminSidebarProps {
@@ -113,10 +114,11 @@ export function AdminSidebar({ activeTab, onTabChange, userEmail, onSignOut }: A
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-4">
+      <SidebarFooter className="border-t p-4 space-y-3">
         {!collapsed && userEmail && (
-          <p className="text-xs text-muted-foreground truncate mb-3">{userEmail}</p>
+          <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
         )}
+        {!collapsed && <PortalSwitcher />}
         <Button
           variant="outline"
           size={collapsed ? "icon" : "default"}

@@ -40,6 +40,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
 import { LeadAlerts } from "@/components/vendor/LeadAlerts";
 import { LeadStatusSelector } from "@/components/vendor/LeadStatusSelector";
+import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
 import logo from "@/assets/logo.png";
 
 interface Lead {
@@ -241,10 +242,13 @@ export default function VendedorPortal() {
               <p className="text-sm text-muted-foreground">{vendedor?.nome}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sair
-          </Button>
+          <div className="flex items-center gap-2">
+            <PortalSwitcher />
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </Button>
+          </div>
         </div>
       </header>
 
