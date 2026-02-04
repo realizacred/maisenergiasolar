@@ -30,6 +30,8 @@ import { VendorLeadFilters, VendorOrcamentosTable, VendorLeadViewDialog } from "
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
 import { OfflineConversionsManager } from "@/components/leads/OfflineConversionsManager";
 import { OfflineDuplicateResolver } from "@/components/vendor/OfflineDuplicateResolver";
+import NotificationSettings from "@/components/vendor/NotificationSettings";
+import SyncStatusWidget from "@/components/vendor/SyncStatusWidget";
 import { useOrcamentosVendedor, OrcamentoVendedor } from "@/hooks/useOrcamentosVendedor";
 import logo from "@/assets/logo.png";
 import type { Lead } from "@/types/lead";
@@ -282,6 +284,12 @@ export default function VendedorPortal() {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Sync Status & Notifications Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SyncStatusWidget />
+          {vendedor && <NotificationSettings vendedorNome={vendedor.nome} />}
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>

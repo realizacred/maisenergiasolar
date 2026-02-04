@@ -11,6 +11,7 @@ import { LeadsView } from "@/components/admin/views/LeadsView";
 import LeadsPipeline from "@/components/admin/LeadsPipeline";
 import FollowUpManager from "@/components/admin/FollowUpManager";
 import DashboardCharts from "@/components/admin/DashboardCharts";
+import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 import VendedoresManager from "@/components/admin/VendedoresManager";
 import CalculadoraConfig from "@/components/admin/CalculadoraConfig";
 import FinanciamentoConfig from "@/components/admin/FinanciamentoConfig";
@@ -29,7 +30,7 @@ const ALLOWED_ADMIN_ROLES = ["admin", "gerente", "financeiro"];
 export default function Admin() {
   const [activeTab, setActiveTab] = useState("leads");
   const { user, signOut, loading: authLoading } = useAuth();
-  const { leads, loading, stats, fetchLeads } = useLeads();
+  const { leads, statuses, loading, stats, fetchLeads } = useLeads();
   const navigate = useNavigate();
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
@@ -134,7 +135,7 @@ export default function Admin() {
           </Card>
         );
       case "dashboard":
-        return <DashboardCharts leads={leads} />;
+        return <AnalyticsDashboard leads={leads} statuses={statuses} />;
       case "vendedores":
         return <VendedoresManager leads={leads} />;
       case "usuarios":
