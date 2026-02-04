@@ -80,8 +80,8 @@ export function PortalSwitcher() {
     navigate("/portal");
   };
 
-  // Don't show if user only has one portal access
-  const hasMultipleAccess = access.admin && access.vendedor && access.vendedorRecord;
+  // Show if admin (can access all portals) or has both roles with vendedor record
+  const hasMultipleAccess = access.admin || (access.vendedor && access.vendedorRecord);
   
   if (loading || !hasMultipleAccess) {
     return null;

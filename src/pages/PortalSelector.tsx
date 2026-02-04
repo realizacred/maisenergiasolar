@@ -71,12 +71,21 @@ export default function PortalSelector() {
       });
 
       // If only one option available, redirect directly
-      if (isAdmin && (!isVendedor || !hasVendedorRecord)) {
-        navigate("/admin", { replace: true });
-        return;
-      }
-      if (isVendedor && hasVendedorRecord && !isAdmin) {
+      // Admins can access both portals (vendor portal shows all leads for admins)
+      if (isAdmin) {
+        // Admin has access to both - continue to show selector
+        // unless they only have admin role (no vendedor role)
+        if (!isVendedor) {
+          navigate("/admin", { replace: true });
+          return;
+        }
+      } else if (isVendedor && hasVendedorRecord) {
+        // Vendedor-only users go directly to vendor portal
         navigate("/vendedor", { replace: true });
+        return;
+      } else {
+        // No valid role, redirect to admin (will show access denied)
+        navigate("/admin", { replace: true });
         return;
       }
 
@@ -134,7 +143,7 @@ export default function PortalSelector() {
           {/* Portal Cards */}
           <div className="grid md:grid-cols-2 gap-4">
             {/* Vendedor Portal Card */}
-            {access.vendedor && access.vendedorRecord && (
+            {(access.vendedor || access.admin) && (
               <Card 
                 className="cursor-pointer group hover:shadow-lg transition-all duration-300 hover:border-primary/50 hover:scale-[1.02]"
                 onClick={() => handleSelectPortal("vendedor")}
