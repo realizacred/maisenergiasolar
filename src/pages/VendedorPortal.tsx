@@ -28,6 +28,7 @@ import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
 import { VendorLeadFilters, VendorOrcamentosTable } from "@/components/vendor/leads";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
 import { OfflineConversionsManager } from "@/components/leads/OfflineConversionsManager";
+import { OfflineDuplicateResolver } from "@/components/vendor/OfflineDuplicateResolver";
 import { useOrcamentosVendedor, OrcamentoVendedor } from "@/hooks/useOrcamentosVendedor";
 import logo from "@/assets/logo.png";
 import type { Lead } from "@/types/lead";
@@ -344,6 +345,9 @@ export default function VendedorPortal() {
             if (orc) setSelectedOrcamento(orc);
           }}
         />
+
+        {/* Offline Duplicate Resolver */}
+        <OfflineDuplicateResolver />
 
         {/* Offline Conversions Manager */}
         <OfflineConversionsManager />
