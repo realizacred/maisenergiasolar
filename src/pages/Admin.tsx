@@ -175,11 +175,13 @@ export default function Admin() {
           </header>
 
           <main className="flex-1 p-6 space-y-6">
-            <StatsCards
-              totalLeads={stats.total}
-              totalKwh={stats.totalKwh}
-              uniqueEstados={stats.uniqueEstados}
-            />
+            {activeTab === "leads" && (
+              <StatsCards
+                totalLeads={stats.total}
+                totalKwh={stats.totalKwh}
+                uniqueEstados={stats.uniqueEstados}
+              />
+            )}
             {renderContent()}
           </main>
 
