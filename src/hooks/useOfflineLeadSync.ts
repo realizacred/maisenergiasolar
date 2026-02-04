@@ -41,6 +41,19 @@ interface DuplicateInfo {
 const STORAGE_KEY = "offline_leads";
 const DUPLICATE_STORAGE_KEY = "offline_leads_duplicates";
 
+// Custom events for cross-component synchronization
+const PENDING_COUNT_CHANGED_EVENT = "offline-leads-pending-changed";
+const DUPLICATES_CHANGED_EVENT = "offline-leads-duplicates-changed";
+
+// Emit events to notify other hook instances
+const emitPendingCountChanged = () => {
+  window.dispatchEvent(new CustomEvent(PENDING_COUNT_CHANGED_EVENT));
+};
+
+const emitDuplicatesChanged = () => {
+  window.dispatchEvent(new CustomEvent(DUPLICATES_CHANGED_EVENT));
+};
+
 export function useOfflineLeadSync() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingCount, setPendingCount] = useState(0);
@@ -63,6 +76,20 @@ export function useOfflineLeadSync() {
     } catch {
       setPendingCount(0);
       return 0;
+    }
+  }, []);
+
+  const loadDuplicates = useCallback(() => {
+    try {
+      const stored = localStorage.getItem(DUPLICATE_STORAGE_KEY);
+      if (stored) {
+        const duplicates = JSON.parse(stored);
+        setDuplicatesToResolve(duplicates);
+      } else {
+        setDuplicatesToResolve([]);
+      }
+    } catch {
+      setDuplicatesToResolve([]);
     }
   }, []);
 
@@ -256,9 +283,14 @@ export function useOfflineLeadSync() {
       if (duplicatesFound.length > 0) {
         localStorage.setItem(DUPLICATE_STORAGE_KEY, JSON.stringify(duplicatesFound));
         setDuplicatesToResolve(duplicatesFound);
+        // Notify other hook instances about duplicates
+        emitDuplicatesChanged();
       }
       
       countPending();
+      // Notify other hook instances about pending count change
+      emitPendingCountChanged();
+      
       setLastSyncResult(result);
 
       if (showToast) {
@@ -316,6 +348,9 @@ export function useOfflineLeadSync() {
       
       localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
       countPending();
+      
+      // Notify other hook instances
+      emitPendingCountChanged();
       
       return localId;
     } catch (error) {
@@ -452,6 +487,11 @@ export function useOfflineLeadSync() {
         localStorage.setItem(DUPLICATE_STORAGE_KEY, JSON.stringify(duplicates));
         
         countPending();
+        
+        // Notify other hook instances
+        emitPendingCountChanged();
+        emitDuplicatesChanged();
+        
         return true;
       }
       return false;
@@ -483,6 +523,11 @@ export function useOfflineLeadSync() {
         localStorage.setItem(DUPLICATE_STORAGE_KEY, JSON.stringify(duplicates));
         
         countPending();
+        
+        // Notify other hook instances
+        emitPendingCountChanged();
+        emitDuplicatesChanged();
+        
         return true;
       }
       return false;
@@ -498,19 +543,32 @@ export function useOfflineLeadSync() {
   const clearDuplicates = useCallback(() => {
     setDuplicatesToResolve([]);
     localStorage.removeItem(DUPLICATE_STORAGE_KEY);
+    emitDuplicatesChanged();
   }, []);
 
-  // Load duplicates from storage on mount
+  // Load duplicates from storage on mount and listen for changes from other hook instances
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(DUPLICATE_STORAGE_KEY);
-      if (stored) {
-        setDuplicatesToResolve(JSON.parse(stored));
-      }
-    } catch {
-      // Ignore parse errors
-    }
-  }, []);
+    // Initial load
+    loadDuplicates();
+    countPending();
+
+    // Listen for changes from other hook instances
+    const handlePendingCountChanged = () => {
+      countPending();
+    };
+
+    const handleDuplicatesChanged = () => {
+      loadDuplicates();
+    };
+
+    window.addEventListener(PENDING_COUNT_CHANGED_EVENT, handlePendingCountChanged);
+    window.addEventListener(DUPLICATES_CHANGED_EVENT, handleDuplicatesChanged);
+
+    return () => {
+      window.removeEventListener(PENDING_COUNT_CHANGED_EVENT, handlePendingCountChanged);
+      window.removeEventListener(DUPLICATES_CHANGED_EVENT, handleDuplicatesChanged);
+    };
+  }, [loadDuplicates, countPending]);
 
   return {
     isOnline,
