@@ -273,14 +273,29 @@ export function UsuariosManager() {
     try {
       // Prevent removal of the last admin role in the system
       if (role === "admin") {
-        const { count, error: countError } = await supabase
+        // Count how many admins exist in the system
+        const { data: adminRoles, error: countError } = await supabase
           .from("user_roles")
-          .select("*", { count: "exact", head: true })
+          .select("user_id")
           .eq("role", "admin");
 
         if (countError) throw countError;
 
-        if ((count ?? 0) <= 1) {
+        const adminCount = adminRoles?.length ?? 0;
+
+        // If there's only 1 admin and we're trying to remove it, block the action
+        if (adminCount <= 1) {
+          toast({
+            title: "Ação bloqueada",
+            description: "Não é possível remover o último administrador do sistema.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Extra safety: if removing will leave the system with no admins, block
+        const remainingAdmins = adminRoles?.filter(r => r.user_id !== userId).length ?? 0;
+        if (remainingAdmins < 1) {
           toast({
             title: "Ação bloqueada",
             description: "Não é possível remover o último administrador do sistema.",
