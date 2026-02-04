@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Pencil, Building } from "lucide-react";
+import { Plus, Trash2, Pencil, Building, Search, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -64,7 +64,9 @@ export function ConcessionariasManager() {
   const [editing, setEditing] = useState<Concessionaria | null>(null);
   const [deleting, setDeleting] = useState<Concessionaria | null>(null);
   const [form, setForm] = useState({ nome: "", sigla: "", estado: "" });
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterEstado, setFilterEstado] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
 
   useEffect(() => {
     fetchData();
@@ -170,9 +172,24 @@ export function ConcessionariasManager() {
     }
   };
 
-  const filteredConcessionarias = filterEstado === "all"
-    ? concessionarias
-    : concessionarias.filter(c => c.estado === filterEstado);
+  const filteredConcessionarias = concessionarias.filter(c => {
+    const matchesSearch = searchTerm === "" || 
+      c.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.sigla && c.sigla.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesEstado = filterEstado === "all" || c.estado === filterEstado;
+    const matchesStatus = filterStatus === "all" || 
+      (filterStatus === "ativo" && c.ativo) || 
+      (filterStatus === "inativo" && !c.ativo);
+    return matchesSearch && matchesEstado && matchesStatus;
+  });
+
+  const hasActiveFilters = filterEstado !== "all" || filterStatus !== "all" || searchTerm !== "";
+  
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterEstado("all");
+    setFilterStatus("all");
+  };
 
   if (loading) {
     return <div className="flex justify-center p-8">Carregando...</div>;
@@ -191,22 +208,61 @@ export function ConcessionariasManager() {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-4 mb-4">
-          <Label>Filtrar por Estado:</Label>
-          <Select value={filterEstado} onValueChange={setFilterEstado}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Todos" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {ESTADOS_BRASIL.map((uf) => (
-                <SelectItem key={uf} value={uf}>{uf}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <span className="text-sm text-muted-foreground">
-            {filteredConcessionarias.length} concessionária(s)
-          </span>
+        <div className="flex flex-col gap-4 mb-4">
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome ou sigla..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2 border-t">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Filter className="w-4 h-4" />
+              <span>Filtros:</span>
+            </div>
+
+            <Select value={filterEstado} onValueChange={setFilterEstado}>
+              <SelectTrigger className="w-[120px] h-9">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Estados</SelectItem>
+                {ESTADOS_BRASIL.map((uf) => (
+                  <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[120px] h-9">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Status</SelectItem>
+                <SelectItem value="ativo">Ativos</SelectItem>
+                <SelectItem value="inativo">Inativos</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Limpar filtros
+              </Button>
+            )}
+
+            <span className="text-sm text-muted-foreground ml-auto">
+              {filteredConcessionarias.length} concessionária(s)
+            </span>
+          </div>
         </div>
 
         <Table>
