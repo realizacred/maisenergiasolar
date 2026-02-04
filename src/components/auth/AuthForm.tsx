@@ -145,7 +145,7 @@ export function AuthForm() {
     if (!email) {
       toast({
         title: "Email necessário",
-        description: "Digite seu email para receber o código de recuperação.",
+        description: "Digite seu email para receber o link de recuperação.",
         variant: "destructive",
       });
       return;
@@ -161,13 +161,24 @@ export function AuthForm() {
         // Handle rate limiting errors specifically
         const isRateLimited = error.message.includes("security purposes") || 
                               error.message.includes("rate") ||
-                              error.status === 429;
+                              error.message.includes("email rate limit") ||
+                              (error as any).status === 429;
+        
+        if (isRateLimited) {
+          // Still show the "email sent" screen to prevent email enumeration
+          // and provide a better user experience
+          setRecoveryEmail(email);
+          setRecoveryStep("email_sent");
+          toast({
+            title: "Verifique sua caixa de entrada",
+            description: "Se um email de recuperação já foi enviado, aguarde alguns minutos antes de solicitar novamente.",
+          });
+          return;
+        }
         
         toast({
-          title: isRateLimited ? "Aguarde um momento" : "Erro",
-          description: isRateLimited 
-            ? "Por segurança, aguarde alguns segundos antes de solicitar novamente."
-            : "Não foi possível enviar o email. Tente novamente.",
+          title: "Erro",
+          description: "Não foi possível enviar o email. Tente novamente.",
           variant: "destructive",
         });
       } else {

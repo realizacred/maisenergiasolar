@@ -511,11 +511,28 @@ export function UsuariosManager() {
       const { error } = await supabase.auth.resetPasswordForEmail(
         userToResetPassword.email,
         {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: `${window.location.origin}/auth?type=recovery`,
         }
       );
 
-      if (error) throw error;
+      if (error) {
+        // Handle rate limiting errors specifically
+        const isRateLimited = error.message.includes("security purposes") || 
+                              error.message.includes("rate") ||
+                              error.message.includes("email rate limit") ||
+                              (error as any).status === 429;
+        
+        if (isRateLimited) {
+          toast({
+            title: "Aguarde um momento",
+            description: "Por segurança, aguarde alguns minutos antes de solicitar novamente. Um email pode já ter sido enviado.",
+            variant: "destructive",
+          });
+          setUserToResetPassword(null);
+          return;
+        }
+        throw error;
+      }
 
       toast({ 
         title: "Email de redefinição enviado!",
