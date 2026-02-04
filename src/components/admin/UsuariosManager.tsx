@@ -196,19 +196,27 @@ export function UsuariosManager() {
 
       if (rolesError) throw rolesError;
 
-      // Fetch vendedores to get emails
-      const { data: vendedores, error: vendedoresError } = await supabase
-        .from("vendedores")
-        .select("user_id, email");
-
-      if (vendedoresError) throw vendedoresError;
+      // Fetch emails from edge function (gets from auth.users)
+      let emailMap: Record<string, string> = {};
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          const response = await supabase.functions.invoke("list-users-emails", {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+          if (response.data?.emails) {
+            emailMap = response.data.emails;
+          }
+        }
+      } catch (emailError) {
+        console.warn("Could not fetch user emails:", emailError);
+      }
 
       // Combine profiles with roles and emails
       const usersWithRoles: UserWithRoles[] = (profiles || []).map(profile => {
-        const vendedor = (vendedores || []).find(v => v.user_id === profile.user_id);
         return {
           ...profile,
-          email: vendedor?.email || undefined,
+          email: emailMap[profile.user_id] || undefined,
           roles: (roles || [])
             .filter(r => r.user_id === profile.user_id)
             .map(r => r.role),
