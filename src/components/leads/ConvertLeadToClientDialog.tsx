@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, ShoppingCart, FileText, MapPin, Navigation, Save, WifiOff, AlertCircle } from "lucide-react";
+import { Loader2, ShoppingCart, FileText, MapPin, Navigation, Save, WifiOff, AlertCircle, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,15 @@ interface Transformador {
   descricao: string | null;
 }
 
+interface Simulacao {
+  id: string;
+  potencia_recomendada_kwp: number | null;
+  investimento_estimado: number | null;
+  economia_mensal: number | null;
+  consumo_kwh: number | null;
+  created_at: string;
+}
+
 const formSchema = z.object({
   nome: z.string().min(2, "Nome é obrigatório"),
   telefone: z.string().min(10, "Telefone é obrigatório"),
@@ -76,6 +85,7 @@ const formSchema = z.object({
   transformador_id: z.string().optional(),
   localizacao: z.string().min(1, "Localização é obrigatória"),
   observacoes: z.string().optional(),
+  simulacao_aceita_id: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -98,6 +108,7 @@ export function ConvertLeadToClientDialog({
   const [savingAsLead, setSavingAsLead] = useState(false);
   const [disjuntores, setDisjuntores] = useState<Disjuntor[]>([]);
   const [transformadores, setTransformadores] = useState<Transformador[]>([]);
+  const [simulacoes, setSimulacoes] = useState<Simulacao[]>([]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   // Multiple files support with offline base64 storage
@@ -125,6 +136,7 @@ export function ConvertLeadToClientDialog({
       transformador_id: "",
       localizacao: "",
       observacoes: "",
+      simulacao_aceita_id: "",
     },
   });
 
@@ -158,6 +170,25 @@ export function ConvertLeadToClientDialog({
 
     loadEquipment();
   }, []);
+
+  // Load simulations for this lead
+  useEffect(() => {
+    const loadSimulacoes = async () => {
+      if (!lead || !navigator.onLine) return;
+      
+      const { data } = await supabase
+        .from("simulacoes")
+        .select("id, potencia_recomendada_kwp, investimento_estimado, economia_mensal, consumo_kwh, created_at")
+        .eq("lead_id", lead.id)
+        .order("created_at", { ascending: false });
+
+      if (data) setSimulacoes(data);
+    };
+
+    if (open && lead) {
+      loadSimulacoes();
+    }
+  }, [lead, open]);
 
   // Pre-fill form when lead changes
   // Pre-fill form when lead changes - restore saved partial data if available
@@ -200,6 +231,7 @@ export function ConvertLeadToClientDialog({
           transformador_id: savedData.formData.transformador_id || "",
           localizacao: savedData.formData.localizacao || "",
           observacoes: savedData.formData.observacoes || lead.observacoes || "",
+          simulacao_aceita_id: savedData.formData.simulacao_aceita_id || "",
         });
         
         // Restore document files if saved
@@ -239,6 +271,7 @@ export function ConvertLeadToClientDialog({
           transformador_id: "",
           localizacao: "",
           observacoes: lead.observacoes || "",
+          simulacao_aceita_id: "",
         });
         setIdentidadeFiles([]);
         setComprovanteFiles([]);
@@ -446,7 +479,7 @@ export function ConvertLeadToClientDialog({
       const comprovanteUrls = await uploadDocumentFiles(comprovanteFiles, "comprovante", supabase);
       const beneficiariaUrls = await uploadDocumentFiles(beneficiariaFiles, "beneficiaria", supabase);
 
-      // Create client
+      // Create client with selected simulation
       const { data: cliente, error: clienteError } = await supabase
         .from("clientes")
         .insert({
@@ -469,6 +502,7 @@ export function ConvertLeadToClientDialog({
           identidade_urls: identidadeUrls.length > 0 ? identidadeUrls : null,
           comprovante_endereco_urls: comprovanteUrls.length > 0 ? comprovanteUrls : null,
           comprovante_beneficiaria_urls: beneficiariaUrls.length > 0 ? beneficiariaUrls : null,
+          simulacao_aceita_id: data.simulacao_aceita_id || null,
         })
         .select()
         .single();
@@ -777,6 +811,51 @@ export function ConvertLeadToClientDialog({
                 />
               </div>
             </div>
+
+            {/* Proposta Aceita */}
+            {simulacoes.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-muted-foreground border-b pb-2 flex items-center gap-2">
+                  <Receipt className="h-4 w-4" />
+                  Proposta Aceita
+                </h3>
+                <FormField
+                  control={form.control}
+                  name="simulacao_aceita_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Selecione a simulação/proposta aceita pelo cliente</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a proposta aceita" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {simulacoes.map((s) => {
+                            const dataFormatada = new Date(s.created_at).toLocaleDateString("pt-BR");
+                            const potencia = s.potencia_recomendada_kwp ? `${s.potencia_recomendada_kwp.toFixed(2)} kWp` : "N/A";
+                            const investimento = s.investimento_estimado 
+                              ? `R$ ${s.investimento_estimado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                              : "N/A";
+                            const economia = s.economia_mensal 
+                              ? `R$ ${s.economia_mensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês`
+                              : "";
+                            
+                            return (
+                              <SelectItem key={s.id} value={s.id}>
+                                {dataFormatada} - {potencia} - {investimento} {economia && `(${economia})`}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
 
             {/* Dados Técnicos */}
             <div className="space-y-4">

@@ -684,6 +684,7 @@ export type Database = {
           observacoes: string | null
           potencia_kwp: number | null
           rua: string | null
+          simulacao_aceita_id: string | null
           telefone: string
           transformador_id: string | null
           updated_at: string
@@ -717,6 +718,7 @@ export type Database = {
           observacoes?: string | null
           potencia_kwp?: number | null
           rua?: string | null
+          simulacao_aceita_id?: string | null
           telefone: string
           transformador_id?: string | null
           updated_at?: string
@@ -750,6 +752,7 @@ export type Database = {
           observacoes?: string | null
           potencia_kwp?: number | null
           rua?: string | null
+          simulacao_aceita_id?: string | null
           telefone?: string
           transformador_id?: string | null
           updated_at?: string
@@ -768,6 +771,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_simulacao_aceita_id_fkey"
+            columns: ["simulacao_aceita_id"]
+            isOneToOne: false
+            referencedRelation: "simulacoes"
             referencedColumns: ["id"]
           },
           {
