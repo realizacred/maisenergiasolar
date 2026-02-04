@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, Eye, Trash2, ShoppingCart } from "lucide-react";
+import { Phone, Eye, Trash2, ShoppingCart, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -14,17 +14,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Lead } from "@/types/lead";
+import type { Lead, LeadStatus } from "@/types/lead";
 
 interface LeadsTableProps {
   leads: Lead[];
+  statuses?: LeadStatus[];
   onToggleVisto: (lead: Lead) => void;
   onView: (lead: Lead) => void;
   onDelete: (lead: Lead) => void;
   onConvert?: (lead: Lead) => void;
 }
 
-export function LeadsTable({ leads, onToggleVisto, onView, onDelete, onConvert }: LeadsTableProps) {
+export function LeadsTable({ leads, statuses = [], onToggleVisto, onView, onDelete, onConvert }: LeadsTableProps) {
   if (leads.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -50,10 +51,15 @@ export function LeadsTable({ leads, onToggleVisto, onView, onDelete, onConvert }
           </TableRow>
         </TableHeader>
         <TableBody>
-          {leads.map((lead) => (
+          {leads.map((lead) => {
+            // Check if lead has been converted
+            const convertidoStatus = statuses.find(s => s.nome === "Convertido");
+            const isConverted = convertidoStatus && lead.status_id === convertidoStatus.id;
+            
+            return (
             <TableRow
               key={lead.id}
-              className={lead.visto_admin ? "bg-green-50 dark:bg-green-950/20" : ""}
+              className={`${lead.visto_admin ? "bg-green-50 dark:bg-green-950/20" : ""} ${isConverted ? "bg-primary/5" : ""}`}
             >
               <TableCell>
                 <Checkbox
@@ -114,7 +120,7 @@ export function LeadsTable({ leads, onToggleVisto, onView, onDelete, onConvert }
                       </TooltipTrigger>
                       <TooltipContent>Ver detalhes</TooltipContent>
                     </Tooltip>
-                    {onConvert && (
+                    {onConvert && !isConverted && (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -127,6 +133,16 @@ export function LeadsTable({ leads, onToggleVisto, onView, onDelete, onConvert }
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Converter em Venda</TooltipContent>
+                      </Tooltip>
+                    )}
+                    {isConverted && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center justify-center h-8 w-8 text-green-600">
+                            <UserCheck className="w-4 h-4" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Já convertido em cliente</TooltipContent>
                       </Tooltip>
                     )}
                     <Tooltip>
@@ -146,7 +162,8 @@ export function LeadsTable({ leads, onToggleVisto, onView, onDelete, onConvert }
                 </TooltipProvider>
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
     </div>

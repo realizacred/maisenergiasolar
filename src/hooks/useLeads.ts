@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { Lead } from "@/types/lead";
+import type { Lead, LeadStatus } from "@/types/lead";
 
 interface UseLeadsOptions {
   autoFetch?: boolean;
@@ -9,19 +9,30 @@ interface UseLeadsOptions {
 
 export function useLeads({ autoFetch = true }: UseLeadsOptions = {}) {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [statuses, setStatuses] = useState<LeadStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const fetchLeads = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("leads")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const [leadsRes, statusesRes] = await Promise.all([
+        supabase
+          .from("leads")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("lead_status")
+          .select("*")
+          .order("ordem"),
+      ]);
 
-      if (error) throw error;
-      setLeads(data || []);
+      if (leadsRes.error) throw leadsRes.error;
+      setLeads(leadsRes.data || []);
+      
+      if (statusesRes.data) {
+        setStatuses(statusesRes.data);
+      }
     } catch (error) {
       console.error("Erro ao buscar leads:", error);
       toast({
@@ -103,6 +114,7 @@ export function useLeads({ autoFetch = true }: UseLeadsOptions = {}) {
 
   return {
     leads,
+    statuses,
     loading,
     fetchLeads,
     toggleVisto,
