@@ -38,8 +38,16 @@ export function AuthForm() {
   const [recoveryStep, setRecoveryStep] = useState<RecoveryStep>("idle");
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [hasRecoverySession, setHasRecoverySession] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+
+  // Cooldown timer for resend button
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const isRecoveryFlow = useMemo(() => {
     const hash = window.location.hash ?? "";
@@ -173,6 +181,7 @@ export function AuthForm() {
       } else {
         setRecoveryEmail(email);
         setRecoveryStep("email_sent");
+        setResendCooldown(10); // Start 10 second cooldown
         toast({
           title: "Email enviado! 📧",
           description: "Abra o email e clique no link para redefinir sua senha.",
@@ -306,10 +315,10 @@ export function AuthForm() {
           <button
             type="button"
             onClick={handleRequestPasswordReset}
-            className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            disabled={isLoading}
+            className="text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading || resendCooldown > 0}
           >
-            Reenviar email
+            {resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : "Reenviar email"}
           </button>
         </div>
       </div>
