@@ -302,9 +302,9 @@ export function EquipamentosManager() {
                             checked={d.ativo}
                             onCheckedChange={() => handleToggleDisjuntorAtivo(d)}
                           />
-                          <Badge variant={d.ativo ? "default" : "secondary"}>
+                          <span className={`text-sm ${d.ativo ? "text-green-600" : "text-muted-foreground"}`}>
                             {d.ativo ? "Ativo" : "Inativo"}
-                          </Badge>
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
@@ -369,9 +369,9 @@ export function EquipamentosManager() {
                             checked={t.ativo}
                             onCheckedChange={() => handleToggleTransformadorAtivo(t)}
                           />
-                          <Badge variant={t.ativo ? "default" : "secondary"}>
+                          <span className={`text-sm ${t.ativo ? "text-green-600" : "text-muted-foreground"}`}>
                             {t.ativo ? "Ativo" : "Inativo"}
-                          </Badge>
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">

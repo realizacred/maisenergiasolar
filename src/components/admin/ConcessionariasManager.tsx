@@ -298,9 +298,9 @@ export function ConcessionariasManager() {
                         checked={c.ativo}
                         onCheckedChange={() => handleToggleAtivo(c)}
                       />
-                      <Badge variant={c.ativo ? "default" : "secondary"}>
+                      <span className={`text-sm ${c.ativo ? "text-green-600" : "text-muted-foreground"}`}>
                         {c.ativo ? "Ativo" : "Inativo"}
-                      </Badge>
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
