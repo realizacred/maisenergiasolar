@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,37 +10,20 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import { 
   Users, 
   TrendingUp, 
   Eye, 
   LogOut, 
-  Search,
-  Phone,
-  MapPin,
-  Calendar,
   Copy,
   ExternalLink,
-  Loader2,
-  User
+  Loader2
 } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
 import { LeadAlerts } from "@/components/vendor/LeadAlerts";
-import { LeadStatusSelector } from "@/components/vendor/LeadStatusSelector";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
+import { VendorLeadFilters, VendorLeadsTable, VendorLeadViewDialog } from "@/components/vendor/leads";
 import logo from "@/assets/logo.png";
 
 interface Lead {
@@ -49,12 +32,23 @@ interface Lead {
   telefone: string;
   cidade: string;
   estado: string;
+  bairro?: string | null;
+  rua?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  cep?: string | null;
+  area: string;
+  tipo_telhado: string;
+  rede_atendimento: string;
   media_consumo: number;
+  consumo_previsto: number;
   created_at: string;
   ultimo_contato: string | null;
   visto: boolean;
   lead_code: string | null;
   status_id: string | null;
+  observacoes?: string | null;
+  arquivos_urls?: string[] | null;
 }
 
 interface VendedorProfile {
@@ -78,8 +72,16 @@ export default function VendedorPortal() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [statuses, setStatuses] = useState<LeadStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filter states
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("todos");
+  const [filterVisto, setFilterVisto] = useState("todos");
+  const [filterEstado, setFilterEstado] = useState("todos");
+  const [filterStatus, setFilterStatus] = useState("todos");
+  
+  // Dialog states
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -141,10 +143,10 @@ export default function VendedorPortal() {
 
       setVendedor(vendedorData);
 
-      // Load leads for this vendedor (include ultimo_contato for AI alerts)
+      // Load leads for this vendedor with all fields
       const { data: leadsData, error: leadsError } = await supabase
         .from("leads")
-        .select("id, nome, telefone, cidade, estado, media_consumo, created_at, ultimo_contato, visto, lead_code, status_id")
+        .select("*")
         .eq("vendedor", vendedorData.nome)
         .order("created_at", { ascending: false });
 
@@ -185,13 +187,33 @@ export default function VendedorPortal() {
     });
   };
 
-  const getStatusName = (statusId: string | null) => {
-    if (!statusId) return "Novo";
-    const status = statuses.find(s => s.id === statusId);
-    return status?.nome || "Desconhecido";
+  const handleToggleVisto = async (lead: Lead) => {
+    const newVisto = !lead.visto;
+    
+    // Optimistic update
+    setLeads(prev => 
+      prev.map(l => l.id === lead.id ? { ...l, visto: newVisto } : l)
+    );
+
+    const { error } = await supabase
+      .from("leads")
+      .update({ visto: newVisto })
+      .eq("id", lead.id);
+
+    if (error) {
+      // Revert on error
+      setLeads(prev => 
+        prev.map(l => l.id === lead.id ? { ...l, visto: !newVisto } : l)
+      );
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleLocalStatusChange = (leadId: string, newStatusId: string | null) => {
+  const handleStatusChange = (leadId: string, newStatusId: string | null) => {
     setLeads(prev => 
       prev.map(lead => 
         lead.id === leadId 
@@ -201,18 +223,47 @@ export default function VendedorPortal() {
     );
   };
 
-  const filteredLeads = leads.filter(lead => {
-    const matchesSearch = 
+  const handleClearFilters = () => {
+    setFilterVisto("todos");
+    setFilterEstado("todos");
+    setFilterStatus("todos");
+  };
+
+  // Derived data
+  const estados = useMemo(() => 
+    [...new Set(leads.map(l => l.estado))].sort(), 
+    [leads]
+  );
+
+  const filteredLeads = useMemo(() => {
+    let filtered = leads.filter(lead =>
       lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.telefone.includes(searchTerm) ||
-      lead.cidade.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (activeTab === "novos") return matchesSearch && !lead.visto;
-    if (activeTab === "vistos") return matchesSearch && lead.visto;
-    return matchesSearch;
-  });
+      lead.cidade.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-  const stats = {
+    if (filterVisto === "visto") {
+      filtered = filtered.filter(lead => lead.visto);
+    } else if (filterVisto === "nao_visto") {
+      filtered = filtered.filter(lead => !lead.visto);
+    }
+
+    if (filterEstado !== "todos") {
+      filtered = filtered.filter(lead => lead.estado === filterEstado);
+    }
+
+    if (filterStatus !== "todos") {
+      if (filterStatus === "novo") {
+        filtered = filtered.filter(lead => !lead.status_id);
+      } else {
+        filtered = filtered.filter(lead => lead.status_id === filterStatus);
+      }
+    }
+
+    return filtered;
+  }, [leads, searchTerm, filterVisto, filterEstado, filterStatus]);
+
+  const stats = useMemo(() => ({
     total: leads.length,
     novos: leads.filter(l => !l.visto).length,
     esteMes: leads.filter(l => {
@@ -220,7 +271,7 @@ export default function VendedorPortal() {
       const now = new Date();
       return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
     }).length,
-  };
+  }), [leads]);
 
   if (loading) {
     return (
@@ -331,112 +382,40 @@ export default function VendedorPortal() {
             <CardDescription>
               Lista de todos os leads captados através do seu link
             </CardDescription>
+            <VendorLeadFilters
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              filterVisto={filterVisto}
+              onFilterVistoChange={setFilterVisto}
+              filterEstado={filterEstado}
+              onFilterEstadoChange={setFilterEstado}
+              filterStatus={filterStatus}
+              onFilterStatusChange={setFilterStatus}
+              estados={estados}
+              statuses={statuses}
+              onClearFilters={handleClearFilters}
+            />
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome, telefone ou cidade..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
-                <TabsList>
-                  <TabsTrigger value="todos">Todos ({leads.length})</TabsTrigger>
-                  <TabsTrigger value="novos">Novos ({stats.novos})</TabsTrigger>
-                  <TabsTrigger value="vistos">Vistos ({leads.length - stats.novos})</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-
-            {/* Table */}
-            {filteredLeads.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhum lead encontrado</p>
-                <p className="text-sm mt-1">
-                  Compartilhe seu link para começar a captar leads
-                </p>
-              </div>
-            ) : (
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Lead</TableHead>
-                      <TableHead className="hidden md:table-cell">Localização</TableHead>
-                      <TableHead className="hidden sm:table-cell">Consumo</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="hidden lg:table-cell">Data</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredLeads.map((lead) => (
-                      <TableRow key={lead.id}>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{lead.nome}</span>
-                              {!lead.visto && (
-                                <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
-                                  Novo
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Phone className="h-3 w-3" />
-                              <a 
-                                href={`https://wa.me/55${lead.telefone.replace(/\D/g, '')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="hover:text-primary hover:underline"
-                              >
-                                {lead.telefone}
-                              </a>
-                            </div>
-                            {lead.lead_code && (
-                              <span className="text-xs text-muted-foreground">
-                                {lead.lead_code}
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="flex items-center gap-1 text-sm">
-                            <MapPin className="h-3 w-3 text-muted-foreground" />
-                            {lead.cidade}, {lead.estado}
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <span className="text-sm">{lead.media_consumo} kWh</span>
-                        </TableCell>
-                        <TableCell>
-                          <LeadStatusSelector
-                            leadId={lead.id}
-                            currentStatusId={lead.status_id}
-                            statuses={statuses}
-                            onStatusChange={(newStatusId) => handleLocalStatusChange(lead.id, newStatusId)}
-                          />
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
-                            {format(new Date(lead.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+          <CardContent>
+            <VendorLeadsTable
+              leads={filteredLeads}
+              statuses={statuses}
+              onToggleVisto={handleToggleVisto}
+              onView={(lead) => {
+                setSelectedLead(lead);
+                setIsViewOpen(true);
+              }}
+              onStatusChange={handleStatusChange}
+            />
           </CardContent>
         </Card>
       </main>
+
+      <VendorLeadViewDialog
+        lead={selectedLead}
+        open={isViewOpen}
+        onOpenChange={setIsViewOpen}
+      />
     </div>
   );
 }

@@ -1,0 +1,168 @@
+import { Phone, Eye, MapPin, Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { LeadStatusSelector } from "@/components/vendor/LeadStatusSelector";
+
+interface Lead {
+  id: string;
+  nome: string;
+  telefone: string;
+  cidade: string;
+  estado: string;
+  bairro?: string | null;
+  rua?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  cep?: string | null;
+  area: string;
+  tipo_telhado: string;
+  rede_atendimento: string;
+  media_consumo: number;
+  consumo_previsto: number;
+  created_at: string;
+  ultimo_contato: string | null;
+  visto: boolean;
+  lead_code: string | null;
+  status_id: string | null;
+  observacoes?: string | null;
+  arquivos_urls?: string[] | null;
+}
+
+interface LeadStatus {
+  id: string;
+  nome: string;
+  cor: string;
+}
+
+interface VendorLeadsTableProps {
+  leads: Lead[];
+  statuses: LeadStatus[];
+  onToggleVisto: (lead: Lead) => void;
+  onView: (lead: Lead) => void;
+  onStatusChange: (leadId: string, newStatusId: string | null) => void;
+}
+
+export function VendorLeadsTable({ 
+  leads, 
+  statuses, 
+  onToggleVisto, 
+  onView,
+  onStatusChange 
+}: VendorLeadsTableProps) {
+  if (leads.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <p>Nenhum lead encontrado</p>
+        <p className="text-sm mt-1">
+          Compartilhe seu link para começar a captar leads
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-12">Visto</TableHead>
+            <TableHead className="w-24">Código</TableHead>
+            <TableHead>Nome</TableHead>
+            <TableHead>Telefone</TableHead>
+            <TableHead className="hidden md:table-cell">Localização</TableHead>
+            <TableHead className="hidden sm:table-cell">Consumo</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="hidden lg:table-cell">Data</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {leads.map((lead) => (
+            <TableRow
+              key={lead.id}
+              className={lead.visto ? "bg-green-50 dark:bg-green-950/20" : ""}
+            >
+              <TableCell>
+                <Checkbox
+                  checked={lead.visto}
+                  onCheckedChange={() => onToggleVisto(lead)}
+                  className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                />
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className="font-mono text-xs">
+                  {lead.lead_code || "-"}
+                </Badge>
+              </TableCell>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  {lead.nome}
+                  {!lead.visto && (
+                    <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
+                      Novo
+                    </Badge>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <a 
+                  href={`https://wa.me/55${lead.telefone.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 hover:text-primary hover:underline"
+                >
+                  <Phone className="w-3 h-3 text-muted-foreground" />
+                  {lead.telefone}
+                </a>
+              </TableCell>
+              <TableCell className="hidden md:table-cell">
+                <div className="flex items-center gap-1 text-sm">
+                  <MapPin className="h-3 w-3 text-muted-foreground" />
+                  {lead.cidade}, {lead.estado}
+                </div>
+              </TableCell>
+              <TableCell className="hidden sm:table-cell">
+                <span className="text-sm">{lead.media_consumo} kWh</span>
+              </TableCell>
+              <TableCell>
+                <LeadStatusSelector
+                  leadId={lead.id}
+                  currentStatusId={lead.status_id}
+                  statuses={statuses}
+                  onStatusChange={(newStatusId) => onStatusChange(lead.id, newStatusId)}
+                />
+              </TableCell>
+              <TableCell className="hidden lg:table-cell">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Calendar className="h-3 w-3" />
+                  {format(new Date(lead.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-secondary hover:text-secondary"
+                  onClick={() => onView(lead)}
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
