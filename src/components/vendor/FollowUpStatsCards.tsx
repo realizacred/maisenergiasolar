@@ -40,42 +40,42 @@ export function FollowUpStatsCards({ leads }: FollowUpStatsCardsProps) {
   }, [leads]);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
       {/* Urgentes (6+ dias) */}
       <Card className="border-destructive/30 bg-destructive/5">
-        <CardContent className="flex items-center gap-4 p-4">
-          <div className="rounded-full border-2 border-destructive p-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
+        <CardContent className="flex items-center gap-3 p-3 sm:p-4">
+          <div className="rounded-full border-2 border-destructive p-1.5 sm:p-2 shrink-0">
+            <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />
           </div>
-          <div>
-            <p className="text-2xl font-bold">{stats.urgentes}</p>
-            <p className="text-sm text-muted-foreground">Urgentes (6+ dias)</p>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-bold">{stats.urgentes}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">Urgentes (6+ dias)</p>
           </div>
         </CardContent>
       </Card>
 
       {/* Pendentes (3+ dias) */}
       <Card className="border-amber-400/30 bg-amber-50 dark:bg-amber-950/20">
-        <CardContent className="flex items-center gap-4 p-4">
-          <div className="rounded-full border-2 border-amber-500 p-2">
-            <Clock className="h-5 w-5 text-amber-600" />
+        <CardContent className="flex items-center gap-3 p-3 sm:p-4">
+          <div className="rounded-full border-2 border-amber-500 p-1.5 sm:p-2 shrink-0">
+            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
           </div>
-          <div>
-            <p className="text-2xl font-bold">{stats.pendentes}</p>
-            <p className="text-sm text-muted-foreground">Pendentes (3+ dias)</p>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-bold">{stats.pendentes}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">Pendentes (3+ dias)</p>
           </div>
         </CardContent>
       </Card>
 
       {/* Em dia */}
       <Card className="border-emerald-400/30 bg-emerald-50 dark:bg-emerald-950/20">
-        <CardContent className="flex items-center gap-4 p-4">
-          <div className="rounded-full border-2 border-emerald-500 p-2">
-            <CheckCircle className="h-5 w-5 text-emerald-600" />
+        <CardContent className="flex items-center gap-3 p-3 sm:p-4">
+          <div className="rounded-full border-2 border-emerald-500 p-1.5 sm:p-2 shrink-0">
+            <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
           </div>
-          <div>
-            <p className="text-2xl font-bold">{stats.emDia}</p>
-            <p className="text-sm text-muted-foreground">Em dia</p>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-bold">{stats.emDia}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">Em dia</p>
           </div>
         </CardContent>
       </Card>
