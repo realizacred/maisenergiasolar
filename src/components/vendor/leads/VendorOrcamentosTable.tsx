@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { OrcamentoStatusSelector } from "@/components/vendor/OrcamentoStatusSelector";
 import type { LeadStatus } from "@/types/lead";
 import type { OrcamentoVendedor } from "@/hooks/useOrcamentosVendedor";
 
@@ -83,6 +84,7 @@ export function VendorOrcamentosTable({
               <TableHead>Telefone</TableHead>
               <TableHead>Localização</TableHead>
               <TableHead>Consumo</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Data</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -145,6 +147,14 @@ export function VendorOrcamentosTable({
                     </Badge>
                   </TableCell>
                   <TableCell>{orc.media_consumo} kWh</TableCell>
+                  <TableCell>
+                    <OrcamentoStatusSelector
+                      orcamentoId={orc.id}
+                      currentStatusId={orc.status_id}
+                      statuses={statuses}
+                      onStatusChange={(newStatusId) => onStatusChange(orc.id, newStatusId)}
+                    />
+                  </TableCell>
                   <TableCell>
                     {format(new Date(orc.created_at), "dd/MM/yyyy", { locale: ptBR })}
                   </TableCell>
