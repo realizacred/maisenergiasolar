@@ -160,30 +160,92 @@ export function ConvertLeadToClientDialog({
   }, []);
 
   // Pre-fill form when lead changes
+  // Pre-fill form when lead changes - restore saved partial data if available
   useEffect(() => {
     if (lead && open) {
-      form.reset({
-        nome: lead.nome || "",
-        telefone: lead.telefone || "",
-        email: "",
-        cpf_cnpj: "",
-        cep: lead.cep || "",
-        estado: lead.estado || "",
-        cidade: lead.cidade || "",
-        bairro: lead.bairro || "",
-        rua: lead.rua || "",
-        numero: lead.numero || "",
-        complemento: lead.complemento || "",
-        disjuntor_id: "",
-        transformador_id: "",
-        localizacao: "",
-        observacoes: lead.observacoes || "",
-      });
-      setIdentidadeFiles([]);
-      setComprovanteFiles([]);
-      setBeneficiariaFiles([]);
+      // Check if there's saved partial conversion data for this lead
+      const storageKey = `lead_conversion_${lead.id}`;
+      let savedData: {
+        formData?: FormData;
+        identidadeFiles?: DocumentFile[];
+        comprovanteFiles?: DocumentFile[];
+        beneficiariaFiles?: DocumentFile[];
+        savedAt?: string;
+      } | null = null;
+
+      try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          savedData = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.warn("Could not parse saved conversion data:", e);
+      }
+
+      // If we have saved data, restore it; otherwise use lead data
+      if (savedData?.formData) {
+        form.reset({
+          nome: savedData.formData.nome || lead.nome || "",
+          telefone: savedData.formData.telefone || lead.telefone || "",
+          email: savedData.formData.email || "",
+          cpf_cnpj: savedData.formData.cpf_cnpj || "",
+          cep: savedData.formData.cep || lead.cep || "",
+          estado: savedData.formData.estado || lead.estado || "",
+          cidade: savedData.formData.cidade || lead.cidade || "",
+          bairro: savedData.formData.bairro || lead.bairro || "",
+          rua: savedData.formData.rua || lead.rua || "",
+          numero: savedData.formData.numero || lead.numero || "",
+          complemento: savedData.formData.complemento || lead.complemento || "",
+          disjuntor_id: savedData.formData.disjuntor_id || "",
+          transformador_id: savedData.formData.transformador_id || "",
+          localizacao: savedData.formData.localizacao || "",
+          observacoes: savedData.formData.observacoes || lead.observacoes || "",
+        });
+        
+        // Restore document files if saved
+        setIdentidadeFiles(savedData.identidadeFiles || []);
+        setComprovanteFiles(savedData.comprovanteFiles || []);
+        setBeneficiariaFiles(savedData.beneficiariaFiles || []);
+        
+        // Show toast that we restored saved data
+        if (savedData.savedAt) {
+          const savedDate = new Date(savedData.savedAt);
+          const formattedDate = savedDate.toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          toast({
+            title: "Dados restaurados",
+            description: `Continuando de onde parou (${formattedDate})`,
+          });
+        }
+      } else {
+        // No saved data - use lead data as defaults
+        form.reset({
+          nome: lead.nome || "",
+          telefone: lead.telefone || "",
+          email: "",
+          cpf_cnpj: "",
+          cep: lead.cep || "",
+          estado: lead.estado || "",
+          cidade: lead.cidade || "",
+          bairro: lead.bairro || "",
+          rua: lead.rua || "",
+          numero: lead.numero || "",
+          complemento: lead.complemento || "",
+          disjuntor_id: "",
+          transformador_id: "",
+          localizacao: "",
+          observacoes: lead.observacoes || "",
+        });
+        setIdentidadeFiles([]);
+        setComprovanteFiles([]);
+        setBeneficiariaFiles([]);
+      }
     }
-  }, [lead, open, form]);
+  }, [lead, open, form, toast]);
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -426,6 +488,10 @@ export function ConvertLeadToClientDialog({
           .update({ status_id: convertidoStatus.id })
           .eq("id", lead.id);
       }
+
+      // Clear saved partial conversion data since conversion is complete
+      const storageKey = `lead_conversion_${lead.id}`;
+      localStorage.removeItem(storageKey);
 
       toast({
         title: "Lead convertido!",
