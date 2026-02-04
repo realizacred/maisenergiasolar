@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { isEmailAlreadyRegisteredError, parseInvokeError } from "@/lib/supabaseFunctionError";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,6 +103,8 @@ const ROLE_LABELS: Record<string, { label: string; color: string; icon: React.El
 export function UsuariosManager() {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkingPermission, setCheckingPermission] = useState(true);
+  const [canManageUsers, setCanManageUsers] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
@@ -119,10 +123,61 @@ export function UsuariosManager() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    let cancelled = false;
+
+    const checkAndLoad = async () => {
+      setCheckingPermission(true);
+      setLoading(true);
+
+      if (!user) {
+        if (!cancelled) {
+          setCanManageUsers(false);
+          setCheckingPermission(false);
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        // Only admins can manage users/roles (matches backend policies)
+        const { data: roles, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+
+        const isAdmin = (roles ?? []).some((r) => r.role === "admin");
+
+        if (cancelled) return;
+        setCanManageUsers(isAdmin);
+        setCheckingPermission(false);
+
+        if (isAdmin) {
+          await fetchUsers();
+        } else {
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error("Error checking permissions:", e);
+        if (!cancelled) {
+          setCanManageUsers(false);
+          setCheckingPermission(false);
+          setLoading(false);
+        }
+      }
+    };
+
+    checkAndLoad();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const fetchUsers = async () => {
     try {
@@ -244,6 +299,19 @@ export function UsuariosManager() {
       if (error) throw error;
 
       toast({ title: "Perfil removido!" });
+
+      // If the logged-in user removed their own admin role, they will immediately lose
+      // permission to see/manage other users due to backend policies.
+      if (user && userId === user.id && role === "admin") {
+        toast({
+          title: "Acesso atualizado",
+          description: "Você removeu seu próprio perfil de administrador. Entre com outro administrador para continuar.",
+          variant: "destructive",
+        });
+        navigate("/portal", { replace: true });
+        return;
+      }
+
       fetchUsers();
     } catch (error) {
       console.error("Error removing role:", error);
@@ -456,6 +524,36 @@ export function UsuariosManager() {
       <Card>
         <CardContent className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (checkingPermission) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!canManageUsers) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Gestão de Usuários</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Somente administradores podem ver e alterar os perfis de outros usuários.
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/portal", { replace: true })}>
+              Voltar ao portal
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
