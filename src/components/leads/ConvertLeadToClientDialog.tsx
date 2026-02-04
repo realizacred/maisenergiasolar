@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, ShoppingCart, FileText, MapPin, Navigation, Save } from "lucide-react";
+import { Loader2, ShoppingCart, FileText, MapPin, Navigation, Save, WifiOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -31,8 +31,20 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { DocumentUpload } from "./DocumentUpload";
+import { DocumentUpload, DocumentFile, uploadDocumentFiles } from "./DocumentUpload";
 import type { Lead } from "@/types/lead";
+
+// Storage key for offline conversion data
+const OFFLINE_CONVERSION_KEY = "offline_lead_conversions";
+
+interface OfflineConversion {
+  leadId: string;
+  formData: FormData;
+  identidadeFiles: DocumentFile[];
+  comprovanteFiles: DocumentFile[];
+  beneficiariaFiles: DocumentFile[];
+  savedAt: string;
+}
 
 interface Disjuntor {
   id: string;
@@ -84,11 +96,12 @@ export function ConvertLeadToClientDialog({
   const [savingAsLead, setSavingAsLead] = useState(false);
   const [disjuntores, setDisjuntores] = useState<Disjuntor[]>([]);
   const [transformadores, setTransformadores] = useState<Transformador[]>([]);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   
-  // Multiple files support
-  const [identidadeFiles, setIdentidadeFiles] = useState<File[]>([]);
-  const [comprovanteFiles, setComprovanteFiles] = useState<File[]>([]);
-  const [beneficiariaFiles, setBeneficiariaFiles] = useState<File[]>([]);
+  // Multiple files support with offline base64 storage
+  const [identidadeFiles, setIdentidadeFiles] = useState<DocumentFile[]>([]);
+  const [comprovanteFiles, setComprovanteFiles] = useState<DocumentFile[]>([]);
+  const [beneficiariaFiles, setBeneficiariaFiles] = useState<DocumentFile[]>([]);
   
   const [gettingLocation, setGettingLocation] = useState(false);
 
@@ -113,9 +126,25 @@ export function ConvertLeadToClientDialog({
     },
   });
 
+  // Track online status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
   // Load equipment options
   useEffect(() => {
     const loadEquipment = async () => {
+      if (!navigator.onLine) return;
+      
       const [disjuntoresRes, transformadoresRes] = await Promise.all([
         supabase.from("disjuntores").select("*").eq("ativo", true).order("amperagem"),
         supabase.from("transformadores").select("*").eq("ativo", true).order("potencia_kva"),
@@ -153,31 +182,6 @@ export function ConvertLeadToClientDialog({
       setBeneficiariaFiles([]);
     }
   }, [lead, open, form]);
-
-  const uploadFile = async (file: File, folder: string): Promise<string | null> => {
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-    const { error } = await supabase.storage
-      .from("documentos-cliente")
-      .upload(fileName, file);
-
-    if (error) {
-      console.error("Upload error:", error);
-      return null;
-    }
-
-    return fileName;
-  };
-
-  const uploadMultipleFiles = async (files: File[], folder: string): Promise<string[]> => {
-    const urls: string[] = [];
-    for (const file of files) {
-      const url = await uploadFile(file, folder);
-      if (url) urls.push(url);
-    }
-    return urls;
-  };
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -307,13 +311,20 @@ export function ConvertLeadToClientDialog({
   const handleSubmit = async (data: FormData) => {
     if (!lead) return;
 
+    // Check if we're offline
+    if (!navigator.onLine) {
+      // Save locally for later sync
+      saveConversionOffline(data);
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Upload all documents
-      const identidadeUrls = await uploadMultipleFiles(identidadeFiles, "identidade");
-      const comprovanteUrls = await uploadMultipleFiles(comprovanteFiles, "comprovante");
-      const beneficiariaUrls = await uploadMultipleFiles(beneficiariaFiles, "beneficiaria");
+      // Upload all documents using the new utility function
+      const identidadeUrls = await uploadDocumentFiles(identidadeFiles, "identidade", supabase);
+      const comprovanteUrls = await uploadDocumentFiles(comprovanteFiles, "comprovante", supabase);
+      const beneficiariaUrls = await uploadDocumentFiles(beneficiariaFiles, "beneficiaria", supabase);
 
       // Create client
       const { data: cliente, error: clienteError } = await supabase
@@ -377,6 +388,50 @@ export function ConvertLeadToClientDialog({
     }
   };
 
+  // Save conversion data locally for offline sync
+  const saveConversionOffline = (data: FormData) => {
+    if (!lead) return;
+
+    try {
+      const storedData = localStorage.getItem(OFFLINE_CONVERSION_KEY);
+      const conversions: OfflineConversion[] = storedData ? JSON.parse(storedData) : [];
+
+      // Add or update conversion for this lead
+      const existingIndex = conversions.findIndex(c => c.leadId === lead.id);
+      const newConversion: OfflineConversion = {
+        leadId: lead.id,
+        formData: data,
+        identidadeFiles,
+        comprovanteFiles,
+        beneficiariaFiles,
+        savedAt: new Date().toISOString(),
+      };
+
+      if (existingIndex >= 0) {
+        conversions[existingIndex] = newConversion;
+      } else {
+        conversions.push(newConversion);
+      }
+
+      localStorage.setItem(OFFLINE_CONVERSION_KEY, JSON.stringify(conversions));
+
+      toast({
+        title: "Salvo localmente! 📴",
+        description: "A conversão será finalizada quando você estiver online.",
+      });
+
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error) {
+      console.error("Error saving offline:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar localmente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!lead) return null;
 
   return (
@@ -391,6 +446,14 @@ export function ConvertLeadToClientDialog({
             Preencha os dados para transformar o lead em cliente. Se faltarem documentos, você pode salvar como "Aguardando Documentação".
           </DialogDescription>
         </DialogHeader>
+
+        {/* Offline indicator */}
+        {!isOnline && (
+          <div className="flex items-center gap-2 p-3 bg-warning/20 text-warning-foreground rounded-lg text-sm">
+            <WifiOff className="w-4 h-4" />
+            <span>Modo offline - Os dados serão salvos localmente e sincronizados automaticamente quando a conexão voltar.</span>
+          </div>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
