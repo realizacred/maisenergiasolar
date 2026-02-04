@@ -23,6 +23,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { LeadAlerts } from "@/components/vendor/LeadAlerts";
 import { VendorFollowUpManager } from "@/components/vendor/VendorFollowUpManager";
+import { VendorPendingDocumentation } from "@/components/vendor/VendorPendingDocumentation";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
 import { VendorLeadFilters, VendorLeadsTable, VendorLeadViewDialog } from "@/components/vendor/leads";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
@@ -375,6 +376,16 @@ export default function VendedorPortal() {
           leads={leads} 
           diasAlerta={3}
           onViewLead={(lead) => {
+            setSelectedLead(lead);
+            setIsViewOpen(true);
+          }}
+        />
+
+        {/* Pending Documentation Widget */}
+        <VendorPendingDocumentation 
+          leads={leads}
+          statuses={statuses}
+          onLeadClick={(lead) => {
             setSelectedLead(lead);
             setIsViewOpen(true);
           }}

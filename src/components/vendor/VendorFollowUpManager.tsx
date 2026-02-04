@@ -72,13 +72,11 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
     window.open(`https://wa.me/${formattedPhone}?text=${message}`, "_blank");
   };
 
-  if (urgentLeads.length === 0 && pendingLeads.length === 0) {
-    return null;
-  }
+  const hasIssues = urgentLeads.length > 0 || pendingLeads.length > 0;
 
   return (
     <div className="space-y-4">
-      {/* Stats */}
+      {/* Stats - always show */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-l-4 border-l-destructive">
           <CardContent className="flex items-center gap-4 pt-6">
