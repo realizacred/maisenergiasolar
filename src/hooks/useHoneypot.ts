@@ -10,8 +10,9 @@ export function useHoneypot() {
   const [honeypotValue, setHoneypotValue] = useState("");
   const [formLoadTime] = useState(Date.now());
 
-  // Check if the form was filled too quickly (less than 3 seconds)
-  // This is a common bot behavior
+  // NOTE: We intentionally do NOT block submissions solely based on "filled too fast".
+  // With auto-save drafts and fast users, this causes false positives (submit appears to work,
+  // but nothing is sent). We keep the timing signal only for logging/monitoring.
   const MIN_FILL_TIME_MS = 3000;
 
   const validateHoneypot = useCallback((): { isBot: boolean; reason?: string } => {
@@ -24,11 +25,11 @@ export function useHoneypot() {
     // Check fill time - should be at least 3 seconds
     const fillTime = Date.now() - formLoadTime;
     if (fillTime < MIN_FILL_TIME_MS) {
-      console.warn("[Honeypot] Bot detected: form filled too quickly", {
+      console.warn("[Honeypot] Form filled too quickly (not blocking)", {
         fillTime,
         minRequired: MIN_FILL_TIME_MS,
       });
-      return { isBot: true, reason: "too_fast" };
+      return { isBot: false, reason: "too_fast" };
     }
 
     return { isBot: false };

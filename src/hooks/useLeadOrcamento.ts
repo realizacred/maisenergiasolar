@@ -66,8 +66,13 @@ export function useLeadOrcamento() {
         .eq("telefone_normalized", normalized)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("[checkExistingLeads] Error:", error);
+       if (error) {
+         console.error("[checkExistingLeads] Error (likely RLS for anon users):", {
+           message: error.message,
+           details: (error as any).details,
+           hint: (error as any).hint,
+           code: (error as any).code,
+         });
         return null;
       }
 
