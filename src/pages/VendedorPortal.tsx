@@ -92,12 +92,16 @@ export default function VendedorPortal() {
   const loadVendedorData = async () => {
     if (!user) return;
 
+    console.log("VendedorPortal: Loading data for user:", user.id);
+
     try {
       // First check user roles to determine proper redirect
-      const { data: userRoles } = await supabase
+      const { data: userRoles, error: rolesError } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id);
+
+      console.log("VendedorPortal: User roles:", userRoles, "Error:", rolesError);
 
       const isAdmin = userRoles?.some(r => r.role === "admin" || r.role === "gerente");
       
@@ -108,10 +112,15 @@ export default function VendedorPortal() {
         .eq("user_id", user.id)
         .single();
 
+      console.log("VendedorPortal: Vendedor data:", vendedorData, "Error:", vendedorError);
+
       if (vendedorError || !vendedorData) {
+        console.log("VendedorPortal: No vendedor found, isAdmin:", isAdmin);
+        
         // If user is admin/gerente, redirect to admin panel
         if (isAdmin) {
-          navigate("/admin");
+          console.log("VendedorPortal: Redirecting admin to /admin");
+          navigate("/admin", { replace: true });
           return;
         }
         
@@ -121,10 +130,13 @@ export default function VendedorPortal() {
           variant: "destructive",
         });
         // Sign out to prevent redirect loop
+        console.log("VendedorPortal: Signing out user without vendedor link");
         await signOut();
-        navigate("/auth");
+        navigate("/auth", { replace: true });
         return;
       }
+
+      console.log("VendedorPortal: Vendedor found, loading leads");
 
       setVendedor(vendedorData);
 

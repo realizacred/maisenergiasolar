@@ -19,22 +19,29 @@ export default function Auth() {
         setCheckingRole(true);
         try {
           // Check if user has 'vendedor' role
-          const { data: roles } = await supabase
+          const { data: roles, error: rolesError } = await supabase
             .from("user_roles")
             .select("role")
             .eq("user_id", user.id);
 
+          console.log("Auth: User roles fetched:", roles, "Error:", rolesError);
+
           const isVendedor = roles?.some(r => r.role === "vendedor");
           const isAdmin = roles?.some(r => r.role === "admin" || r.role === "gerente");
 
+          console.log("Auth: isVendedor:", isVendedor, "isAdmin:", isAdmin);
+
+          // Vendedor-only users go to vendor portal
           if (isVendedor && !isAdmin) {
-            navigate("/vendedor");
+            console.log("Auth: Redirecting to /vendedor");
+            navigate("/vendedor", { replace: true });
           } else {
-            navigate("/admin");
+            console.log("Auth: Redirecting to /admin");
+            navigate("/admin", { replace: true });
           }
         } catch (error) {
           console.error("Error checking user role:", error);
-          navigate("/admin");
+          navigate("/admin", { replace: true });
         } finally {
           setCheckingRole(false);
         }
