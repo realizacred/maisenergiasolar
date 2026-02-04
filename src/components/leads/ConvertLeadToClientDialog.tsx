@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, ShoppingCart, FileText, MapPin, Navigation, Save, WifiOff } from "lucide-react";
+import { Loader2, ShoppingCart, FileText, MapPin, Navigation, Save, WifiOff, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -246,6 +246,16 @@ export function ConvertLeadToClientDialog({
     );
   };
 
+  // Get list of missing required items
+  const getMissingItems = () => {
+    const missing: string[] = [];
+    if (identidadeFiles.length === 0) missing.push("Identidade (RG/CNH)");
+    if (comprovanteFiles.length === 0) missing.push("Comprovante de Endereço");
+    if (!form.getValues("disjuntor_id")) missing.push("Disjuntor");
+    if (!form.getValues("transformador_id")) missing.push("Transformador");
+    return missing;
+  };
+
   // Save as lead with "Aguardando Documentação" status
   const handleSaveAsLead = async () => {
     if (!lead) return;
@@ -312,6 +322,17 @@ export function ConvertLeadToClientDialog({
 
   const handleSubmit = async (data: FormData) => {
     if (!lead) return;
+
+    // Validate required documents before submission
+    const missingItems = getMissingItems();
+    if (missingItems.length > 0) {
+      toast({
+        title: "Documentação incompleta",
+        description: `Itens obrigatórios faltando: ${missingItems.join(", ")}. Use "Aguardando Documentação" para salvar parcialmente.`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Check if we're offline
     if (!navigator.onLine) {
@@ -769,6 +790,19 @@ export function ConvertLeadToClientDialog({
                 </FormItem>
               )}
             />
+
+            {/* Missing items warning */}
+            {getMissingItems().length > 0 && (
+              <div className="w-full p-3 mb-2 bg-warning/20 text-warning-foreground rounded-lg text-sm flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium">Documentação incompleta</p>
+                  <p className="text-xs mt-1">
+                    Faltam: {getMissingItems().join(", ")}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button

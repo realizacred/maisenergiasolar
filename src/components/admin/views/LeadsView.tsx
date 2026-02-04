@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLeads } from "@/hooks/useLeads";
 import { LeadsTable, LeadFilters, LeadViewDialog, LeadDeleteDialog } from "@/components/admin/leads";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
+import { PendingDocumentationWidget, FollowUpNotifications } from "@/components/admin/widgets";
 import type { Lead } from "@/types/lead";
 
 export function LeadsView() {
@@ -61,8 +62,19 @@ export function LeadsView() {
     }
   };
 
+  const handleLeadFromWidget = (lead: Lead) => {
+    setLeadToConvert(lead);
+    setIsConvertOpen(true);
+  };
+
   return (
     <>
+      {/* Notification Widgets */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <PendingDocumentationWidget onLeadClick={handleLeadFromWidget} />
+        <FollowUpNotifications onLeadClick={handleLeadFromWidget} diasAlerta={3} />
+      </div>
+
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

@@ -1,10 +1,11 @@
-import { useRef, ChangeEvent } from "react";
-import { Camera, Upload, X, FileText, Image, WifiOff } from "lucide-react";
+import { useRef, ChangeEvent, useState } from "react";
+import { Camera, Upload, X, FileText, Image, WifiOff, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
+import { DocumentPreviewDialog } from "./DocumentPreviewDialog";
 
 // Document file with base64 data for offline support
 export interface DocumentFile {
@@ -25,6 +26,7 @@ interface DocumentUploadProps {
   accept?: string;
   required?: boolean;
   maxSizeMB?: number;
+  showPreview?: boolean;
 }
 
 export function DocumentUpload({
@@ -35,11 +37,15 @@ export function DocumentUpload({
   accept = "image/*,.pdf",
   required = false,
   maxSizeMB = 10,
+  showPreview = true,
 }: DocumentUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   const isOnline = navigator.onLine;
 
@@ -161,7 +167,7 @@ export function DocumentUpload({
             <Badge
               key={index}
               variant="secondary"
-              className="flex items-center gap-1 py-1 px-2 max-w-full"
+              className="flex items-center gap-1 py-1 px-2 max-w-full group"
             >
               {getFileIcon(file)}
               <span className="truncate max-w-[100px] text-xs">{file.name}</span>
@@ -170,6 +176,19 @@ export function DocumentUpload({
               </span>
               {!file.uploaded && !isOnline && (
                 <span className="text-xs text-destructive">(pendente)</span>
+              )}
+              {showPreview && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewIndex(index);
+                    setPreviewOpen(true);
+                  }}
+                  className="ml-1 hover:text-primary transition-colors"
+                  aria-label="Visualizar arquivo"
+                >
+                  <Eye className="h-3 w-3" />
+                </button>
               )}
               <button
                 type="button"
@@ -231,6 +250,17 @@ export function DocumentUpload({
         onChange={handleAddFiles}
         className="sr-only"
       />
+      
+      {/* Preview dialog */}
+      {showPreview && (
+        <DocumentPreviewDialog
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          files={files}
+          initialIndex={previewIndex}
+          title={label}
+        />
+      )}
     </div>
   );
 }
