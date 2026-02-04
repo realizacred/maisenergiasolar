@@ -354,7 +354,7 @@ export default function VendedorPortal() {
         />
 
         {/* Offline Duplicate Resolver */}
-        <OfflineDuplicateResolver />
+        <OfflineDuplicateResolver vendedorNome={vendedor?.nome} />
 
         {/* Offline Conversions Manager */}
         <OfflineConversionsManager />

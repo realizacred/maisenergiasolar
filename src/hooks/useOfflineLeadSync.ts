@@ -38,8 +38,9 @@ interface DuplicateInfo {
   matchingLeads: LeadSimplified[];
 }
 
-const STORAGE_KEY = "offline_leads";
-const DUPLICATE_STORAGE_KEY = "offline_leads_duplicates";
+// Base keys for localStorage - will be prefixed with vendedor name for isolation
+const BASE_STORAGE_KEY = "offline_leads";
+const BASE_DUPLICATE_STORAGE_KEY = "offline_leads_duplicates";
 
 // Custom events for cross-component synchronization
 const PENDING_COUNT_CHANGED_EVENT = "offline-leads-pending-changed";
@@ -54,7 +55,11 @@ const emitDuplicatesChanged = () => {
   window.dispatchEvent(new CustomEvent(DUPLICATES_CHANGED_EVENT));
 };
 
-export function useOfflineLeadSync() {
+interface UseOfflineLeadSyncOptions {
+  vendedorNome?: string | null;
+}
+
+export function useOfflineLeadSync({ vendedorNome }: UseOfflineLeadSyncOptions = {}) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingCount, setPendingCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -66,9 +71,28 @@ export function useOfflineLeadSync() {
   const isOnlineRef = useRef(navigator.onLine);
   const syncedIdsRef = useRef<Set<string>>(new Set());
 
+  // Generate vendedor-specific storage keys to isolate data between vendors
+  const getStorageKey = useCallback(() => {
+    if (vendedorNome) {
+      // Normalize vendedor name for use as key suffix (remove spaces, lowercase)
+      const normalizedName = vendedorNome.toLowerCase().replace(/\s+/g, '_');
+      return `${BASE_STORAGE_KEY}_${normalizedName}`;
+    }
+    return BASE_STORAGE_KEY;
+  }, [vendedorNome]);
+
+  const getDuplicateStorageKey = useCallback(() => {
+    if (vendedorNome) {
+      const normalizedName = vendedorNome.toLowerCase().replace(/\s+/g, '_');
+      return `${BASE_DUPLICATE_STORAGE_KEY}_${normalizedName}`;
+    }
+    return BASE_DUPLICATE_STORAGE_KEY;
+  }, [vendedorNome]);
+
   const countPending = useCallback(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const storageKey = getStorageKey();
+      const stored = localStorage.getItem(storageKey);
       const leads: LeadData[] = stored ? JSON.parse(stored) : [];
       const count = leads.filter((l) => !l.synced).length;
       setPendingCount(count);
@@ -77,11 +101,12 @@ export function useOfflineLeadSync() {
       setPendingCount(0);
       return 0;
     }
-  }, []);
+  }, [getStorageKey]);
 
   const loadDuplicates = useCallback(() => {
     try {
-      const stored = localStorage.getItem(DUPLICATE_STORAGE_KEY);
+      const duplicateKey = getDuplicateStorageKey();
+      const stored = localStorage.getItem(duplicateKey);
       if (stored) {
         const duplicates = JSON.parse(stored);
         setDuplicatesToResolve(duplicates);
@@ -91,7 +116,7 @@ export function useOfflineLeadSync() {
     } catch {
       setDuplicatesToResolve([]);
     }
-  }, []);
+  }, [getDuplicateStorageKey]);
 
   /**
    * Normaliza o telefone removendo caracteres não numéricos
@@ -214,7 +239,8 @@ export function useOfflineLeadSync() {
         });
       }
 
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const storageKey = getStorageKey();
+      const stored = localStorage.getItem(storageKey);
       if (!stored) {
         setIsSyncing(false);
         syncInProgressRef.current = false;
@@ -277,11 +303,12 @@ export function useOfflineLeadSync() {
         }
       }
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+      localStorage.setItem(storageKey, JSON.stringify(leads));
       
       // Store duplicates for later resolution
       if (duplicatesFound.length > 0) {
-        localStorage.setItem(DUPLICATE_STORAGE_KEY, JSON.stringify(duplicatesFound));
+        const duplicateKey = getDuplicateStorageKey();
+        localStorage.setItem(duplicateKey, JSON.stringify(duplicatesFound));
         setDuplicatesToResolve(duplicatesFound);
         // Notify other hook instances about duplicates
         emitDuplicatesChanged();
@@ -335,18 +362,19 @@ export function useOfflineLeadSync() {
       setIsSyncing(false);
       syncInProgressRef.current = false;
     }
-  }, [countPending]);
+  }, [countPending, getStorageKey, getDuplicateStorageKey]);
 
-  const saveLocally = (lead: LeadData): string => {
+  const saveLocally = useCallback((lead: LeadData): string => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const storageKey = getStorageKey();
+      const stored = localStorage.getItem(storageKey);
       const leads: LeadData[] = stored ? JSON.parse(stored) : [];
       
       const localId = `local_${Date.now()}`;
       const newLead = { ...lead, id: localId, synced: false };
       leads.push(newLead);
       
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+      localStorage.setItem(storageKey, JSON.stringify(leads));
       countPending();
       
       // Notify other hook instances
@@ -357,7 +385,7 @@ export function useOfflineLeadSync() {
       console.error("Error saving locally:", error);
       throw new Error("Falha ao salvar localmente");
     }
-  };
+  }, [getStorageKey, countPending]);
 
   const saveLead = async (lead: Omit<LeadData, "id" | "synced">): Promise<{ success: boolean; offline: boolean; error?: string }> => {
     // Use fresh navigator.onLine check for most accurate status
@@ -452,23 +480,26 @@ export function useOfflineLeadSync() {
 
   const clearSyncedLeads = useCallback(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const storageKey = getStorageKey();
+      const stored = localStorage.getItem(storageKey);
       if (!stored) return;
       
       const leads: LeadData[] = JSON.parse(stored);
       const pendingOnly = leads.filter((l) => !l.synced);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingOnly));
+      localStorage.setItem(storageKey, JSON.stringify(pendingOnly));
     } catch (error) {
       console.error("Error clearing synced leads:", error);
     }
-  }, []);
+  }, [getStorageKey]);
 
   /**
    * Resolve a duplicate by forcing creation of new lead
    */
   const resolveDuplicateAsNew = useCallback(async (localLeadId: string): Promise<boolean> => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const storageKey = getStorageKey();
+      const duplicateKey = getDuplicateStorageKey();
+      const stored = localStorage.getItem(storageKey);
       if (!stored) return false;
       
       const leads: LeadData[] = JSON.parse(stored);
@@ -479,12 +510,12 @@ export function useOfflineLeadSync() {
       const syncResult = await syncLead(lead);
       if (syncResult.success) {
         lead.synced = true;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+        localStorage.setItem(storageKey, JSON.stringify(leads));
         
         // Remove from duplicates list
         const duplicates = duplicatesToResolve.filter((d) => d.leadId !== localLeadId);
         setDuplicatesToResolve(duplicates);
-        localStorage.setItem(DUPLICATE_STORAGE_KEY, JSON.stringify(duplicates));
+        localStorage.setItem(duplicateKey, JSON.stringify(duplicates));
         
         countPending();
         
@@ -499,14 +530,16 @@ export function useOfflineLeadSync() {
       console.error("Error resolving duplicate as new:", error);
       return false;
     }
-  }, [duplicatesToResolve, countPending]);
+  }, [duplicatesToResolve, countPending, getStorageKey, getDuplicateStorageKey]);
 
   /**
    * Resolve a duplicate by discarding the local lead (it's already in DB)
    */
   const resolveDuplicateAsExisting = useCallback((localLeadId: string): boolean => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const storageKey = getStorageKey();
+      const duplicateKey = getDuplicateStorageKey();
+      const stored = localStorage.getItem(storageKey);
       if (!stored) return false;
       
       const leads: LeadData[] = JSON.parse(stored);
@@ -515,12 +548,12 @@ export function useOfflineLeadSync() {
       if (index >= 0) {
         // Mark as synced (since we're treating it as duplicate of existing)
         leads[index].synced = true;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+        localStorage.setItem(storageKey, JSON.stringify(leads));
         
         // Remove from duplicates list
         const duplicates = duplicatesToResolve.filter((d) => d.leadId !== localLeadId);
         setDuplicatesToResolve(duplicates);
-        localStorage.setItem(DUPLICATE_STORAGE_KEY, JSON.stringify(duplicates));
+        localStorage.setItem(duplicateKey, JSON.stringify(duplicates));
         
         countPending();
         
@@ -535,16 +568,17 @@ export function useOfflineLeadSync() {
       console.error("Error resolving duplicate as existing:", error);
       return false;
     }
-  }, [duplicatesToResolve, countPending]);
+  }, [duplicatesToResolve, countPending, getStorageKey, getDuplicateStorageKey]);
 
   /**
    * Clear all resolved duplicates
    */
   const clearDuplicates = useCallback(() => {
+    const duplicateKey = getDuplicateStorageKey();
     setDuplicatesToResolve([]);
-    localStorage.removeItem(DUPLICATE_STORAGE_KEY);
+    localStorage.removeItem(duplicateKey);
     emitDuplicatesChanged();
-  }, []);
+  }, [getDuplicateStorageKey]);
 
   // Load duplicates from storage on mount and listen for changes from other hook instances
   useEffect(() => {
