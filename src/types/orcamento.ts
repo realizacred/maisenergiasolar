@@ -93,3 +93,8 @@ export interface ExistingLeadMatch {
   lead: LeadSimplified;
   orcamentos_count: number;
 }
+
+// List of matching leads for duplicate selection
+export interface DuplicateLeadsResult {
+  leads: LeadSimplified[];
+}
