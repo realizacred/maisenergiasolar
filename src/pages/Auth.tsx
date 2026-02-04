@@ -44,7 +44,7 @@ export default function Auth() {
             .eq("user_id", user.id);
 
           const isVendedor = roles?.some(r => r.role === "vendedor");
-          const isAdmin = roles?.some(r => r.role === "admin" || r.role === "gerente");
+          const isAdmin = roles?.some(r => r.role === "admin" || r.role === "gerente" || r.role === "financeiro");
 
           let hasVendedorRecord = false;
           if (isVendedor) {

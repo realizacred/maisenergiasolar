@@ -90,7 +90,7 @@ export default function VendedorPortal() {
 
       console.log("VendedorPortal: User roles:", userRoles, "Error:", rolesError);
 
-      const isAdmin = userRoles?.some(r => r.role === "admin" || r.role === "gerente");
+      const isAdmin = userRoles?.some(r => r.role === "admin" || r.role === "gerente" || r.role === "financeiro");
       
       // Get vendedor profile linked to user
       const { data: vendedorData, error: vendedorError } = await supabase

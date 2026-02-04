@@ -51,7 +51,7 @@ export default function PortalSelector() {
         .eq("user_id", user.id);
 
       const isVendedor = roles?.some(r => r.role === "vendedor");
-      const isAdmin = roles?.some(r => r.role === "admin" || r.role === "gerente");
+      const isAdmin = roles?.some(r => r.role === "admin" || r.role === "gerente" || r.role === "financeiro");
 
       // Check if user has vendedor record
       let hasVendedorRecord = false;
