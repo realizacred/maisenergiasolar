@@ -13,6 +13,7 @@ import {
   Sun,
   Instagram,
   Shield,
+  Plug,
 } from "lucide-react";
 import {
   Sidebar,
@@ -50,6 +51,7 @@ const mainMenuItems = [
 const configMenuItems = [
   { id: "vendedores", title: "Vendedores", icon: Users },
   { id: "usuarios", title: "Usuários", icon: Shield },
+  { id: "equipamentos", title: "Equipamentos", icon: Plug },
   { id: "config", title: "Calculadora", icon: Calculator },
   { id: "financiamento", title: "Bancos", icon: Building2 },
   { id: "instagram", title: "Instagram", icon: Instagram },
