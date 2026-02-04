@@ -7,7 +7,10 @@ import {
   User,
   MapPin,
   Phone,
-  FileX
+  FileX,
+  FileCheck,
+  MapPinOff,
+  Zap
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,12 +24,69 @@ interface VendorPendingDocumentationProps {
   onConvertClick?: (lead: Lead) => void;
 }
 
-// Helper to parse missing docs from observacoes
+// Helper to parse missing docs from observacoes - format: [Documentação Pendente: item1, item2]
 function parseMissingDocs(observacoes: string | null): string[] {
   if (!observacoes) return [];
   const match = observacoes.match(/\[Documentação Pendente: ([^\]]+)\]/);
   if (!match) return [];
   return match[1].split(",").map(s => s.trim()).filter(Boolean);
+}
+
+// Get missing items for a lead from localStorage (if partial conversion was saved)
+function getMissingItemsFromStorage(leadId: string): string[] {
+  try {
+    const storageKey = `lead_conversion_${leadId}`;
+    const stored = localStorage.getItem(storageKey);
+    if (!stored) return [];
+    
+    const data = JSON.parse(stored);
+    const missing: string[] = [];
+    
+    // Check documents
+    if (!data.identidadeFiles || data.identidadeFiles.length === 0) {
+      missing.push("Identidade");
+    }
+    if (!data.comprovanteFiles || data.comprovanteFiles.length === 0) {
+      missing.push("Comprovante Endereço");
+    }
+    
+    // Check form data
+    if (!data.formData?.disjuntor_id) {
+      missing.push("Disjuntor");
+    }
+    if (!data.formData?.transformador_id) {
+      missing.push("Transformador");
+    }
+    if (!data.formData?.localizacao) {
+      missing.push("Localização");
+    }
+    
+    return missing;
+  } catch {
+    return [];
+  }
+}
+
+// Get completion percentage
+function getCompletionPercentage(missingItems: string[]): number {
+  const totalItems = 5; // Identidade, Comprovante, Disjuntor, Transformador, Localização
+  const completedItems = totalItems - missingItems.length;
+  return Math.round((completedItems / totalItems) * 100);
+}
+
+// Get badge variant based on item type
+function getItemIcon(item: string) {
+  const lowerItem = item.toLowerCase();
+  if (lowerItem.includes("identidade") || lowerItem.includes("comprovante")) {
+    return FileX;
+  }
+  if (lowerItem.includes("localização")) {
+    return MapPinOff;
+  }
+  if (lowerItem.includes("disjuntor") || lowerItem.includes("transformador")) {
+    return Zap;
+  }
+  return FileX;
 }
 
 export function VendorPendingDocumentation({ 
@@ -42,7 +102,27 @@ export function VendorPendingDocumentation({
     
     return leads
       .filter(lead => lead.status_id === pendingStatus.id)
-      .sort((a, b) => new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime());
+      .map(lead => {
+        // First try to get missing items from localStorage (more accurate)
+        let missingItems = getMissingItemsFromStorage(lead.id);
+        
+        // Fallback to observacoes if localStorage is empty
+        if (missingItems.length === 0) {
+          missingItems = parseMissingDocs(lead.observacoes);
+        }
+        
+        // If still empty, assume default required items
+        if (missingItems.length === 0) {
+          missingItems = ["Identidade", "Comprovante Endereço", "Disjuntor", "Transformador", "Localização"];
+        }
+        
+        return {
+          ...lead,
+          missingItems,
+          completionPercentage: getCompletionPercentage(missingItems),
+        };
+      })
+      .sort((a, b) => b.completionPercentage - a.completionPercentage); // Most complete first
   }, [leads, statuses]);
 
   const getDaysWaiting = (updatedAt: string) => {
@@ -68,8 +148,6 @@ export function VendorPendingDocumentation({
     }
   };
 
-  // Always render - show empty state if no pending
-
   return (
     <Card className="border-primary/30 bg-primary/5">
       <CardHeader className="pb-3">
@@ -93,7 +171,7 @@ export function VendorPendingDocumentation({
         {pendingLeads.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-6 text-center">
             <div className="bg-primary/10 rounded-full p-3 mb-3">
-              <FileWarning className="h-5 w-5 text-primary" />
+              <FileCheck className="h-5 w-5 text-primary" />
             </div>
             <p className="text-sm font-medium text-foreground">Tudo certo! ✅</p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -102,11 +180,10 @@ export function VendorPendingDocumentation({
           </div>
         ) : (
           <>
-            <ScrollArea className="max-h-[350px]">
-              <div className="space-y-2">
+            <ScrollArea className="max-h-[400px]">
+              <div className="space-y-3">
                 {pendingLeads.map((lead) => {
                   const daysWaiting = getDaysWaiting(lead.updated_at);
-                  const missingDocs = parseMissingDocs(lead.observacoes);
                   
                   return (
                     <div
@@ -114,6 +191,7 @@ export function VendorPendingDocumentation({
                       className="flex flex-col p-3 border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer group"
                       onClick={() => handleClick(lead)}
                     >
+                      {/* Header with name and urgency */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <div className="bg-primary/10 rounded-full p-2">
@@ -140,20 +218,49 @@ export function VendorPendingDocumentation({
                         </div>
                       </div>
                       
-                      {/* Missing docs summary */}
-                      {missingDocs.length > 0 && (
-                        <div className="mt-2 pt-2 border-t border-dashed flex items-start gap-2">
-                          <FileX className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
+                      {/* Progress bar */}
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="text-muted-foreground">Progresso</span>
+                          <span className={`font-medium ${lead.completionPercentage >= 80 ? 'text-emerald-600' : lead.completionPercentage >= 40 ? 'text-amber-600' : 'text-destructive'}`}>
+                            {lead.completionPercentage}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all ${
+                              lead.completionPercentage >= 80 
+                                ? 'bg-emerald-500' 
+                                : lead.completionPercentage >= 40 
+                                  ? 'bg-amber-500' 
+                                  : 'bg-destructive'
+                            }`}
+                            style={{ width: `${lead.completionPercentage}%` }}
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Missing items */}
+                      {lead.missingItems.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-dashed">
+                          <p className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1">
+                            <FileX className="h-3 w-3" />
+                            Faltando:
+                          </p>
                           <div className="flex flex-wrap gap-1">
-                            {missingDocs.map((doc, idx) => (
-                              <Badge 
-                                key={idx} 
-                                variant="outline" 
-                                className="text-xs bg-destructive/10 text-destructive border-destructive/30"
-                              >
-                                {doc}
-                              </Badge>
-                            ))}
+                            {lead.missingItems.map((item, idx) => {
+                              const Icon = getItemIcon(item);
+                              return (
+                                <Badge 
+                                  key={idx} 
+                                  variant="outline" 
+                                  className="text-xs bg-destructive/10 text-destructive border-destructive/30 gap-1"
+                                >
+                                  <Icon className="h-3 w-3" />
+                                  {item}
+                                </Badge>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
