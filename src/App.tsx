@@ -10,6 +10,7 @@ import Admin from "./pages/Admin";
 import Calculadora from "./pages/Calculadora";
 import Checklist from "./pages/Checklist";
 import VendedorPortal from "./pages/VendedorPortal";
+import VendorPage from "./pages/VendorPage";
 import PortalSelector from "./pages/PortalSelector";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +25,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/v/:codigo" element={<VendorPage />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/portal" element={<PortalSelector />} />
             <Route path="/admin" element={<Admin />} />
