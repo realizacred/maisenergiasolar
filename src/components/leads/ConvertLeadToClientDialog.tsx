@@ -196,10 +196,16 @@ export function ConvertLeadToClientDialog({
     }
   }, [lead, open]);
 
-  // Pre-fill form when lead changes
+  // Track if form was already initialized for this lead/open session
+  const [formInitialized, setFormInitialized] = useState<string | null>(null);
+
   // Pre-fill form when lead changes - restore saved partial data if available
+  // Only run once per lead+open combination to avoid overwriting user input
   useEffect(() => {
     if (lead && open) {
+      // Skip if already initialized for this lead
+      if (formInitialized === lead.id) return;
+
       // Check if there's saved partial conversion data for this lead
       const storageKey = `lead_conversion_${lead.id}`;
       let savedData: {
@@ -283,8 +289,18 @@ export function ConvertLeadToClientDialog({
         setComprovanteFiles([]);
         setBeneficiariaFiles([]);
       }
+
+      // Mark as initialized for this lead
+      setFormInitialized(lead.id);
     }
-  }, [lead, open, form, toast]);
+  }, [lead, open, formInitialized, form, toast]);
+
+  // Reset formInitialized when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setFormInitialized(null);
+    }
+  }, [open]);
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
