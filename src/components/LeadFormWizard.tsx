@@ -717,6 +717,7 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
                       label="Nome Completo *"
                       icon={<User className="w-4 h-4" />}
                       value={watchedValues.nome}
+                      autoComplete="off"
                       onChange={(e) => setValue("nome", formatName(e.target.value))}
                       onBlur={() => {
                         markFieldTouched("nome");
@@ -733,6 +734,7 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
                       icon={<Phone className="w-4 h-4" />}
                       value={watchedValues.telefone}
                       maxLength={15}
+                      autoComplete="off"
                       onChange={(e) => setValue("telefone", formatPhone(e.target.value))}
                       onBlur={() => {
                         markFieldTouched("telefone");
@@ -754,6 +756,7 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
                       icon={<MapPin className="w-4 h-4" />}
                       value={watchedValues.cep}
                       maxLength={9}
+                      autoComplete="off"
                       onChange={(e) => setValue("cep", formatCEP(e.target.value))}
                       onBlur={(e) => {
                         markFieldTouched("cep");
