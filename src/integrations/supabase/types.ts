@@ -741,6 +741,36 @@ export type Database = {
           },
         ]
       }
+      concessionarias: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          estado: string | null
+          id: string
+          nome: string
+          sigla: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          estado?: string | null
+          id?: string
+          nome: string
+          sigla?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          estado?: string | null
+          id?: string
+          nome?: string
+          sigla?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       disjuntores: {
         Row: {
           amperagem: number
