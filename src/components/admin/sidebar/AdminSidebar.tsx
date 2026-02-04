@@ -60,33 +60,57 @@ const configMenuItems = [
   { id: "webhooks", title: "Webhooks", icon: Webhook },
 ];
 
-export function AdminSidebar({ activeTab, onTabChange, userEmail, onSignOut }: AdminSidebarProps) {
+export function AdminSidebar({
+  activeTab,
+  onTabChange,
+  userEmail,
+  onSignOut,
+}: AdminSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
   return (
-    <Sidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="border-b p-4">
-        <Link to="/" className="flex items-center gap-3">
+    <Sidebar collapsible="icon" className="border-r border-border/50">
+      <SidebarHeader className="border-b border-border/50 p-4">
+        <Link
+          to="/"
+          className="flex items-center gap-3 transition-opacity duration-200 hover:opacity-80"
+        >
           {collapsed ? (
-            <Sun className="h-8 w-8 text-primary" />
+            <div className="p-1.5 rounded-lg bg-primary/10">
+              <Sun className="h-6 w-6 text-primary" />
+            </div>
           ) : (
-            <img src={logo} alt="Mais Energia Solar" className="h-10 w-auto" />
+            <img
+              src={logo}
+              alt="Mais Energia Solar"
+              className="h-9 w-auto"
+            />
           )}
         </Link>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="scrollbar-thin">
         <SidebarGroup>
-          <SidebarGroupLabel>Operações</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-2">
+            Operações
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainMenuItems.map((item) => (
+              {mainMenuItems.map((item, index) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     onClick={() => onTabChange(item.id)}
                     isActive={activeTab === item.id}
                     tooltip={item.title}
+                    className={`
+                      transition-all duration-200 rounded-lg mx-2
+                      ${activeTab === item.id 
+                        ? "bg-primary/10 text-primary font-medium shadow-xs" 
+                        : "hover:bg-accent"
+                      }
+                    `}
+                    style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
@@ -98,15 +122,25 @@ export function AdminSidebar({ activeTab, onTabChange, userEmail, onSignOut }: A
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Configurações</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-2">
+            Configurações
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {configMenuItems.map((item) => (
+              {configMenuItems.map((item, index) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     onClick={() => onTabChange(item.id)}
                     isActive={activeTab === item.id}
                     tooltip={item.title}
+                    className={`
+                      transition-all duration-200 rounded-lg mx-2
+                      ${activeTab === item.id 
+                        ? "bg-primary/10 text-primary font-medium shadow-xs" 
+                        : "hover:bg-accent"
+                      }
+                    `}
+                    style={{ animationDelay: `${(mainMenuItems.length + index) * 50}ms` }}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
@@ -118,16 +152,18 @@ export function AdminSidebar({ activeTab, onTabChange, userEmail, onSignOut }: A
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-4 space-y-3">
+      <SidebarFooter className="border-t border-border/50 p-4 space-y-3">
         {!collapsed && userEmail && (
-          <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+          <div className="px-2 py-1.5 rounded-lg bg-muted/50">
+            <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+          </div>
         )}
         {!collapsed && <PortalSwitcher />}
         <Button
           variant="outline"
           size={collapsed ? "icon" : "default"}
           onClick={onSignOut}
-          className="w-full gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
+          className="w-full gap-2 text-muted-foreground hover:text-destructive hover:border-destructive/50 hover:bg-destructive/5"
         >
           <LogOut className="h-4 w-4" />
           {!collapsed && <span>Sair</span>}
