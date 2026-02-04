@@ -77,8 +77,23 @@ export function useLeadOrcamento() {
       }
 
       if (leads && leads.length > 0) {
+        // Deduplicate by normalized name - keep only the most recent lead for each unique name
+        const normalizedNameMap = new Map<string, typeof leads[0]>();
+        
+        for (const lead of leads) {
+          // Normalize name: lowercase, trim, remove extra spaces
+          const normalizedName = lead.nome.toLowerCase().trim().replace(/\s+/g, ' ');
+          
+          // Only keep the first (most recent) occurrence of each name
+          if (!normalizedNameMap.has(normalizedName)) {
+            normalizedNameMap.set(normalizedName, lead);
+          }
+        }
+        
+        const uniqueLeads = Array.from(normalizedNameMap.values());
+        
         return {
-          leads: leads as LeadSimplified[],
+          leads: uniqueLeads as LeadSimplified[],
         };
       }
 
