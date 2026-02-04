@@ -315,6 +315,8 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
     setIsSubmitting(true);
     setSavedOffline(false);
     
+    console.log("[LeadFormWizard] Starting form submission...");
+    
     try {
       const leadData = {
         nome: data.nome.trim(),
@@ -336,7 +338,9 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
         vendedor: vendedorNome,
       };
 
+      console.log("[LeadFormWizard] Calling saveLead with data:", leadData.nome);
       const result = await saveLead(leadData);
+      console.log("[LeadFormWizard] saveLead result:", result);
 
       if (result.success) {
         setIsSuccess(true);
@@ -358,13 +362,19 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
             : "Entraremos em contato em breve.",
         });
       } else {
-        throw new Error("Falha ao salvar lead");
+        console.error("[LeadFormWizard] Save failed:", result.error);
+        toast({
+          title: "Erro ao enviar cadastro",
+          description: result.error || "Tente novamente mais tarde.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("Erro ao enviar cadastro:", error);
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      console.error("[LeadFormWizard] Exception during submission:", errorMessage);
       toast({
         title: "Erro ao enviar cadastro",
-        description: "Tente novamente mais tarde.",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
         variant: "destructive",
       });
     } finally {
