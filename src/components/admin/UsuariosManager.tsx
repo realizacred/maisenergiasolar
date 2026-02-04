@@ -216,6 +216,25 @@ export function UsuariosManager() {
 
   const handleRemoveRole = async (userId: string, role: string) => {
     try {
+      // Prevent removal of the last admin role in the system
+      if (role === "admin") {
+        const { count, error: countError } = await supabase
+          .from("user_roles")
+          .select("*", { count: "exact", head: true })
+          .eq("role", "admin");
+
+        if (countError) throw countError;
+
+        if ((count ?? 0) <= 1) {
+          toast({
+            title: "Ação bloqueada",
+            description: "Não é possível remover o último administrador do sistema.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from("user_roles")
         .delete()
