@@ -73,7 +73,11 @@ const fieldVariants = {
   },
 };
 
-export default function LeadFormWizard() {
+interface LeadFormWizardProps {
+  vendorCode?: string;
+}
+
+export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {}) {
   const [searchParams] = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(0);
@@ -111,7 +115,8 @@ export default function LeadFormWizard() {
   // Captura e valida o vendedor da URL
   useEffect(() => {
     const validateVendedor = async () => {
-      const codigo = searchParams.get("v") || searchParams.get("vendedor");
+      // Prioriza prop vendorCode, depois searchParams
+      const codigo = vendorCode || searchParams.get("v") || searchParams.get("vendedor");
       if (!codigo) return;
 
       try {
@@ -137,7 +142,7 @@ export default function LeadFormWizard() {
     };
 
     validateVendedor();
-  }, [searchParams]);
+  }, [searchParams, vendorCode]);
 
   const form = useForm<LeadFormData>({
     resolver: zodResolver(leadFormSchema),

@@ -177,7 +177,7 @@ export default function VendedorPortal() {
 
   const copyLink = () => {
     if (!vendedor) return;
-    const link = `${window.location.origin}/?v=${vendedor.codigo}`;
+    const link = `${window.location.origin}/v/${vendedor.codigo}`;
     navigator.clipboard.writeText(link);
     toast({
       title: "Link copiado!",
@@ -313,7 +313,7 @@ export default function VendedorPortal() {
             <div className="flex gap-2">
               <Input 
                 readOnly 
-                value={`${window.location.origin}/?v=${vendedor?.codigo || ''}`}
+                value={`${window.location.origin}/v/${vendedor?.codigo || ''}`}
                 className="bg-background"
               />
               <Button onClick={copyLink} variant="secondary">
