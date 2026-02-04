@@ -354,100 +354,122 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
       vendedor: vendedorNome,
     };
 
-    try {
-      // If online, use new Lead/Orcamento system
-      if (isOnline) {
-        const result = await submitOrcamento(
-          { nome: data.nome.trim(), telefone: data.telefone.trim() },
-          orcamentoData
-        );
+    // Helper to save offline
+    const saveOfflineFallback = async () => {
+      const leadData = {
+        nome: data.nome.trim(),
+        telefone: data.telefone.trim(),
+        ...orcamentoData,
+      };
 
-        console.log("[LeadFormWizard] submitOrcamento result:", result);
+      console.log("[LeadFormWizard] Using offline saveLead");
+      const result = await saveLead(leadData);
 
-        if (result.error === "DUPLICATE_DETECTED") {
-          // Duplicate detected - dialog will be shown
-          setIsSubmitting(false);
-          return;
-        }
-
-        if (result.success) {
-          console.log("[LeadFormWizard] Success! Setting isSuccess to true");
-          clearDraft();
-          resetHoneypot();
-          resetRateLimit();
-          setSavedOffline(false);
+      if (result.success) {
+        clearDraft();
+        resetHoneypot();
+        resetRateLimit();
+        setSavedOffline(result.offline || false);
+        
+        if (!result.offline) {
           triggerConfetti();
-          
-          toast({
-            title: result.isNewLead 
-              ? "Cadastro enviado com sucesso! ☀️"
-              : "Novo orçamento vinculado! ☀️",
-            description: result.isNewLead
-              ? "Entraremos em contato em breve."
-              : "Orçamento adicionado ao cliente existente.",
-          });
-          
-          // Set success state AFTER all other operations
-          setIsSubmitting(false);
-          setIsSuccess(true);
-          return;
-        } else {
-          console.error("[LeadFormWizard] Save failed:", result.error);
-          toast({
-            title: "Erro ao enviar cadastro",
-            description: result.error || "Tente novamente mais tarde.",
-            variant: "destructive",
-          });
         }
-      } else {
-        // Offline: use legacy lead save
-        const leadData = {
-          nome: data.nome.trim(),
-          telefone: data.telefone.trim(),
-          ...orcamentoData,
-        };
+        
+        toast({
+          title: result.offline 
+            ? "Cadastro salvo localmente! 📴" 
+            : "Cadastro enviado com sucesso! ☀️",
+          description: result.offline
+            ? "Será sincronizado automaticamente quando a conexão voltar."
+            : "Entraremos em contato em breve.",
+        });
+        
+        setIsSubmitting(false);
+        setIsSuccess(true);
+        return true;
+      }
+      return false;
+    };
 
-        console.log("[LeadFormWizard] Offline - using legacy saveLead");
-        const result = await saveLead(leadData);
-
-        if (result.success) {
-          setIsSuccess(true);
-          setSavedOffline(result.offline);
-          clearDraft();
-          resetHoneypot();
-          resetRateLimit();
-          
-          if (!result.offline) {
-            triggerConfetti();
-          }
-          
+    try {
+      // If offline, use legacy lead save directly
+      if (!isOnline) {
+        const success = await saveOfflineFallback();
+        if (!success) {
           toast({
-            title: result.offline 
-              ? "Cadastro salvo localmente! 📴" 
-              : "Cadastro enviado com sucesso! ☀️",
-            description: result.offline
-              ? "Será sincronizado automaticamente quando a conexão voltar."
-              : "Entraremos em contato em breve.",
+            title: "Erro ao salvar cadastro",
+            description: "Não foi possível salvar o cadastro localmente.",
+            variant: "destructive",
           });
-        } else {
-          console.error("[LeadFormWizard] Save failed:", result.error);
+          setIsSubmitting(false);
+        }
+        return;
+      }
+
+      // Online: use new Lead/Orcamento system
+      const result = await submitOrcamento(
+        { nome: data.nome.trim(), telefone: data.telefone.trim() },
+        orcamentoData
+      );
+
+      console.log("[LeadFormWizard] submitOrcamento result:", result);
+
+      if (result.error === "DUPLICATE_DETECTED") {
+        // Duplicate detected - dialog will be shown
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (result.success) {
+        console.log("[LeadFormWizard] Success! Setting isSuccess to true");
+        clearDraft();
+        resetHoneypot();
+        resetRateLimit();
+        setSavedOffline(false);
+        triggerConfetti();
+        
+        toast({
+          title: result.isNewLead 
+            ? "Cadastro enviado com sucesso! ☀️"
+            : "Novo orçamento vinculado! ☀️",
+          description: result.isNewLead
+            ? "Entraremos em contato em breve."
+            : "Orçamento adicionado ao cliente existente.",
+        });
+        
+        setIsSubmitting(false);
+        setIsSuccess(true);
+        return;
+      } else {
+        // Online submission failed - try offline fallback
+        console.warn("[LeadFormWizard] Online save failed, trying offline fallback:", result.error);
+        const offlineSuccess = await saveOfflineFallback();
+        
+        if (!offlineSuccess) {
           toast({
             title: "Erro ao enviar cadastro",
             description: result.error || "Tente novamente mais tarde.",
             variant: "destructive",
           });
+          setIsSubmitting(false);
         }
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
       console.error("[LeadFormWizard] Exception during submission:", errorMessage);
-      toast({
-        title: "Erro ao enviar cadastro",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+      
+      // Try offline fallback on any exception
+      console.log("[LeadFormWizard] Attempting offline fallback after exception");
+      const offlineSuccess = await saveOfflineFallback();
+      
+      if (!offlineSuccess) {
+        toast({
+          title: "Erro ao enviar cadastro",
+          description: "Ocorreu um erro inesperado. Tente novamente.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+      }
     }
   };
 
