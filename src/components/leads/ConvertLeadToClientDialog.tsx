@@ -259,8 +259,7 @@ export function ConvertLeadToClientDialog({
   };
 
   // Save as lead with "Aguardando Documentação" status
-  // This saves the partial data (disjuntor, transformador, etc.) to a temporary client record
-  // or stores it in localStorage for later completion
+  // This saves partial data ONLY to the lead record (not creating a client yet)
   const handleSaveAsLead = async () => {
     if (!lead) return;
 
@@ -289,99 +288,47 @@ export function ConvertLeadToClientDialog({
       if (!form.getValues("transformador_id")) missing.push("Transformador");
       if (!form.getValues("localizacao")) missing.push("Localização");
 
+      // Get current observations and remove any existing "[Documentação Pendente: ...]" prefix
       const observacoesAtuais = form.getValues("observacoes") || "";
+      const observacoesSemPendencia = observacoesAtuais
+        .replace(/^\[Documentação Pendente:[^\]]*\]\s*/i, "")
+        .trim();
+
+      // Build new observation with pending items (only if there are missing items)
       const novaObservacao = missing.length > 0 
-        ? `[Documentação Pendente: ${missing.join(", ")}] ${observacoesAtuais}`.trim()
-        : observacoesAtuais;
+        ? `[Documentação Pendente: ${missing.join(", ")}]${observacoesSemPendencia ? ` ${observacoesSemPendencia}` : ""}`
+        : observacoesSemPendencia;
 
       const formData = form.getValues();
 
-      // Upload any files that are already available
-      let identidadeUrls: string[] = [];
-      let comprovanteUrls: string[] = [];
-      let beneficiariaUrls: string[] = [];
+      // Store partial conversion data in localStorage for later completion
+      // This allows continuing the conversion process without creating a client yet
+      const partialData = {
+        leadId: lead.id,
+        formData: {
+          ...formData,
+          observacoes: novaObservacao,
+        },
+        identidadeFiles: identidadeFiles,
+        comprovanteFiles: comprovanteFiles,
+        beneficiariaFiles: beneficiariaFiles,
+        savedAt: new Date().toISOString(),
+      };
 
-      if (navigator.onLine) {
-        if (identidadeFiles.length > 0) {
-          identidadeUrls = await uploadDocumentFiles(identidadeFiles, "identidade", supabase);
-        }
-        if (comprovanteFiles.length > 0) {
-          comprovanteUrls = await uploadDocumentFiles(comprovanteFiles, "comprovante", supabase);
-        }
-        if (beneficiariaFiles.length > 0) {
-          beneficiariaUrls = await uploadDocumentFiles(beneficiariaFiles, "beneficiaria", supabase);
-        }
-      }
+      // Save to localStorage for persistence
+      const storageKey = `lead_conversion_${lead.id}`;
+      localStorage.setItem(storageKey, JSON.stringify(partialData));
 
-      // Create a partial client record with the data we have so far
-      const { data: existingClient } = await supabase
-        .from("clientes")
-        .select("id")
-        .eq("lead_id", lead.id)
-        .single();
-
-      if (existingClient) {
-        // Update existing partial client record
-        const { error: updateClientError } = await supabase
-          .from("clientes")
-          .update({
-            nome: formData.nome,
-            telefone: formData.telefone,
-            email: formData.email || null,
-            cpf_cnpj: formData.cpf_cnpj || null,
-            cep: formData.cep || null,
-            estado: formData.estado,
-            cidade: formData.cidade,
-            bairro: formData.bairro || null,
-            rua: formData.rua || null,
-            numero: formData.numero || null,
-            complemento: formData.complemento || null,
-            disjuntor_id: formData.disjuntor_id || null,
-            transformador_id: formData.transformador_id || null,
-            localizacao: formData.localizacao || null,
-            observacoes: novaObservacao,
-            identidade_urls: identidadeUrls.length > 0 ? identidadeUrls : null,
-            comprovante_endereco_urls: comprovanteUrls.length > 0 ? comprovanteUrls : null,
-            comprovante_beneficiaria_urls: beneficiariaUrls.length > 0 ? beneficiariaUrls : null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existingClient.id);
-
-        if (updateClientError) throw updateClientError;
-      } else {
-        // Create new partial client record
-        const { error: createClientError } = await supabase
-          .from("clientes")
-          .insert({
-            nome: formData.nome,
-            telefone: formData.telefone,
-            email: formData.email || null,
-            cpf_cnpj: formData.cpf_cnpj || null,
-            cep: formData.cep || null,
-            estado: formData.estado,
-            cidade: formData.cidade,
-            bairro: formData.bairro || null,
-            rua: formData.rua || null,
-            numero: formData.numero || null,
-            complemento: formData.complemento || null,
-            lead_id: lead.id,
-            disjuntor_id: formData.disjuntor_id || null,
-            transformador_id: formData.transformador_id || null,
-            localizacao: formData.localizacao || null,
-            observacoes: novaObservacao,
-            identidade_urls: identidadeUrls.length > 0 ? identidadeUrls : null,
-            comprovante_endereco_urls: comprovanteUrls.length > 0 ? comprovanteUrls : null,
-            comprovante_beneficiaria_urls: beneficiariaUrls.length > 0 ? beneficiariaUrls : null,
-          });
-
-        if (createClientError) throw createClientError;
-      }
-
-      // Update lead status
+      // Update ONLY the lead (not creating a client yet)
       const { error: updateError } = await supabase
         .from("leads")
         .update({
           status_id: aguardandoStatus.id,
+          cep: formData.cep || null,
+          bairro: formData.bairro || null,
+          rua: formData.rua || null,
+          numero: formData.numero || null,
+          complemento: formData.complemento || null,
           observacoes: novaObservacao,
           updated_at: new Date().toISOString(),
         })
@@ -391,7 +338,7 @@ export function ConvertLeadToClientDialog({
 
       toast({
         title: "Lead atualizado!",
-        description: `${lead.nome} foi salvo como "Aguardando Documentação" com os dados parciais.`,
+        description: `${lead.nome} foi salvo como "Aguardando Documentação". Complete a documentação para converter em cliente.`,
       });
 
       onOpenChange(false);
