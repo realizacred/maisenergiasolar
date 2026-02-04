@@ -35,6 +35,9 @@ const FloatingInput = React.forwardRef<HTMLInputElement, FloatingInputProps>(
           )}
           <input
             type={type}
+            autoComplete="off"
+            data-lpignore="true"
+            data-form-type="other"
             className={cn(
               "flex h-14 w-full rounded-xl border-2 bg-background px-4 pt-5 pb-2 text-base transition-all duration-200",
               "focus:outline-none focus:ring-0",
