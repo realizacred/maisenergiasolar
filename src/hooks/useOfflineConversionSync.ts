@@ -124,14 +124,21 @@ export function useOfflineConversionSync() {
   };
 
   const syncSingleConversion = useCallback(async (leadId: string): Promise<boolean> => {
-    if (!navigator.onLine || syncInProgressRef.current) {
-      if (!navigator.onLine) {
-        toast({
-          title: "Sem conexão",
-          description: "Aguarde a conexão ser restabelecida.",
-          variant: "destructive",
-        });
-      }
+    if (syncInProgressRef.current) {
+      console.log("[syncSingleConversion] Sync already in progress, skipping");
+      return false;
+    }
+
+    // Check online status at call time
+    const currentlyOnline = navigator.onLine;
+    console.log("[syncSingleConversion] Online status check:", currentlyOnline);
+    
+    if (!currentlyOnline) {
+      toast({
+        title: "Sem conexão",
+        description: "Aguarde a conexão ser restabelecida.",
+        variant: "destructive",
+      });
       return false;
     }
 
@@ -181,14 +188,21 @@ export function useOfflineConversionSync() {
   const syncAllConversions = useCallback(async (): Promise<SyncResult> => {
     const result: SyncResult = { total: 0, synced: 0, failed: 0 };
 
-    if (!navigator.onLine || syncInProgressRef.current) {
-      if (!navigator.onLine) {
-        toast({
-          title: "Sem conexão",
-          description: "Aguarde a conexão ser restabelecida.",
-          variant: "destructive",
-        });
-      }
+    if (syncInProgressRef.current) {
+      console.log("[syncAllConversions] Sync already in progress, skipping");
+      return result;
+    }
+
+    // Check online status at call time
+    const currentlyOnline = navigator.onLine;
+    console.log("[syncAllConversions] Online status check:", currentlyOnline);
+    
+    if (!currentlyOnline) {
+      toast({
+        title: "Sem conexão",
+        description: "Aguarde a conexão ser restabelecida.",
+        variant: "destructive",
+      });
       return result;
     }
 
