@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,7 @@ import { FloatingSelect } from "@/components/ui/floating-select";
 import ConsumptionChart from "./ConsumptionChart";
 import FileUpload from "./FileUpload";
 import { useOfflineLeadSync } from "@/hooks/useOfflineLeadSync";
+import { useLeadOrcamento } from "@/hooks/useLeadOrcamento";
 import { useFormAutoSave } from "@/hooks/useFormAutoSave";
 import { useFormRateLimit } from "@/hooks/useFormRateLimit";
 import { useHoneypot } from "@/hooks/useHoneypot";
@@ -26,7 +27,8 @@ import {
   HoneypotField, 
   FormProgressBar, 
   RateLimitWarning,
-  AutoSaveIndicator 
+  AutoSaveIndicator,
+  DuplicateLeadWarning,
 } from "@/components/form";
 import logo from "@/assets/logo.png";
 import {
@@ -98,6 +100,20 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
     retrySync,
     refreshPendingCount,
   } = useOfflineLeadSync();
+
+  // Lead/Orcamento management with duplicate detection
+  const {
+    isSubmitting: isSubmittingOrcamento,
+    existingLead,
+    showDuplicateWarning,
+    submitOrcamento,
+    confirmUseExistingLead,
+    forceCreateNewLead,
+    cancelDuplicateWarning,
+  } = useLeadOrcamento();
+
+  // Store form data for duplicate handling
+  const pendingFormDataRef = useRef<LeadFormData | null>(null);
 
   // Honeypot anti-bot protection
   const { honeypotValue, handleHoneypotChange, validateHoneypot, resetHoneypot } = useHoneypot();
@@ -317,57 +333,103 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
     
     console.log("[LeadFormWizard] Starting form submission...");
     
+    // Store form data for potential duplicate handling
+    pendingFormDataRef.current = data;
+    
+    const orcamentoData = {
+      cep: data.cep?.trim() || null,
+      estado: data.estado,
+      cidade: data.cidade.trim(),
+      rua: data.rua?.trim() || null,
+      numero: data.numero?.trim() || null,
+      bairro: data.bairro?.trim() || null,
+      complemento: data.complemento?.trim() || null,
+      area: data.area,
+      tipo_telhado: data.tipo_telhado,
+      rede_atendimento: data.rede_atendimento,
+      media_consumo: data.media_consumo,
+      consumo_previsto: data.consumo_previsto,
+      observacoes: data.observacoes?.trim() || null,
+      arquivos_urls: uploadedFiles,
+      vendedor: vendedorNome,
+    };
+
     try {
-      const leadData = {
-        nome: data.nome.trim(),
-        telefone: data.telefone.trim(),
-        cep: data.cep?.trim() || null,
-        estado: data.estado,
-        cidade: data.cidade.trim(),
-        rua: data.rua?.trim() || null,
-        numero: data.numero?.trim() || null,
-        bairro: data.bairro?.trim() || null,
-        complemento: data.complemento?.trim() || null,
-        area: data.area,
-        tipo_telhado: data.tipo_telhado,
-        rede_atendimento: data.rede_atendimento,
-        media_consumo: data.media_consumo,
-        consumo_previsto: data.consumo_previsto,
-        observacoes: data.observacoes?.trim() || null,
-        arquivos_urls: uploadedFiles,
-        vendedor: vendedorNome,
-      };
+      // If online, use new Lead/Orcamento system
+      if (isOnline) {
+        const result = await submitOrcamento(
+          { nome: data.nome.trim(), telefone: data.telefone.trim() },
+          orcamentoData
+        );
 
-      console.log("[LeadFormWizard] Calling saveLead with data:", leadData.nome);
-      const result = await saveLead(leadData);
-      console.log("[LeadFormWizard] saveLead result:", result);
-
-      if (result.success) {
-        setIsSuccess(true);
-        setSavedOffline(result.offline);
-        clearDraft(); // Clear saved draft on success
-        resetHoneypot();
-        resetRateLimit();
-        
-        if (!result.offline) {
-          triggerConfetti();
+        if (result.error === "DUPLICATE_DETECTED") {
+          // Duplicate detected - dialog will be shown
+          setIsSubmitting(false);
+          return;
         }
-        
-        toast({
-          title: result.offline 
-            ? "Cadastro salvo localmente! 📴" 
-            : "Cadastro enviado com sucesso! ☀️",
-          description: result.offline
-            ? "Será sincronizado automaticamente quando a conexão voltar."
-            : "Entraremos em contato em breve.",
-        });
+
+        if (result.success) {
+          setIsSuccess(true);
+          setSavedOffline(false);
+          clearDraft();
+          resetHoneypot();
+          resetRateLimit();
+          triggerConfetti();
+          
+          toast({
+            title: result.isNewLead 
+              ? "Cadastro enviado com sucesso! ☀️"
+              : "Novo orçamento vinculado! ☀️",
+            description: result.isNewLead
+              ? "Entraremos em contato em breve."
+              : "Orçamento adicionado ao cliente existente.",
+          });
+        } else {
+          console.error("[LeadFormWizard] Save failed:", result.error);
+          toast({
+            title: "Erro ao enviar cadastro",
+            description: result.error || "Tente novamente mais tarde.",
+            variant: "destructive",
+          });
+        }
       } else {
-        console.error("[LeadFormWizard] Save failed:", result.error);
-        toast({
-          title: "Erro ao enviar cadastro",
-          description: result.error || "Tente novamente mais tarde.",
-          variant: "destructive",
-        });
+        // Offline: use legacy lead save
+        const leadData = {
+          nome: data.nome.trim(),
+          telefone: data.telefone.trim(),
+          ...orcamentoData,
+        };
+
+        console.log("[LeadFormWizard] Offline - using legacy saveLead");
+        const result = await saveLead(leadData);
+
+        if (result.success) {
+          setIsSuccess(true);
+          setSavedOffline(result.offline);
+          clearDraft();
+          resetHoneypot();
+          resetRateLimit();
+          
+          if (!result.offline) {
+            triggerConfetti();
+          }
+          
+          toast({
+            title: result.offline 
+              ? "Cadastro salvo localmente! 📴" 
+              : "Cadastro enviado com sucesso! ☀️",
+            description: result.offline
+              ? "Será sincronizado automaticamente quando a conexão voltar."
+              : "Entraremos em contato em breve.",
+          });
+        } else {
+          console.error("[LeadFormWizard] Save failed:", result.error);
+          toast({
+            title: "Erro ao enviar cadastro",
+            description: result.error || "Tente novamente mais tarde.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
@@ -382,6 +444,114 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
     }
   };
 
+  // Handle duplicate confirmation - use existing lead
+  const handleUseExistingLead = async () => {
+    if (!pendingFormDataRef.current) return;
+    
+    const data = pendingFormDataRef.current;
+    setIsSubmitting(true);
+    
+    const orcamentoData = {
+      cep: data.cep?.trim() || null,
+      estado: data.estado,
+      cidade: data.cidade.trim(),
+      rua: data.rua?.trim() || null,
+      numero: data.numero?.trim() || null,
+      bairro: data.bairro?.trim() || null,
+      complemento: data.complemento?.trim() || null,
+      area: data.area,
+      tipo_telhado: data.tipo_telhado,
+      rede_atendimento: data.rede_atendimento,
+      media_consumo: data.media_consumo,
+      consumo_previsto: data.consumo_previsto,
+      observacoes: data.observacoes?.trim() || null,
+      arquivos_urls: uploadedFiles,
+      vendedor: vendedorNome,
+    };
+
+    const result = await confirmUseExistingLead(orcamentoData);
+    
+    if (result.success) {
+      setIsSuccess(true);
+      clearDraft();
+      resetHoneypot();
+      resetRateLimit();
+      triggerConfetti();
+      
+      toast({
+        title: "Novo orçamento vinculado! ☀️",
+        description: "Orçamento adicionado ao cliente existente.",
+      });
+    } else {
+      toast({
+        title: "Erro ao vincular orçamento",
+        description: result.error || "Tente novamente.",
+        variant: "destructive",
+      });
+    }
+    
+    setIsSubmitting(false);
+    pendingFormDataRef.current = null;
+  };
+
+  // Handle duplicate - force create new lead
+  const handleCreateNewLead = async () => {
+    if (!pendingFormDataRef.current) return;
+    
+    const data = pendingFormDataRef.current;
+    setIsSubmitting(true);
+    
+    const orcamentoData = {
+      cep: data.cep?.trim() || null,
+      estado: data.estado,
+      cidade: data.cidade.trim(),
+      rua: data.rua?.trim() || null,
+      numero: data.numero?.trim() || null,
+      bairro: data.bairro?.trim() || null,
+      complemento: data.complemento?.trim() || null,
+      area: data.area,
+      tipo_telhado: data.tipo_telhado,
+      rede_atendimento: data.rede_atendimento,
+      media_consumo: data.media_consumo,
+      consumo_previsto: data.consumo_previsto,
+      observacoes: data.observacoes?.trim() || null,
+      arquivos_urls: uploadedFiles,
+      vendedor: vendedorNome,
+    };
+
+    const result = await forceCreateNewLead(
+      { nome: data.nome.trim(), telefone: data.telefone.trim() },
+      orcamentoData
+    );
+    
+    if (result.success) {
+      setIsSuccess(true);
+      clearDraft();
+      resetHoneypot();
+      resetRateLimit();
+      triggerConfetti();
+      
+      toast({
+        title: "Cadastro enviado com sucesso! ☀️",
+        description: "Novo cliente criado com orçamento.",
+      });
+    } else {
+      toast({
+        title: "Erro ao criar cadastro",
+        description: result.error || "Tente novamente.",
+        variant: "destructive",
+      });
+    }
+    
+    setIsSubmitting(false);
+    pendingFormDataRef.current = null;
+  };
+
+  const handleCancelDuplicate = () => {
+    cancelDuplicateWarning();
+    pendingFormDataRef.current = null;
+  };
+
   const resetForm = () => {
     form.reset();
     setCurrentStep(1);
@@ -392,6 +562,7 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
     clearDraft();
     resetHoneypot();
     refreshPendingCount();
+    pendingFormDataRef.current = null;
   };
 
   if (isSuccess) {
@@ -804,6 +975,16 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
             <span>Seus dados estão protegidos e seguros</span>
           </motion.div>
         </form>
+
+        {/* Duplicate Lead Warning Dialog */}
+        <DuplicateLeadWarning
+          open={showDuplicateWarning}
+          existingLead={existingLead}
+          onUseExisting={handleUseExistingLead}
+          onCreateNew={handleCreateNewLead}
+          onCancel={handleCancelDuplicate}
+          isSubmitting={isSubmitting || isSubmittingOrcamento}
+        />
       </CardContent>
     </Card>
   );

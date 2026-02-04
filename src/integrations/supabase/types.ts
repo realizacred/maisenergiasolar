@@ -1084,6 +1084,7 @@ export type Database = {
           rua: string | null
           status_id: string | null
           telefone: string
+          telefone_normalized: string | null
           tipo_telhado: string
           ultimo_contato: string | null
           updated_at: string
@@ -1113,6 +1114,7 @@ export type Database = {
           rua?: string | null
           status_id?: string | null
           telefone: string
+          telefone_normalized?: string | null
           tipo_telhado: string
           ultimo_contato?: string | null
           updated_at?: string
@@ -1142,6 +1144,7 @@ export type Database = {
           rua?: string | null
           status_id?: string | null
           telefone?: string
+          telefone_normalized?: string | null
           tipo_telhado?: string
           ultimo_contato?: string | null
           updated_at?: string
@@ -1152,6 +1155,108 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "leads_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "lead_status"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orcamentos: {
+        Row: {
+          area: string
+          arquivos_urls: string[] | null
+          bairro: string | null
+          cep: string | null
+          cidade: string
+          complemento: string | null
+          consumo_previsto: number
+          created_at: string
+          data_proxima_acao: string | null
+          estado: string
+          id: string
+          lead_id: string
+          media_consumo: number
+          numero: string | null
+          observacoes: string | null
+          orc_code: string | null
+          proxima_acao: string | null
+          rede_atendimento: string
+          rua: string | null
+          status_id: string | null
+          tipo_telhado: string
+          ultimo_contato: string | null
+          updated_at: string
+          vendedor: string | null
+          visto: boolean
+          visto_admin: boolean
+        }
+        Insert: {
+          area: string
+          arquivos_urls?: string[] | null
+          bairro?: string | null
+          cep?: string | null
+          cidade: string
+          complemento?: string | null
+          consumo_previsto: number
+          created_at?: string
+          data_proxima_acao?: string | null
+          estado: string
+          id?: string
+          lead_id: string
+          media_consumo: number
+          numero?: string | null
+          observacoes?: string | null
+          orc_code?: string | null
+          proxima_acao?: string | null
+          rede_atendimento: string
+          rua?: string | null
+          status_id?: string | null
+          tipo_telhado: string
+          ultimo_contato?: string | null
+          updated_at?: string
+          vendedor?: string | null
+          visto?: boolean
+          visto_admin?: boolean
+        }
+        Update: {
+          area?: string
+          arquivos_urls?: string[] | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string
+          complemento?: string | null
+          consumo_previsto?: number
+          created_at?: string
+          data_proxima_acao?: string | null
+          estado?: string
+          id?: string
+          lead_id?: string
+          media_consumo?: number
+          numero?: string | null
+          observacoes?: string | null
+          orc_code?: string | null
+          proxima_acao?: string | null
+          rede_atendimento?: string
+          rua?: string | null
+          status_id?: string | null
+          tipo_telhado?: string
+          ultimo_contato?: string | null
+          updated_at?: string
+          vendedor?: string | null
+          visto?: boolean
+          visto_admin?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamentos_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamentos_status_id_fkey"
             columns: ["status_id"]
             isOneToOne: false
             referencedRelation: "lead_status"

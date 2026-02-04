@@ -3,6 +3,7 @@ export interface Lead {
   lead_code: string | null;
   nome: string;
   telefone: string;
+  telefone_normalized: string | null;
   cep: string | null;
   estado: string;
   cidade: string;
@@ -22,6 +23,8 @@ export interface Lead {
   visto: boolean;
   visto_admin: boolean;
   ultimo_contato: string | null;
+  proxima_acao: string | null;
+  data_proxima_acao: string | null;
   created_at: string;
   updated_at: string;
 }
