@@ -58,6 +58,7 @@ import {
   MoreVertical,
   UserX,
   UserCheck,
+  KeyRound,
 } from "lucide-react";
 
 interface UserRole {
@@ -70,12 +71,14 @@ interface UserRole {
 interface UserProfile {
   user_id: string;
   nome: string;
+  email?: string;
   ativo: boolean;
 }
 
 interface UserWithRoles {
   user_id: string;
   nome: string;
+  email?: string;
   ativo: boolean;
   roles: string[];
 }
@@ -111,8 +114,10 @@ export function UsuariosManager() {
   });
   const [userToDeactivate, setUserToDeactivate] = useState<UserWithRoles | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserWithRoles | null>(null);
+  const [userToResetPassword, setUserToResetPassword] = useState<UserWithRoles | null>(null);
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -136,13 +141,24 @@ export function UsuariosManager() {
 
       if (rolesError) throw rolesError;
 
-      // Combine profiles with roles
-      const usersWithRoles: UserWithRoles[] = (profiles || []).map(profile => ({
-        ...profile,
-        roles: (roles || [])
-          .filter(r => r.user_id === profile.user_id)
-          .map(r => r.role),
-      }));
+      // Fetch vendedores to get emails
+      const { data: vendedores, error: vendedoresError } = await supabase
+        .from("vendedores")
+        .select("user_id, email");
+
+      if (vendedoresError) throw vendedoresError;
+
+      // Combine profiles with roles and emails
+      const usersWithRoles: UserWithRoles[] = (profiles || []).map(profile => {
+        const vendedor = (vendedores || []).find(v => v.user_id === profile.user_id);
+        return {
+          ...profile,
+          email: vendedor?.email || undefined,
+          roles: (roles || [])
+            .filter(r => r.user_id === profile.user_id)
+            .map(r => r.role),
+        };
+      });
 
       setUsers(usersWithRoles);
     } catch (error) {
@@ -385,6 +401,37 @@ export function UsuariosManager() {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!userToResetPassword || !userToResetPassword.email) return;
+
+    setIsResettingPassword(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        userToResetPassword.email,
+        {
+          redirectTo: `${window.location.origin}/auth`,
+        }
+      );
+
+      if (error) throw error;
+
+      toast({ 
+        title: "Email de redefinição enviado!",
+        description: `Um email foi enviado para ${userToResetPassword.email} com instruções para redefinir a senha.`,
+      });
+      setUserToResetPassword(null);
+    } catch (error: any) {
+      console.error("Error resetting password:", error);
+      toast({
+        title: "Erro ao enviar email",
+        description: error.message || "Não foi possível enviar o email de redefinição.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -503,6 +550,14 @@ export function UsuariosManager() {
                                   </>
                                 )}
                               </DropdownMenuItem>
+                              {user.email && (
+                                <DropdownMenuItem 
+                                  onClick={() => setUserToResetPassword(user)}
+                                >
+                                  <KeyRound className="mr-2 h-4 w-4" />
+                                  Redefinir senha
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem 
                                 onClick={() => setUserToDelete(user)}
                                 className="text-destructive focus:text-destructive"
@@ -694,6 +749,35 @@ export function UsuariosManager() {
             >
               {isDeleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset Password Confirmation Dialog */}
+      <AlertDialog open={!!userToResetPassword} onOpenChange={(open) => !open && setUserToResetPassword(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-primary" />
+              Redefinir senha do usuário?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Um email de redefinição de senha será enviado para:
+              <br />
+              <span className="font-semibold text-foreground">{userToResetPassword?.email}</span>
+              <br /><br />
+              O usuário "{userToResetPassword?.nome}" receberá um link para criar uma nova senha.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isResettingPassword}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleResetPassword} 
+              disabled={isResettingPassword}
+            >
+              {isResettingPassword && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Enviar email
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
