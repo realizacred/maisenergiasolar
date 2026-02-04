@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { LeadAlerts } from "@/components/vendor/LeadAlerts";
+import { VendorFollowUpManager } from "@/components/vendor/VendorFollowUpManager";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
 import { VendorLeadFilters, VendorLeadsTable, VendorLeadViewDialog } from "@/components/vendor/leads";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
@@ -368,6 +369,16 @@ export default function VendedorPortal() {
 
         {/* AI Assistant Alerts */}
         <LeadAlerts leads={leads} diasAlerta={3} />
+
+        {/* Follow-Up Manager */}
+        <VendorFollowUpManager 
+          leads={leads} 
+          diasAlerta={3}
+          onViewLead={(lead) => {
+            setSelectedLead(lead);
+            setIsViewOpen(true);
+          }}
+        />
 
         {/* Offline Conversions Manager */}
         <OfflineConversionsManager />
