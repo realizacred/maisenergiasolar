@@ -39,11 +39,13 @@ const OFFLINE_CONVERSION_KEY = "offline_lead_conversions";
 
 interface OfflineConversion {
   leadId: string;
+  leadNome: string;
   formData: FormData;
   identidadeFiles: DocumentFile[];
   comprovanteFiles: DocumentFile[];
   beneficiariaFiles: DocumentFile[];
   savedAt: string;
+  synced?: boolean;
 }
 
 interface Disjuntor {
@@ -400,11 +402,13 @@ export function ConvertLeadToClientDialog({
       const existingIndex = conversions.findIndex(c => c.leadId === lead.id);
       const newConversion: OfflineConversion = {
         leadId: lead.id,
+        leadNome: lead.nome,
         formData: data,
         identidadeFiles,
         comprovanteFiles,
         beneficiariaFiles,
         savedAt: new Date().toISOString(),
+        synced: false,
       };
 
       if (existingIndex >= 0) {

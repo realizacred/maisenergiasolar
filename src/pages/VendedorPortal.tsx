@@ -25,6 +25,7 @@ import { LeadAlerts } from "@/components/vendor/LeadAlerts";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
 import { VendorLeadFilters, VendorLeadsTable, VendorLeadViewDialog } from "@/components/vendor/leads";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
+import { OfflineConversionsManager } from "@/components/leads/OfflineConversionsManager";
 import logo from "@/assets/logo.png";
 import type { Lead, LeadStatus } from "@/types/lead";
 
@@ -343,6 +344,9 @@ export default function VendedorPortal() {
 
         {/* AI Assistant Alerts */}
         <LeadAlerts leads={leads} diasAlerta={3} />
+
+        {/* Offline Conversions Manager */}
+        <OfflineConversionsManager />
 
         {/* Share Link Card */}
         <Card className="bg-primary/5 border-primary/20">
