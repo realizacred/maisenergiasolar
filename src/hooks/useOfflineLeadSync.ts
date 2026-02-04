@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import type { LeadSimplified } from "@/types/orcamento";
 
 interface LeadData {
   id?: string;
@@ -28,15 +29,24 @@ interface SyncResult {
   total: number;
   synced: number;
   failed: number;
+  duplicates: number;
+}
+
+interface DuplicateInfo {
+  leadId: string;
+  leadData: LeadData;
+  matchingLeads: LeadSimplified[];
 }
 
 const STORAGE_KEY = "offline_leads";
+const DUPLICATE_STORAGE_KEY = "offline_leads_duplicates";
 
 export function useOfflineLeadSync() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingCount, setPendingCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null);
+  const [duplicatesToResolve, setDuplicatesToResolve] = useState<DuplicateInfo[]>([]);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const syncInProgressRef = useRef(false);
   // Keep a reliable, up-to-date online flag (navigator.onLine can be inconsistent in some contexts)
@@ -55,6 +65,51 @@ export function useOfflineLeadSync() {
       return 0;
     }
   }, []);
+
+  /**
+   * Normaliza o telefone removendo caracteres não numéricos
+   */
+  const normalizePhone = (phone: string): string => {
+    return phone.replace(/\D/g, "");
+  };
+
+  /**
+   * Verifica se já existem leads com o mesmo telefone
+   */
+  const checkExistingLeads = async (telefone: string): Promise<LeadSimplified[] | null> => {
+    const normalized = normalizePhone(telefone);
+    if (normalized.length < 10) return null;
+
+    try {
+      const { data: leads, error } = await supabase
+        .from("leads")
+        .select("id, lead_code, nome, telefone, telefone_normalized, created_at, updated_at")
+        .eq("telefone_normalized", normalized)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("[checkExistingLeads] Error:", error.message);
+        return null;
+      }
+
+      if (leads && leads.length > 0) {
+        // Deduplicate by normalized name
+        const normalizedNameMap = new Map<string, typeof leads[0]>();
+        for (const lead of leads) {
+          const normalizedName = lead.nome.toLowerCase().trim().replace(/\s+/g, ' ');
+          if (!normalizedNameMap.has(normalizedName)) {
+            normalizedNameMap.set(normalizedName, lead);
+          }
+        }
+        return Array.from(normalizedNameMap.values()) as LeadSimplified[];
+      }
+
+      return null;
+    } catch (error) {
+      console.error("[checkExistingLeads] Exception:", error);
+      return null;
+    }
+  };
 
   const syncLead = async (lead: LeadData): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -95,7 +150,7 @@ export function useOfflineLeadSync() {
   };
 
   const syncPendingLeads = useCallback(async (showToast = true): Promise<SyncResult> => {
-    const result: SyncResult = { total: 0, synced: 0, failed: 0 };
+    const result: SyncResult = { total: 0, synced: 0, failed: 0, duplicates: 0 };
     
     // Prevent multiple simultaneous sync operations
     if (syncInProgressRef.current) {
@@ -128,7 +183,7 @@ export function useOfflineLeadSync() {
       if (showToast) {
         toast({
           title: "Sincronizando...",
-          description: "Enviando leads pendentes.",
+          description: "Verificando e enviando leads pendentes.",
         });
       }
 
@@ -156,10 +211,26 @@ export function useOfflineLeadSync() {
         return result;
       }
 
+      const duplicatesFound: DuplicateInfo[] = [];
+
       for (const lead of pending) {
         // Double-check this lead hasn't been synced
         if (lead.id && syncedIdsRef.current.has(lead.id)) {
           continue;
+        }
+        
+        // Check for existing leads with same phone BEFORE syncing
+        const existingLeads = await checkExistingLeads(lead.telefone);
+        
+        if (existingLeads && existingLeads.length > 0) {
+          console.log("[syncPendingLeads] Duplicate found for:", lead.nome, "matches:", existingLeads.length);
+          duplicatesFound.push({
+            leadId: lead.id!,
+            leadData: lead,
+            matchingLeads: existingLeads,
+          });
+          result.duplicates++;
+          continue; // Skip syncing this lead, add to duplicates list
         }
         
         const syncResult = await syncLead(lead);
@@ -180,11 +251,24 @@ export function useOfflineLeadSync() {
       }
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+      
+      // Store duplicates for later resolution
+      if (duplicatesFound.length > 0) {
+        localStorage.setItem(DUPLICATE_STORAGE_KEY, JSON.stringify(duplicatesFound));
+        setDuplicatesToResolve(duplicatesFound);
+      }
+      
       countPending();
       setLastSyncResult(result);
 
       if (showToast) {
-        if (result.failed === 0 && result.synced > 0) {
+        if (result.duplicates > 0) {
+          toast({
+            title: "Clientes existentes encontrados",
+            description: `${result.duplicates} lead${result.duplicates > 1 ? 's' : ''} com telefone já cadastrado. Revise antes de sincronizar.`,
+            variant: "destructive",
+          });
+        } else if (result.failed === 0 && result.synced > 0) {
           toast({
             title: "Sincronização concluída! ✓",
             description: `${result.synced} lead${result.synced > 1 ? 's' : ''} enviado${result.synced > 1 ? 's' : ''} com sucesso.`,
@@ -344,15 +428,103 @@ export function useOfflineLeadSync() {
     }
   }, []);
 
+  /**
+   * Resolve a duplicate by forcing creation of new lead
+   */
+  const resolveDuplicateAsNew = useCallback(async (localLeadId: string): Promise<boolean> => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) return false;
+      
+      const leads: LeadData[] = JSON.parse(stored);
+      const lead = leads.find((l) => l.id === localLeadId);
+      
+      if (!lead) return false;
+      
+      const syncResult = await syncLead(lead);
+      if (syncResult.success) {
+        lead.synced = true;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+        
+        // Remove from duplicates list
+        const duplicates = duplicatesToResolve.filter((d) => d.leadId !== localLeadId);
+        setDuplicatesToResolve(duplicates);
+        localStorage.setItem(DUPLICATE_STORAGE_KEY, JSON.stringify(duplicates));
+        
+        countPending();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error resolving duplicate as new:", error);
+      return false;
+    }
+  }, [duplicatesToResolve, countPending]);
+
+  /**
+   * Resolve a duplicate by discarding the local lead (it's already in DB)
+   */
+  const resolveDuplicateAsExisting = useCallback((localLeadId: string): boolean => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) return false;
+      
+      const leads: LeadData[] = JSON.parse(stored);
+      const index = leads.findIndex((l) => l.id === localLeadId);
+      
+      if (index >= 0) {
+        // Mark as synced (since we're treating it as duplicate of existing)
+        leads[index].synced = true;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+        
+        // Remove from duplicates list
+        const duplicates = duplicatesToResolve.filter((d) => d.leadId !== localLeadId);
+        setDuplicatesToResolve(duplicates);
+        localStorage.setItem(DUPLICATE_STORAGE_KEY, JSON.stringify(duplicates));
+        
+        countPending();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error resolving duplicate as existing:", error);
+      return false;
+    }
+  }, [duplicatesToResolve, countPending]);
+
+  /**
+   * Clear all resolved duplicates
+   */
+  const clearDuplicates = useCallback(() => {
+    setDuplicatesToResolve([]);
+    localStorage.removeItem(DUPLICATE_STORAGE_KEY);
+  }, []);
+
+  // Load duplicates from storage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(DUPLICATE_STORAGE_KEY);
+      if (stored) {
+        setDuplicatesToResolve(JSON.parse(stored));
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }, []);
+
   return {
     isOnline,
     pendingCount,
     isSyncing,
     lastSyncResult,
+    duplicatesToResolve,
     saveLead,
     syncPendingLeads,
     retrySync,
     clearSyncedLeads,
     refreshPendingCount: countPending,
+    resolveDuplicateAsNew,
+    resolveDuplicateAsExisting,
+    clearDuplicates,
   };
 }
