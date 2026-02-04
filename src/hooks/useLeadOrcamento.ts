@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import type { ExistingLeadMatch } from "@/types/orcamento";
+import type { LeadSimplified, DuplicateLeadsResult } from "@/types/orcamento";
 
 interface LeadData {
   nome: string;
@@ -39,8 +39,11 @@ interface SubmitResult {
  */
 export function useLeadOrcamento() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingLead, setExistingLead] = useState<ExistingLeadMatch | null>(null);
+  // Support multiple leads with same phone
+  const [matchingLeads, setMatchingLeads] = useState<LeadSimplified[]>([]);
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  // Track which lead the user selected (if any)
+  const [selectedLead, setSelectedLead] = useState<LeadSimplified | null>(null);
 
   /**
    * Normaliza o telefone removendo caracteres não numéricos
@@ -50,43 +53,34 @@ export function useLeadOrcamento() {
   };
 
   /**
-   * Verifica se já existe um lead com o mesmo telefone
+   * Verifica se já existem leads com o mesmo telefone (retorna TODOS os matches)
    */
-  const checkExistingLead = useCallback(async (telefone: string): Promise<ExistingLeadMatch | null> => {
+  const checkExistingLeads = useCallback(async (telefone: string): Promise<DuplicateLeadsResult | null> => {
     const normalized = normalizePhone(telefone);
     if (normalized.length < 10) return null;
 
     try {
-      // Search for existing lead with matching phone
+      // Search for ALL leads with matching phone (ordered by most recent)
       const { data: leads, error } = await supabase
         .from("leads")
         .select("id, lead_code, nome, telefone, telefone_normalized, created_at, updated_at")
         .eq("telefone_normalized", normalized)
-        .limit(1);
+        .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("[checkExistingLead] Error:", error);
+        console.error("[checkExistingLeads] Error:", error);
         return null;
       }
 
       if (leads && leads.length > 0) {
-        const lead = leads[0];
-        
-        // Count existing orcamentos for this lead
-        const { count } = await supabase
-          .from("orcamentos")
-          .select("*", { count: "exact", head: true })
-          .eq("lead_id", lead.id);
-
         return {
-          lead: lead as ExistingLeadMatch["lead"],
-          orcamentos_count: count || 0,
+          leads: leads as LeadSimplified[],
         };
       }
 
       return null;
     } catch (error) {
-      console.error("[checkExistingLead] Exception:", error);
+      console.error("[checkExistingLeads] Exception:", error);
       return null;
     }
   }, []);
@@ -183,13 +177,14 @@ export function useLeadOrcamento() {
       let leadId: string;
       let isNewLead = true;
 
-      // Check for existing lead if not forcing new
+      // Check for existing leads if not forcing new
       if (!options?.forceNew && !options?.useExistingLeadId) {
-        const existing = await checkExistingLead(leadData.telefone);
+        const existing = await checkExistingLeads(leadData.telefone);
         
-        if (existing) {
-          // Found existing lead - show warning and pause
-          setExistingLead(existing);
+        if (existing && existing.leads.length > 0) {
+          // Found existing leads - show warning dialog with list
+          setMatchingLeads(existing.leads);
+          setSelectedLead(null);
           setShowDuplicateWarning(true);
           setIsSubmitting(false);
           return {
@@ -233,19 +228,29 @@ export function useLeadOrcamento() {
   };
 
   /**
-   * Confirma o uso do lead existente e cria novo orçamento
+   * Seleciona um lead específico da lista de duplicados
    */
-  const confirmUseExistingLead = async (orcamentoData: OrcamentoData): Promise<SubmitResult> => {
-    if (!existingLead) {
+  const selectLeadFromList = (lead: LeadSimplified) => {
+    setSelectedLead(lead);
+  };
+
+  /**
+   * Confirma o uso do lead selecionado e cria novo orçamento
+   */
+  const confirmUseExistingLead = async (orcamentoData: OrcamentoData, leadOverride?: LeadSimplified): Promise<SubmitResult> => {
+    const leadToUse = leadOverride || selectedLead;
+    if (!leadToUse) {
       return { success: false, isNewLead: false, error: "Nenhum lead existente selecionado" };
     }
 
     setShowDuplicateWarning(false);
+    setMatchingLeads([]);
+    setSelectedLead(null);
     
     return submitOrcamento(
-      { nome: existingLead.lead.nome, telefone: existingLead.lead.telefone },
+      { nome: leadToUse.nome, telefone: leadToUse.telefone },
       orcamentoData,
-      { useExistingLeadId: existingLead.lead.id }
+      { useExistingLeadId: leadToUse.id }
     );
   };
 
@@ -257,7 +262,8 @@ export function useLeadOrcamento() {
     orcamentoData: OrcamentoData
   ): Promise<SubmitResult> => {
     setShowDuplicateWarning(false);
-    setExistingLead(null);
+    setMatchingLeads([]);
+    setSelectedLead(null);
     
     return submitOrcamento(leadData, orcamentoData, { forceNew: true });
   };
@@ -267,14 +273,17 @@ export function useLeadOrcamento() {
    */
   const cancelDuplicateWarning = () => {
     setShowDuplicateWarning(false);
-    setExistingLead(null);
+    setMatchingLeads([]);
+    setSelectedLead(null);
   };
 
   return {
     isSubmitting,
-    existingLead,
+    matchingLeads,
+    selectedLead,
     showDuplicateWarning,
-    checkExistingLead,
+    checkExistingLeads,
+    selectLeadFromList,
     submitOrcamento,
     confirmUseExistingLead,
     forceCreateNewLead,

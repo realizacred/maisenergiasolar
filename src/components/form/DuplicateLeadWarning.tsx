@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,15 +11,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, Phone, FileText, Plus, Link2 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { User, Phone, Plus, Link2, Check } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { ExistingLeadMatch } from "@/types/orcamento";
+import type { LeadSimplified } from "@/types/orcamento";
 
 interface DuplicateLeadWarningProps {
   open: boolean;
-  existingLead: ExistingLeadMatch | null;
-  onUseExisting: () => void;
+  matchingLeads: LeadSimplified[];
+  selectedLead: LeadSimplified | null;
+  onSelectLead: (lead: LeadSimplified) => void;
+  onUseExisting: (lead: LeadSimplified) => void;
   onCreateNew: () => void;
   onCancel: () => void;
   isSubmitting?: boolean;
@@ -26,16 +30,23 @@ interface DuplicateLeadWarningProps {
 
 export function DuplicateLeadWarning({
   open,
-  existingLead,
+  matchingLeads,
+  selectedLead,
+  onSelectLead,
   onUseExisting,
   onCreateNew,
   onCancel,
   isSubmitting = false,
 }: DuplicateLeadWarningProps) {
-  if (!existingLead) return null;
+  if (!matchingLeads.length) return null;
 
-  const { lead, orcamentos_count } = existingLead;
-  const createdDate = format(new Date(lead.created_at), "dd/MM/yyyy", { locale: ptBR });
+  const firstLead = matchingLeads[0];
+  const hasMultiple = matchingLeads.length > 1;
+
+  const handleUseSelected = () => {
+    const leadToUse = selectedLead || firstLead;
+    onUseExisting(leadToUse);
+  };
 
   return (
     <AlertDialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
@@ -43,39 +54,69 @@ export function DuplicateLeadWarning({
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-base">
             <User className="h-5 w-5 text-primary" />
-            Cliente já cadastrado
+            {hasMultiple ? "Clientes encontrados" : "Cliente já cadastrado"}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-sm">
-            Encontramos um cliente com este telefone. Deseja vincular este
-            novo orçamento ao cadastro existente ou criar um novo cliente?
+            {hasMultiple 
+              ? `Encontramos ${matchingLeads.length} clientes com este telefone. Selecione um para vincular ou crie um novo.`
+              : "Encontramos um cliente com este telefone. Deseja vincular este novo orçamento ao cadastro existente ou criar um novo cliente?"
+            }
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="bg-muted/50 rounded-lg p-4 space-y-2 my-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <User className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="font-medium truncate">{lead.nome}</span>
-            {lead.lead_code && (
-              <Badge variant="outline" className="text-xs shrink-0">
-                {lead.lead_code}
-              </Badge>
-            )}
+        {/* Lead list */}
+        <ScrollArea className={hasMultiple ? "max-h-60" : ""}>
+          <div className="space-y-2 my-2">
+            {matchingLeads.map((lead) => {
+              const isSelected = selectedLead?.id === lead.id || (!selectedLead && lead.id === firstLead.id);
+              const createdDate = format(new Date(lead.created_at), "dd/MM/yyyy", { locale: ptBR });
+
+              return (
+                <div
+                  key={lead.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSelectLead(lead)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onSelectLead(lead);
+                    }
+                  }}
+                  className={`
+                    relative rounded-lg p-3 border cursor-pointer transition-all duration-150
+                    ${isSelected 
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/30" 
+                      : "border-muted hover:border-muted-foreground/40 bg-muted/50"
+                    }
+                  `}
+                >
+                  {/* Selection indicator */}
+                  {isSelected && (
+                    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                      <Check className="w-3 h-3 text-primary-foreground" />
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 flex-wrap pr-6">
+                    <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="font-medium truncate">{lead.nome}</span>
+                    {lead.lead_code && (
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {lead.lead_code}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                    <Phone className="h-3 w-3 shrink-0" />
+                    <span>{lead.telefone}</span>
+                    <span className="text-xs">• Cadastrado em {createdDate}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Phone className="h-4 w-4 shrink-0" />
-            <span>{lead.telefone}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <FileText className="h-4 w-4 shrink-0" />
-            <span>
-              {orcamentos_count} orçamento{orcamentos_count !== 1 ? "s" : ""}{" "}
-              existente{orcamentos_count !== 1 ? "s" : ""}
-            </span>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Cadastrado em {createdDate}
-          </div>
-        </div>
+        </ScrollArea>
 
         <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:gap-2">
           <AlertDialogCancel 
@@ -96,12 +137,12 @@ export function DuplicateLeadWarning({
             Criar Novo Cliente
           </Button>
           <AlertDialogAction
-            onClick={onUseExisting}
+            onClick={handleUseSelected}
             disabled={isSubmitting}
             className="gap-2 w-full sm:w-auto"
           >
             <Link2 className="h-4 w-4" />
-            Vincular ao Existente
+            Vincular ao Selecionado
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

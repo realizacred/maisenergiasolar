@@ -104,9 +104,11 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
   // Lead/Orcamento management with duplicate detection
   const {
     isSubmitting: isSubmittingOrcamento,
-    existingLead,
+    matchingLeads,
+    selectedLead,
     showDuplicateWarning,
     submitOrcamento,
+    selectLeadFromList,
     confirmUseExistingLead,
     forceCreateNewLead,
     cancelDuplicateWarning,
@@ -473,8 +475,8 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
     }
   };
 
-  // Handle duplicate confirmation - use existing lead
-  const handleUseExistingLead = async () => {
+  // Handle duplicate confirmation - use selected existing lead
+  const handleUseExistingLead = async (lead: import("@/types/orcamento").LeadSimplified) => {
     if (!pendingFormDataRef.current) return;
     
     const data = pendingFormDataRef.current;
@@ -498,7 +500,7 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
       vendedor: vendedorNome,
     };
 
-    const result = await confirmUseExistingLead(orcamentoData);
+    const result = await confirmUseExistingLead(orcamentoData, lead);
     
     if (result.success) {
       setIsSuccess(true);
@@ -1008,7 +1010,9 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
         {/* Duplicate Lead Warning Dialog */}
         <DuplicateLeadWarning
           open={showDuplicateWarning}
-          existingLead={existingLead}
+          matchingLeads={matchingLeads}
+          selectedLead={selectedLead}
+          onSelectLead={selectLeadFromList}
           onUseExisting={handleUseExistingLead}
           onCreateNew={handleCreateNewLead}
           onCancel={handleCancelDuplicate}
