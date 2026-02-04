@@ -53,12 +53,13 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
   const isNewVendedor = !editingVendedor;
   const isLinkingExistingUser = isNewVendedor && formData.tipoAcesso === "vincular";
 
-  // Count leads per vendedor
+  // Count leads per vendedor (by nome, case-insensitive)
   const leadCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     leads.forEach(lead => {
       if (lead.vendedor) {
-        counts[lead.vendedor] = (counts[lead.vendedor] || 0) + 1;
+        const normalizedName = lead.vendedor.toLowerCase();
+        counts[normalizedName] = (counts[normalizedName] || 0) + 1;
       }
     });
     return counts;
@@ -478,7 +479,7 @@ export default function VendedoresManager({ leads }: VendedoresManagerProps) {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                          {leadCounts[vendedor.codigo] || 0} leads
+                          {leadCounts[vendedor.nome.toLowerCase()] || 0} leads
                         </Badge>
                       </TableCell>
                       <TableCell>
