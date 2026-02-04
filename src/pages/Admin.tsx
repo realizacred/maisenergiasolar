@@ -19,6 +19,7 @@ import { RecebimentosManager } from "@/components/admin/RecebimentosManager";
 import { InstagramConfig } from "@/components/admin/InstagramConfig";
 import { UsuariosManager } from "@/components/admin/UsuariosManager";
 import { EquipamentosManager } from "@/components/admin/EquipamentosManager";
+import { ConcessionariasManager } from "@/components/admin/ConcessionariasManager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Footer from "@/components/layout/Footer";
 
@@ -92,6 +93,8 @@ export default function Admin() {
         return <UsuariosManager />;
       case "equipamentos":
         return <EquipamentosManager />;
+      case "concessionarias":
+        return <ConcessionariasManager />;
       case "config":
         return <CalculadoraConfig />;
       case "financiamento":
