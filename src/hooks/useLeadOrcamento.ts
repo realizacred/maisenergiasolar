@@ -200,19 +200,28 @@ export function useLeadOrcamento() {
         leadId = options.useExistingLeadId;
         isNewLead = false;
       } else {
+        console.log("[submitOrcamento] Creating new lead...");
         const leadResult = await createLead(leadData);
         if (!leadResult.success || !leadResult.leadId) {
+          console.error("[submitOrcamento] Failed to create lead:", leadResult.error);
+          setIsSubmitting(false);
           return { success: false, isNewLead: true, error: leadResult.error };
         }
         leadId = leadResult.leadId;
+        console.log("[submitOrcamento] Lead created with id:", leadId);
       }
 
       // Create the orcamento
+      console.log("[submitOrcamento] Creating orcamento for lead:", leadId);
       const orcamentoResult = await createOrcamento(leadId, orcamentoData);
       if (!orcamentoResult.success) {
+        console.error("[submitOrcamento] Failed to create orcamento:", orcamentoResult.error);
+        setIsSubmitting(false);
         return { success: false, leadId, isNewLead, error: orcamentoResult.error };
       }
 
+      console.log("[submitOrcamento] Success! Lead:", leadId, "Orcamento:", orcamentoResult.orcamentoId);
+      setIsSubmitting(false);
       return {
         success: true,
         leadId,
@@ -221,9 +230,9 @@ export function useLeadOrcamento() {
       };
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
-      return { success: false, isNewLead: true, error: msg };
-    } finally {
+      console.error("[submitOrcamento] Exception:", msg);
       setIsSubmitting(false);
+      return { success: false, isNewLead: true, error: msg };
     }
   };
 
