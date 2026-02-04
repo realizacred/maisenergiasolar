@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, ShoppingCart, FileText, MapPin, Navigation, Save, WifiOff, AlertCircle, Receipt } from "lucide-react";
@@ -142,6 +142,9 @@ export function ConvertLeadToClientDialog({
       simulacao_aceita_id: "",
     },
   });
+
+  // Explicit subscription so programmatic setValue always reflects in the UI
+  const localizacaoValue = useWatch({ control: form.control, name: "localizacao" });
 
   // Track online status
   useEffect(() => {
@@ -975,6 +978,7 @@ export function ConvertLeadToClientDialog({
                       <FormControl>
                         <Input 
                           {...field} 
+                          value={localizacaoValue ?? ""}
                           placeholder="Ex: -23.5505, -46.6333 ou link do Google Maps"
                           className="flex-1"
                         />
