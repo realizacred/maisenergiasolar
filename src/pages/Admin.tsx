@@ -29,7 +29,7 @@ export default function Admin() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      navigate("/auth?from=admin", { replace: true });
     }
   }, [user, authLoading, navigate]);
 
