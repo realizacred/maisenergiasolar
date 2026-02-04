@@ -151,6 +151,32 @@ export function useOrcamentosAdmin({ autoFetch = true }: UseOrcamentosAdminOptio
     }
   }, [autoFetch, fetchOrcamentos]);
 
+  // Realtime subscription for orcamentos updates
+  useEffect(() => {
+    if (!autoFetch) return;
+
+    const channel = supabase
+      .channel('orcamentos-admin-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orcamentos',
+        },
+        (payload) => {
+          console.log('Realtime update received:', payload.eventType);
+          // Refetch all data to ensure consistency with joins
+          fetchOrcamentos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [autoFetch, fetchOrcamentos]);
+
   // Computed values
   const totalKwh = orcamentos.reduce((acc, o) => acc + o.media_consumo, 0);
   const uniqueEstados = new Set(orcamentos.map((o) => o.estado)).size;
