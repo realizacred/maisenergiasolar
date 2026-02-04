@@ -340,9 +340,12 @@ export default function VendedorPortal() {
         <VendorPendingDocumentation 
           leads={leadsForAlerts}
           statuses={statuses}
-          onLeadClick={(lead) => {
+          onConvertClick={(lead) => {
             const orc = orcamentos.find(o => o.lead_id === lead.id);
-            if (orc) setSelectedOrcamento(orc);
+            if (orc) {
+              setOrcamentoToConvert(orc);
+              setIsConvertOpen(true);
+            }
           }}
         />
 
