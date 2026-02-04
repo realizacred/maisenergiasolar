@@ -1,17 +1,30 @@
-import { useRef } from "react";
-import { Camera, Upload, X, FileText, Image } from "lucide-react";
+import { useRef, ChangeEvent } from "react";
+import { Camera, Upload, X, FileText, Image, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
+
+// Document file with base64 data for offline support
+export interface DocumentFile {
+  name: string;
+  size: number;
+  type: string;
+  // base64 data URL for offline storage, or storage path after upload
+  data: string;
+  // True if already uploaded to storage
+  uploaded: boolean;
+}
 
 interface DocumentUploadProps {
   label: string;
   description: string;
-  files: File[];
-  onFilesChange: (files: File[]) => void;
+  files: DocumentFile[];
+  onFilesChange: (files: DocumentFile[]) => void;
   accept?: string;
   required?: boolean;
+  maxSizeMB?: number;
 }
 
 export function DocumentUpload({
@@ -21,14 +34,82 @@ export function DocumentUpload({
   onFilesChange,
   accept = "image/*,.pdf",
   required = false,
+  maxSizeMB = 10,
 }: DocumentUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+  const { toast } = useToast();
 
-  const handleAddFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const isOnline = navigator.onLine;
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const validateFile = (file: File): string | null => {
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      return `Arquivo muito grande. Máximo permitido: ${maxSizeMB}MB`;
+    }
+    if (files.some(f => f.name === file.name)) {
+      return "Este arquivo já foi adicionado.";
+    }
+    return null;
+  };
+
+  const handleAddFiles = async (e: ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(e.target.files || []);
-    onFilesChange([...files, ...newFiles]);
+    
+    const processedFiles: DocumentFile[] = [];
+    
+    for (const file of newFiles) {
+      const error = validateFile(file);
+      if (error) {
+        toast({
+          title: "Erro",
+          description: error,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      try {
+        // Convert to base64 for offline storage
+        const base64Data = await fileToBase64(file);
+        
+        processedFiles.push({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          data: base64Data,
+          uploaded: false,
+        });
+      } catch (error) {
+        console.error("Error converting file to base64:", error);
+        toast({
+          title: "Erro",
+          description: `Não foi possível processar ${file.name}`,
+          variant: "destructive",
+        });
+      }
+    }
+
+    if (processedFiles.length > 0) {
+      onFilesChange([...files, ...processedFiles]);
+      
+      toast({
+        title: "Arquivo(s) adicionado(s)!",
+        description: isOnline 
+          ? `${processedFiles.length} arquivo(s) pronto(s) para envio.`
+          : `${processedFiles.length} arquivo(s) salvo(s) localmente. Serão enviados quando estiver online.`,
+      });
+    }
+    
     e.target.value = "";
   };
 
@@ -44,7 +125,7 @@ export function DocumentUpload({
     cameraInputRef.current?.click();
   };
 
-  const getFileIcon = (file: File) => {
+  const getFileIcon = (file: DocumentFile) => {
     if (file.type.startsWith("image/")) {
       return <Image className="h-3 w-3" />;
     }
@@ -65,6 +146,14 @@ export function DocumentUpload({
       </Label>
       <p className="text-xs text-muted-foreground">{description}</p>
 
+      {/* Offline indicator */}
+      {!isOnline && files.length > 0 && (
+        <div className="flex items-center gap-2 p-2 bg-warning/20 text-warning-foreground rounded-lg text-xs">
+          <WifiOff className="w-3 h-3" />
+          <span>Arquivos salvos localmente - serão enviados quando online</span>
+        </div>
+      )}
+
       {/* File list */}
       {files.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
@@ -79,6 +168,9 @@ export function DocumentUpload({
               <span className="text-muted-foreground text-xs">
                 ({formatFileSize(file.size)})
               </span>
+              {!file.uploaded && !isOnline && (
+                <span className="text-xs text-destructive">(pendente)</span>
+              )}
               <button
                 type="button"
                 onClick={() => handleRemoveFile(index)}
@@ -141,4 +233,49 @@ export function DocumentUpload({
       />
     </div>
   );
+}
+
+// Utility function to upload document files to Supabase storage
+export async function uploadDocumentFiles(
+  files: DocumentFile[],
+  folder: string,
+  supabaseClient: any,
+  bucket: string = "documentos-cliente"
+): Promise<string[]> {
+  const uploadedUrls: string[] = [];
+  
+  for (const file of files) {
+    if (file.uploaded) {
+      // Already uploaded, just use the existing path
+      uploadedUrls.push(file.data);
+      continue;
+    }
+
+    try {
+      // Convert base64 to blob
+      const response = await fetch(file.data);
+      const blob = await response.blob();
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { error } = await supabaseClient.storage
+        .from(bucket)
+        .upload(fileName, blob, {
+          contentType: file.type,
+        });
+
+      if (error) {
+        console.error('Upload error:', error);
+        throw error;
+      }
+
+      uploadedUrls.push(fileName);
+    } catch (error) {
+      console.error('Failed to upload file:', file.name, error);
+      // Continue with other files even if one fails
+    }
+  }
+  
+  return uploadedUrls;
 }
