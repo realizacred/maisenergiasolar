@@ -356,34 +356,32 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
       vendedor: vendedorNome,
     };
 
-    // Helper to save offline
-    const saveOfflineFallback = async () => {
+    // Helper to save offline (only used when truly offline)
+    const saveOfflineFallback = async (): Promise<boolean> => {
+      // Only use offline fallback when actually offline
+      if (navigator.onLine) {
+        console.log("[LeadFormWizard] Still online, not using offline fallback");
+        return false;
+      }
+      
       const leadData = {
         nome: data.nome.trim(),
         telefone: data.telefone.trim(),
         ...orcamentoData,
       };
 
-      console.log("[LeadFormWizard] Using offline saveLead");
+      console.log("[LeadFormWizard] Device offline, using saveLead for local storage");
       const result = await saveLead(leadData);
 
-      if (result.success) {
+      if (result.success && result.offline) {
         clearDraft();
         resetHoneypot();
         resetRateLimit();
-        setSavedOffline(result.offline || false);
-        
-        if (!result.offline) {
-          triggerConfetti();
-        }
+        setSavedOffline(true);
         
         toast({
-          title: result.offline 
-            ? "Cadastro salvo localmente! 📴" 
-            : "Cadastro enviado com sucesso! ☀️",
-          description: result.offline
-            ? "Será sincronizado automaticamente quando a conexão voltar."
-            : "Entraremos em contato em breve.",
+          title: "Cadastro salvo localmente! 📴",
+          description: "Será sincronizado automaticamente quando a conexão voltar.",
         });
         
         setIsSubmitting(false);
@@ -443,35 +441,32 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
         setIsSuccess(true);
         return;
       } else {
-        // Online submission failed - try offline fallback
-        console.warn("[LeadFormWizard] Online save failed, trying offline fallback:", result.error);
-        const offlineSuccess = await saveOfflineFallback();
-        
-        if (!offlineSuccess) {
-          toast({
-            title: "Erro ao enviar cadastro",
-            description: result.error || "Tente novamente mais tarde.",
-            variant: "destructive",
-          });
-          setIsSubmitting(false);
-        }
+        // Online submission failed - show error, don't silently fall back to offline
+        console.error("[LeadFormWizard] Online save failed:", result.error);
+        toast({
+          title: "Erro ao enviar cadastro",
+          description: result.error || "Ocorreu um erro. Tente novamente.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
       console.error("[LeadFormWizard] Exception during submission:", errorMessage);
       
-      // Try offline fallback on any exception
-      console.log("[LeadFormWizard] Attempting offline fallback after exception");
-      const offlineSuccess = await saveOfflineFallback();
-      
-      if (!offlineSuccess) {
-        toast({
-          title: "Erro ao enviar cadastro",
-          description: "Ocorreu um erro inesperado. Tente novamente.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
+      // Only try offline fallback if we're truly offline now
+      if (!navigator.onLine) {
+        console.log("[LeadFormWizard] Connection lost, attempting offline fallback");
+        const offlineSuccess = await saveOfflineFallback();
+        if (offlineSuccess) return;
       }
+      
+      toast({
+        title: "Erro ao enviar cadastro",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
     }
   };
 
