@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,11 +25,13 @@ import { LeadAlerts } from "@/components/vendor/LeadAlerts";
 import { VendorFollowUpManager } from "@/components/vendor/VendorFollowUpManager";
 import { VendorPendingDocumentation } from "@/components/vendor/VendorPendingDocumentation";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
-import { VendorLeadFilters, VendorLeadsTable, VendorLeadViewDialog } from "@/components/vendor/leads";
+import { VendorLeadFilters, VendorOrcamentosTable } from "@/components/vendor/leads";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
 import { OfflineConversionsManager } from "@/components/leads/OfflineConversionsManager";
+import { useOrcamentosVendedor, OrcamentoVendedor } from "@/hooks/useOrcamentosVendedor";
 import logo from "@/assets/logo.png";
-import type { Lead, LeadStatus } from "@/types/lead";
+import type { Lead } from "@/types/lead";
+import { useEffect } from "react";
 
 interface VendedorProfile {
   id: string;
@@ -53,9 +55,7 @@ export default function VendedorPortal() {
   const navigate = useNavigate();
   const [vendedor, setVendedor] = useState<VendedorProfile | null>(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [statuses, setStatuses] = useState<LeadStatus[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -64,24 +64,24 @@ export default function VendedorPortal() {
   const [filterStatus, setFilterStatus] = useState("todos");
   
   // Dialog states
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [selectedOrcamento, setSelectedOrcamento] = useState<OrcamentoVendedor | null>(null);
   const [isConvertOpen, setIsConvertOpen] = useState(false);
-  const [leadToConvert, setLeadToConvert] = useState<Lead | null>(null);
+  const [orcamentoToConvert, setOrcamentoToConvert] = useState<OrcamentoVendedor | null>(null);
 
+  // Load vendedor profile
   useEffect(() => {
     if (!user) {
       navigate("/auth?from=vendedor", { replace: true });
       return;
     }
     
-    loadVendedorData();
+    loadVendedorProfile();
   }, [user, navigate]);
 
-  const loadVendedorData = async () => {
+  const loadVendedorProfile = async () => {
     if (!user) return;
 
-    console.log("VendedorPortal: Loading data for user:", user.id);
+    console.log("VendedorPortal: Loading profile for user:", user.id);
 
     try {
       // First check user roles to determine proper redirect
@@ -106,66 +106,53 @@ export default function VendedorPortal() {
       if (vendedorError || !vendedorData) {
         console.log("VendedorPortal: No vendedor found, isAdmin:", isAdmin);
         
-        // If user is admin/gerente, allow access with admin mode (sees all leads)
+        // If user is admin/gerente, allow access with admin mode (sees all orcamentos)
         if (isAdmin) {
-          console.log("VendedorPortal: Admin mode - showing all leads");
+          console.log("VendedorPortal: Admin mode - showing all orcamentos");
           setIsAdminMode(true);
           setVendedor(ADMIN_PROFILE);
-          
-          // Load ALL leads for admin
-          const { data: leadsData, error: leadsError } = await supabase
-            .from("leads")
-            .select("*")
-            .order("created_at", { ascending: false });
-
-          if (leadsError) throw leadsError;
-          setLeads(leadsData || []);
         } else {
           toast({
             title: "Acesso negado",
             description: "Seu usuário não está vinculado a um vendedor. Entre em contato com o administrador.",
             variant: "destructive",
           });
-          // Sign out to prevent redirect loop
           console.log("VendedorPortal: Signing out user without vendedor link");
           await signOut();
           navigate("/auth", { replace: true });
           return;
         }
       } else {
-        console.log("VendedorPortal: Vendedor found, loading leads");
-
+        console.log("VendedorPortal: Vendedor found:", vendedorData.nome);
         setVendedor(vendedorData);
-
-        // Load leads for this vendedor with all fields
-        const { data: leadsData, error: leadsError } = await supabase
-          .from("leads")
-          .select("*")
-          .eq("vendedor", vendedorData.nome)
-          .order("created_at", { ascending: false });
-
-        if (leadsError) throw leadsError;
-        setLeads(leadsData || []);
       }
-
-      // Load lead statuses
-      const { data: statusData } = await supabase
-        .from("lead_status")
-        .select("*")
-        .order("ordem");
-      
-      setStatuses(statusData || []);
     } catch (error) {
-      console.error("Error loading data:", error);
+      console.error("Error loading profile:", error);
       toast({
         title: "Erro",
         description: "Erro ao carregar dados.",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
     }
   };
+
+  // Use the orcamentos hook once vendedor is loaded
+  const {
+    orcamentos,
+    statuses,
+    loading: orcamentosLoading,
+    stats,
+    estados,
+    fetchOrcamentos,
+    toggleVisto,
+    updateStatus,
+    deleteOrcamento,
+  } = useOrcamentosVendedor({
+    vendedorNome: vendedor?.nome || null,
+    isAdminMode,
+  });
 
   const handleSignOut = async () => {
     await signOut();
@@ -182,113 +169,80 @@ export default function VendedorPortal() {
     });
   };
 
-  const handleToggleVisto = async (lead: Lead) => {
-    const newVisto = !lead.visto;
-    
-    // Optimistic update
-    setLeads(prev => 
-      prev.map(l => l.id === lead.id ? { ...l, visto: newVisto } : l)
-    );
-
-    const { error } = await supabase
-      .from("leads")
-      .update({ visto: newVisto })
-      .eq("id", lead.id);
-
-    if (error) {
-      // Revert on error
-      setLeads(prev => 
-        prev.map(l => l.id === lead.id ? { ...l, visto: !newVisto } : l)
-      );
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o status.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleStatusChange = (leadId: string, newStatusId: string | null) => {
-    setLeads(prev => 
-      prev.map(lead => 
-        lead.id === leadId 
-          ? { ...lead, status_id: newStatusId, ultimo_contato: new Date().toISOString() } 
-          : lead
-      )
-    );
-  };
-
-  const handleDeleteLead = async (lead: Lead) => {
-    const { error } = await supabase
-      .from("leads")
-      .delete()
-      .eq("id", lead.id);
-
-    if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível excluir o lead.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLeads(prev => prev.filter(l => l.id !== lead.id));
-    toast({
-      title: "Lead excluído",
-      description: `O lead "${lead.nome}" foi excluído com sucesso.`,
-    });
-  };
-
   const handleClearFilters = () => {
     setFilterVisto("todos");
     setFilterEstado("todos");
     setFilterStatus("todos");
   };
 
-  // Derived data
-  const estados = useMemo(() => 
-    [...new Set(leads.map(l => l.estado))].sort(), 
-    [leads]
+  // Convert orcamento to Lead format for conversion dialog
+  const orcamentoToLead = (orc: OrcamentoVendedor): Lead => ({
+    id: orc.lead_id,
+    lead_code: orc.lead_code,
+    nome: orc.nome,
+    telefone: orc.telefone,
+    telefone_normalized: orc.telefone.replace(/\D/g, ""),
+    cep: orc.cep,
+    estado: orc.estado,
+    cidade: orc.cidade,
+    bairro: orc.bairro,
+    rua: orc.rua,
+    numero: orc.numero,
+    complemento: orc.complemento,
+    area: orc.area,
+    tipo_telhado: orc.tipo_telhado,
+    rede_atendimento: orc.rede_atendimento,
+    media_consumo: orc.media_consumo,
+    consumo_previsto: orc.consumo_previsto,
+    observacoes: orc.observacoes,
+    arquivos_urls: orc.arquivos_urls,
+    vendedor: orc.vendedor,
+    visto: orc.visto,
+    visto_admin: orc.visto_admin,
+    status_id: orc.status_id,
+    ultimo_contato: orc.ultimo_contato,
+    proxima_acao: orc.proxima_acao,
+    data_proxima_acao: orc.data_proxima_acao,
+    created_at: orc.created_at,
+    updated_at: orc.updated_at,
+  });
+
+  // Convert orcamentos to leads for components that expect Lead type
+  const leadsForAlerts = useMemo(() => 
+    orcamentos.map(orcamentoToLead), 
+    [orcamentos]
   );
 
-  const filteredLeads = useMemo(() => {
-    let filtered = leads.filter(lead =>
-      lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.telefone.includes(searchTerm) ||
-      lead.cidade.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredOrcamentos = useMemo(() => {
+    let filtered = orcamentos.filter(orc =>
+      orc.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      orc.telefone.includes(searchTerm) ||
+      orc.cidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (orc.orc_code && orc.orc_code.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     if (filterVisto === "visto") {
-      filtered = filtered.filter(lead => lead.visto);
+      filtered = filtered.filter(orc => orc.visto);
     } else if (filterVisto === "nao_visto") {
-      filtered = filtered.filter(lead => !lead.visto);
+      filtered = filtered.filter(orc => !orc.visto);
     }
 
     if (filterEstado !== "todos") {
-      filtered = filtered.filter(lead => lead.estado === filterEstado);
+      filtered = filtered.filter(orc => orc.estado === filterEstado);
     }
 
     if (filterStatus !== "todos") {
       if (filterStatus === "novo") {
-        filtered = filtered.filter(lead => !lead.status_id);
+        filtered = filtered.filter(orc => !orc.status_id);
       } else {
-        filtered = filtered.filter(lead => lead.status_id === filterStatus);
+        filtered = filtered.filter(orc => orc.status_id === filterStatus);
       }
     }
 
     return filtered;
-  }, [leads, searchTerm, filterVisto, filterEstado, filterStatus]);
+  }, [orcamentos, searchTerm, filterVisto, filterEstado, filterStatus]);
 
-  const stats = useMemo(() => ({
-    total: leads.length,
-    novos: leads.filter(l => !l.visto).length,
-    esteMes: leads.filter(l => {
-      const date = new Date(l.created_at);
-      const now = new Date();
-      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-    }).length,
-  }), [leads]);
+  const loading = initialLoading || orcamentosLoading;
 
   if (loading) {
     return (
@@ -311,7 +265,7 @@ export default function VendedorPortal() {
                 {isAdminMode && <span className="text-xs ml-2 text-primary">(Modo Admin)</span>}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {isAdminMode ? "Visualizando todos os leads" : vendedor?.nome}
+                {isAdminMode ? "Visualizando todos os orçamentos" : vendedor?.nome}
               </p>
             </div>
           </div>
@@ -330,20 +284,20 @@ export default function VendedorPortal() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total de Leads</CardTitle>
+              <CardTitle className="text-sm font-medium">Total de Orçamentos</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.total}</div>
               <p className="text-xs text-muted-foreground">
-                Leads cadastrados com seu link
+                Orçamentos cadastrados com seu link
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Leads Novos</CardTitle>
+              <CardTitle className="text-sm font-medium">Orçamentos Novos</CardTitle>
               <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -362,32 +316,32 @@ export default function VendedorPortal() {
             <CardContent>
               <div className="text-2xl font-bold text-primary">{stats.esteMes}</div>
               <p className="text-xs text-muted-foreground">
-                Leads captados no mês atual
+                Orçamentos captados no mês atual
               </p>
             </CardContent>
           </Card>
         </div>
 
         {/* AI Assistant Alerts */}
-        <LeadAlerts leads={leads} diasAlerta={3} />
+        <LeadAlerts leads={leadsForAlerts} diasAlerta={3} />
 
         {/* Follow-Up Manager */}
         <VendorFollowUpManager 
-          leads={leads} 
+          leads={leadsForAlerts} 
           diasAlerta={3}
           onViewLead={(lead) => {
-            setSelectedLead(lead);
-            setIsViewOpen(true);
+            const orc = orcamentos.find(o => o.lead_id === lead.id);
+            if (orc) setSelectedOrcamento(orc);
           }}
         />
 
         {/* Pending Documentation Widget */}
         <VendorPendingDocumentation 
-          leads={leads}
+          leads={leadsForAlerts}
           statuses={statuses}
           onLeadClick={(lead) => {
-            setSelectedLead(lead);
-            setIsViewOpen(true);
+            const orc = orcamentos.find(o => o.lead_id === lead.id);
+            if (orc) setSelectedOrcamento(orc);
           }}
         />
 
@@ -403,7 +357,7 @@ export default function VendedorPortal() {
                 Seu Link de Vendedor
               </CardTitle>
               <CardDescription>
-                Compartilhe este link com seus clientes para captar leads
+                Compartilhe este link com seus clientes para captar orçamentos
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -422,12 +376,12 @@ export default function VendedorPortal() {
           </Card>
         )}
 
-        {/* Leads Table */}
+        {/* Orcamentos Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Meus Leads</CardTitle>
+            <CardTitle>Meus Orçamentos</CardTitle>
             <CardDescription>
-              Lista de todos os leads captados através do seu link
+              Lista de todos os orçamentos captados através do seu link
             </CardDescription>
             <VendorLeadFilters
               searchTerm={searchTerm}
@@ -444,18 +398,15 @@ export default function VendedorPortal() {
             />
           </CardHeader>
           <CardContent>
-            <VendorLeadsTable
-              leads={filteredLeads}
+            <VendorOrcamentosTable
+              orcamentos={filteredOrcamentos}
               statuses={statuses}
-              onToggleVisto={handleToggleVisto}
-              onView={(lead) => {
-                setSelectedLead(lead);
-                setIsViewOpen(true);
-              }}
-              onStatusChange={handleStatusChange}
-              onDelete={handleDeleteLead}
-              onConvert={(lead) => {
-                setLeadToConvert(lead);
+              onToggleVisto={toggleVisto}
+              onView={(orc) => setSelectedOrcamento(orc)}
+              onStatusChange={updateStatus}
+              onDelete={(orc) => deleteOrcamento(orc.id)}
+              onConvert={(orc) => {
+                setOrcamentoToConvert(orc);
                 setIsConvertOpen(true);
               }}
             />
@@ -463,17 +414,11 @@ export default function VendedorPortal() {
         </Card>
       </main>
 
-      <VendorLeadViewDialog
-        lead={selectedLead}
-        open={isViewOpen}
-        onOpenChange={setIsViewOpen}
-      />
-
       <ConvertLeadToClientDialog
-        lead={leadToConvert}
+        lead={orcamentoToConvert ? orcamentoToLead(orcamentoToConvert) : null}
         open={isConvertOpen}
         onOpenChange={setIsConvertOpen}
-        onSuccess={loadVendedorData}
+        onSuccess={fetchOrcamentos}
       />
     </div>
   );
