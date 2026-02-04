@@ -294,41 +294,57 @@ export function ConvertLeadToClientDialog({
     }
 
     setGettingLocation(true);
+    console.log("[Geolocation] Requesting current position...");
+
+    // Fallback timeout in case the browser never invokes either callback
+    const fallbackTimeout = setTimeout(() => {
+      console.warn("[Geolocation] Fallback timeout triggered (15s without response).");
+      setGettingLocation(false);
+      toast({
+        title: "Erro",
+        description: "Não foi possível obter a localização. Verifique as permissões do navegador.",
+        variant: "destructive",
+      });
+    }, 15000);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        clearTimeout(fallbackTimeout);
         const { latitude, longitude } = position.coords;
         const googleMapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
         form.setValue("localizacao", googleMapsLink);
         setGettingLocation(false);
+        console.log("[Geolocation] Success:", latitude, longitude);
         toast({
           title: "Localização obtida!",
           description: `Coordenadas: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
         });
       },
       (error) => {
+        clearTimeout(fallbackTimeout);
         setGettingLocation(false);
+        console.error("[Geolocation] Error:", error.code, error.message);
         let message = "Erro ao obter localização.";
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            message = "Permissão de localização negada.";
+            message = "Permissão de localização negada. Habilite nas configurações do navegador.";
             break;
           case error.POSITION_UNAVAILABLE:
-            message = "Localização indisponível.";
+            message = "Localização indisponível no momento.";
             break;
           case error.TIMEOUT:
-            message = "Tempo esgotado ao obter localização.";
+            message = "Tempo esgotado ao obter localização. Tente novamente.";
             break;
         }
         toast({
-          title: "Erro",
+          title: "Erro de Geolocalização",
           description: message,
           variant: "destructive",
         });
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 12000,
         maximumAge: 0,
       }
     );
