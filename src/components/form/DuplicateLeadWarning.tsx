@@ -50,7 +50,7 @@ export function DuplicateLeadWarning({
 
   return (
     <AlertDialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
-      <AlertDialogContent className="max-w-sm sm:max-w-md">
+      <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-base">
             <User className="h-5 w-5 text-primary" />
@@ -65,7 +65,7 @@ export function DuplicateLeadWarning({
         </AlertDialogHeader>
 
         {/* Lead list */}
-        <ScrollArea className={hasMultiple ? "max-h-60" : ""}>
+        <ScrollArea className={hasMultiple ? "max-h-48 sm:max-h-60" : ""}>
           <div className="space-y-2 my-2">
             {matchingLeads.map((lead) => {
               const isSelected = selectedLead?.id === lead.id || (!selectedLead && lead.id === firstLead.id);
@@ -98,18 +98,20 @@ export function DuplicateLeadWarning({
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 flex-wrap pr-6">
+                  <div className="flex items-center gap-2 pr-8">
                     <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="font-medium truncate">{lead.nome}</span>
+                    <span className="font-medium truncate max-w-[120px] sm:max-w-none">{lead.nome}</span>
                     {lead.lead_code && (
                       <Badge variant="outline" className="text-xs shrink-0">
                         {lead.lead_code}
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                    <Phone className="h-3 w-3 shrink-0" />
-                    <span>{lead.telefone}</span>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground mt-1">
+                    <div className="flex items-center gap-1">
+                      <Phone className="h-3 w-3 shrink-0" />
+                      <span className="text-xs sm:text-sm">{lead.telefone}</span>
+                    </div>
                     <span className="text-xs">• Cadastrado em {createdDate}</span>
                   </div>
                 </div>
@@ -118,11 +120,11 @@ export function DuplicateLeadWarning({
           </div>
         </ScrollArea>
 
-        <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:gap-2">
+        <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-2 mt-2">
           <AlertDialogCancel 
             disabled={isSubmitting} 
             onClick={onCancel}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto mt-0"
           >
             Cancelar
           </AlertDialogCancel>
@@ -131,18 +133,18 @@ export function DuplicateLeadWarning({
             variant="outline"
             onClick={onCreateNew}
             disabled={isSubmitting}
-            className="gap-2 w-full sm:w-auto"
+            className="gap-1.5 w-full sm:w-auto text-sm"
           >
             <Plus className="h-4 w-4" />
-            Criar Novo Cliente
+            <span className="hidden xs:inline">Criar</span> Novo Cliente
           </Button>
           <AlertDialogAction
             onClick={handleUseSelected}
             disabled={isSubmitting}
-            className="gap-2 w-full sm:w-auto"
+            className="gap-1.5 w-full sm:w-auto text-sm"
           >
             <Link2 className="h-4 w-4" />
-            Vincular ao Selecionado
+            Vincular<span className="hidden xs:inline"> ao Selecionado</span>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
