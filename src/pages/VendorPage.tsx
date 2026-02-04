@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import LeadFormWizard from "@/components/LeadFormWizard";
 import { OfflineStatusBar } from "@/components/vendor/OfflineStatusBar";
+import { OfflineDuplicateResolver } from "@/components/vendor/OfflineDuplicateResolver";
 
 export default function VendorPage() {
   const { codigo } = useParams<{ codigo: string }>();
@@ -14,6 +15,7 @@ export default function VendorPage() {
       {/* Form Section - passa o código do vendedor */}
       <main className="flex-1 py-12">
         <div className="container mx-auto px-4">
+          <OfflineDuplicateResolver />
           <LeadFormWizard vendorCode={codigo} />
         </div>
       </main>
