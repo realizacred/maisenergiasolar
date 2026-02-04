@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { LeadAlerts } from "@/components/vendor/LeadAlerts";
+import { FollowUpStatsCards } from "@/components/vendor/FollowUpStatsCards";
 import { VendorFollowUpManager } from "@/components/vendor/VendorFollowUpManager";
 import { VendorPendingDocumentation } from "@/components/vendor/VendorPendingDocumentation";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
@@ -322,6 +323,9 @@ export default function VendedorPortal() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Follow-Up Stats Cards (Urgentes, Pendentes, Em dia) */}
+        <FollowUpStatsCards leads={leadsForAlerts} />
 
         {/* AI Assistant Alerts */}
         <LeadAlerts leads={leadsForAlerts} diasAlerta={3} />
