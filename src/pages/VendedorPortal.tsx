@@ -37,10 +37,20 @@ interface VendedorProfile {
   email: string | null;
 }
 
+// Special admin profile when admin accesses without vendedor record
+const ADMIN_PROFILE: VendedorProfile = {
+  id: "admin",
+  nome: "Administrador",
+  codigo: "admin",
+  telefone: "",
+  email: null,
+};
+
 export default function VendedorPortal() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [vendedor, setVendedor] = useState<VendedorProfile | null>(null);
+  const [isAdminMode, setIsAdminMode] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [statuses, setStatuses] = useState<LeadStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,38 +104,47 @@ export default function VendedorPortal() {
       if (vendedorError || !vendedorData) {
         console.log("VendedorPortal: No vendedor found, isAdmin:", isAdmin);
         
-        // If user is admin/gerente, redirect to admin panel
+        // If user is admin/gerente, allow access with admin mode (sees all leads)
         if (isAdmin) {
-          console.log("VendedorPortal: Redirecting admin to /admin");
-          navigate("/admin", { replace: true });
+          console.log("VendedorPortal: Admin mode - showing all leads");
+          setIsAdminMode(true);
+          setVendedor(ADMIN_PROFILE);
+          
+          // Load ALL leads for admin
+          const { data: leadsData, error: leadsError } = await supabase
+            .from("leads")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+          if (leadsError) throw leadsError;
+          setLeads(leadsData || []);
+        } else {
+          toast({
+            title: "Acesso negado",
+            description: "Seu usuário não está vinculado a um vendedor. Entre em contato com o administrador.",
+            variant: "destructive",
+          });
+          // Sign out to prevent redirect loop
+          console.log("VendedorPortal: Signing out user without vendedor link");
+          await signOut();
+          navigate("/auth", { replace: true });
           return;
         }
-        
-        toast({
-          title: "Acesso negado",
-          description: "Seu usuário não está vinculado a um vendedor. Entre em contato com o administrador.",
-          variant: "destructive",
-        });
-        // Sign out to prevent redirect loop
-        console.log("VendedorPortal: Signing out user without vendedor link");
-        await signOut();
-        navigate("/auth", { replace: true });
-        return;
+      } else {
+        console.log("VendedorPortal: Vendedor found, loading leads");
+
+        setVendedor(vendedorData);
+
+        // Load leads for this vendedor with all fields
+        const { data: leadsData, error: leadsError } = await supabase
+          .from("leads")
+          .select("*")
+          .eq("vendedor", vendedorData.nome)
+          .order("created_at", { ascending: false });
+
+        if (leadsError) throw leadsError;
+        setLeads(leadsData || []);
       }
-
-      console.log("VendedorPortal: Vendedor found, loading leads");
-
-      setVendedor(vendedorData);
-
-      // Load leads for this vendedor with all fields
-      const { data: leadsData, error: leadsError } = await supabase
-        .from("leads")
-        .select("*")
-        .eq("vendedor", vendedorData.nome)
-        .order("created_at", { ascending: false });
-
-      if (leadsError) throw leadsError;
-      setLeads(leadsData || []);
 
       // Load lead statuses
       const { data: statusData } = await supabase
@@ -285,8 +304,13 @@ export default function VendedorPortal() {
           <div className="flex items-center gap-3">
             <img src={logo} alt="Logo" className="h-10" />
             <div>
-              <h1 className="font-bold text-lg">Portal do Vendedor</h1>
-              <p className="text-sm text-muted-foreground">{vendedor?.nome}</p>
+              <h1 className="font-bold text-lg">
+                Portal do Vendedor
+                {isAdminMode && <span className="text-xs ml-2 text-primary">(Modo Admin)</span>}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {isAdminMode ? "Visualizando todos os leads" : vendedor?.nome}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -348,31 +372,33 @@ export default function VendedorPortal() {
         {/* Offline Conversions Manager */}
         <OfflineConversionsManager />
 
-        {/* Share Link Card */}
-        <Card className="bg-primary/5 border-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <ExternalLink className="h-4 w-4" />
-              Seu Link de Vendedor
-            </CardTitle>
-            <CardDescription>
-              Compartilhe este link com seus clientes para captar leads
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <Input 
-                readOnly 
-                value={`${window.location.origin}/v/${vendedor?.codigo || ''}`}
-                className="bg-background"
-              />
-              <Button onClick={copyLink} variant="secondary">
-                <Copy className="h-4 w-4 mr-2" />
-                Copiar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Share Link Card - only show for actual vendedores, not admin mode */}
+        {!isAdminMode && (
+          <Card className="bg-primary/5 border-primary/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Seu Link de Vendedor
+              </CardTitle>
+              <CardDescription>
+                Compartilhe este link com seus clientes para captar leads
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Input 
+                  readOnly 
+                  value={`${window.location.origin}/v/${vendedor?.codigo || ''}`}
+                  className="bg-background"
+                />
+                <Button onClick={copyLink} variant="secondary">
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copiar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Leads Table */}
         <Card>
