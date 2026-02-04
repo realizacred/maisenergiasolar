@@ -392,8 +392,10 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
     };
 
     try {
-      // If offline, use legacy lead save directly
-      if (!isOnline) {
+      // If truly offline, use local save
+      // NOTE: `isOnline` state can be stale/incorrect on first load in some browsers.
+      const trulyOffline = !navigator.onLine;
+      if (trulyOffline) {
         const success = await saveOfflineFallback();
         if (!success) {
           toast({

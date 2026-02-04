@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 import type { LeadSimplified, DuplicateLeadsResult } from "@/types/orcamento";
 
 interface LeadData {
@@ -90,14 +89,19 @@ export function useLeadOrcamento() {
    */
   const createLead = async (data: LeadData): Promise<{ success: boolean; leadId?: string; error?: string }> => {
     try {
+      const leadId = crypto.randomUUID();
+      const telefone_normalized = normalizePhone(data.telefone);
+
       // Note: We still insert with the original required fields
       // The database may require certain fields even though we're moving them to orcamentos
       // We'll insert minimal data that satisfies NOT NULL constraints
-      const { data: newLead, error } = await supabase
+      const { error } = await supabase
         .from("leads")
         .insert({
+          id: leadId,
           nome: data.nome,
           telefone: data.telefone,
+          telefone_normalized,
           // Minimal required fields with defaults
           estado: "N/A",
           cidade: "N/A",
@@ -106,16 +110,14 @@ export function useLeadOrcamento() {
           rede_atendimento: "N/A",
           media_consumo: 0,
           consumo_previsto: 0,
-        })
-        .select("id")
-        .single();
+        });
 
       if (error) {
         console.error("[createLead] Error:", error);
         return { success: false, error: error.message };
       }
 
-      return { success: true, leadId: newLead.id };
+      return { success: true, leadId };
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
       return { success: false, error: msg };
@@ -127,9 +129,11 @@ export function useLeadOrcamento() {
    */
   const createOrcamento = async (leadId: string, data: OrcamentoData): Promise<{ success: boolean; orcamentoId?: string; error?: string }> => {
     try {
-      const { data: newOrcamento, error } = await supabase
+      const orcamentoId = crypto.randomUUID();
+      const { error } = await supabase
         .from("orcamentos")
         .insert({
+          id: orcamentoId,
           lead_id: leadId,
           cep: data.cep || null,
           estado: data.estado,
@@ -146,16 +150,14 @@ export function useLeadOrcamento() {
           observacoes: data.observacoes || null,
           arquivos_urls: data.arquivos_urls || [],
           vendedor: data.vendedor || null,
-        })
-        .select("id, orc_code")
-        .single();
+        });
 
       if (error) {
         console.error("[createOrcamento] Error:", error);
         return { success: false, error: error.message };
       }
 
-      return { success: true, orcamentoId: newOrcamento.id };
+      return { success: true, orcamentoId };
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
       return { success: false, error: msg };
