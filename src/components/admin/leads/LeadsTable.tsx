@@ -51,11 +51,11 @@ export function LeadsTable({ leads, onToggleVisto, onView, onDelete }: LeadsTabl
           {leads.map((lead) => (
             <TableRow
               key={lead.id}
-              className={lead.visto ? "bg-green-50 dark:bg-green-950/20" : ""}
+              className={lead.visto_admin ? "bg-green-50 dark:bg-green-950/20" : ""}
             >
               <TableCell>
                 <Checkbox
-                  checked={lead.visto}
+                  checked={lead.visto_admin}
                   onCheckedChange={() => onToggleVisto(lead)}
                   className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
                 />

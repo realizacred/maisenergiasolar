@@ -35,17 +35,17 @@ export function useLeads({ autoFetch = true }: UseLeadsOptions = {}) {
   }, [toast]);
 
   const toggleVisto = useCallback(async (lead: Lead) => {
-    const newVisto = !lead.visto;
+    const newVisto = !lead.visto_admin;
     
     // Optimistic update
     setLeads((prev) =>
-      prev.map((l) => (l.id === lead.id ? { ...l, visto: newVisto } : l))
+      prev.map((l) => (l.id === lead.id ? { ...l, visto_admin: newVisto } : l))
     );
     
     try {
       const { error } = await supabase
         .from("leads")
-        .update({ visto: newVisto })
+        .update({ visto_admin: newVisto })
         .eq("id", lead.id);
         
       if (error) throw error;
@@ -53,7 +53,7 @@ export function useLeads({ autoFetch = true }: UseLeadsOptions = {}) {
       console.error("Erro ao atualizar visto:", error);
       // Revert on error
       setLeads((prev) =>
-        prev.map((l) => (l.id === lead.id ? { ...l, visto: lead.visto } : l))
+        prev.map((l) => (l.id === lead.id ? { ...l, visto_admin: lead.visto_admin } : l))
       );
       toast({
         title: "Erro",

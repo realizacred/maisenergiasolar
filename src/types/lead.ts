@@ -20,6 +20,7 @@ export interface Lead {
   arquivos_urls: string[] | null;
   status_id: string | null;
   visto: boolean;
+  visto_admin: boolean;
   created_at: string;
   updated_at: string;
 }

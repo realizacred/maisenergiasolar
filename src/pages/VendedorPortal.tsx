@@ -45,6 +45,7 @@ interface Lead {
   created_at: string;
   ultimo_contato: string | null;
   visto: boolean;
+  visto_admin: boolean;
   lead_code: string | null;
   status_id: string | null;
   observacoes?: string | null;
