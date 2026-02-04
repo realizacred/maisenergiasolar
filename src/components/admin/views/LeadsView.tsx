@@ -1,52 +1,59 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useLeads } from "@/hooks/useLeads";
-import { LeadsTable, LeadFilters, LeadViewDialog, LeadDeleteDialog } from "@/components/admin/leads";
+import { useOrcamentosAdmin } from "@/hooks/useOrcamentosAdmin";
+import { 
+  OrcamentosTable, 
+  LeadFilters, 
+  OrcamentoViewDialog, 
+  OrcamentoDeleteDialog 
+} from "@/components/admin/leads";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
 import { PendingDocumentationWidget, FollowUpNotifications } from "@/components/admin/widgets";
+import type { OrcamentoDisplayItem } from "@/types/orcamento";
 import type { Lead } from "@/types/lead";
 
 export function LeadsView() {
-  const { leads, statuses, toggleVisto, deleteLead, filters, fetchLeads } = useLeads();
-  const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
+  const { orcamentos, statuses, toggleVisto, deleteOrcamento, filters, fetchOrcamentos } = useOrcamentosAdmin();
+  const [filteredOrcamentos, setFilteredOrcamentos] = useState<OrcamentoDisplayItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterVisto, setFilterVisto] = useState("nao_visto");
   const [filterVendedor, setFilterVendedor] = useState("todos");
   const [filterEstado, setFilterEstado] = useState("todos");
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedOrcamento, setSelectedOrcamento] = useState<OrcamentoDisplayItem | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+  const [orcamentoToDelete, setOrcamentoToDelete] = useState<OrcamentoDisplayItem | null>(null);
   const [isConvertOpen, setIsConvertOpen] = useState(false);
   const [leadToConvert, setLeadToConvert] = useState<Lead | null>(null);
 
   useEffect(() => {
-    let filtered = leads.filter(
-      (lead) =>
-        lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.telefone.includes(searchTerm) ||
-        lead.cidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.estado.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (lead.vendedor &&
-          lead.vendedor.toLowerCase().includes(searchTerm.toLowerCase()))
+    let filtered = orcamentos.filter(
+      (orc) =>
+        orc.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        orc.telefone.includes(searchTerm) ||
+        orc.cidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        orc.estado.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (orc.orc_code && orc.orc_code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (orc.lead_code && orc.lead_code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (orc.vendedor && orc.vendedor.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     if (filterVisto === "visto") {
-      filtered = filtered.filter((lead) => lead.visto_admin);
+      filtered = filtered.filter((orc) => orc.visto_admin);
     } else if (filterVisto === "nao_visto") {
-      filtered = filtered.filter((lead) => !lead.visto_admin);
+      filtered = filtered.filter((orc) => !orc.visto_admin);
     }
 
     if (filterVendedor !== "todos") {
-      filtered = filtered.filter((lead) => lead.vendedor === filterVendedor);
+      filtered = filtered.filter((orc) => orc.vendedor === filterVendedor);
     }
 
     if (filterEstado !== "todos") {
-      filtered = filtered.filter((lead) => lead.estado === filterEstado);
+      filtered = filtered.filter((orc) => orc.estado === filterEstado);
     }
 
-    setFilteredLeads(filtered);
-  }, [searchTerm, leads, filterVisto, filterVendedor, filterEstado]);
+    setFilteredOrcamentos(filtered);
+  }, [searchTerm, orcamentos, filterVisto, filterVendedor, filterEstado]);
 
   const handleClearFilters = () => {
     setFilterVisto("todos");
@@ -55,11 +62,47 @@ export function LeadsView() {
   };
 
   const handleDelete = async () => {
-    if (leadToDelete) {
-      await deleteLead(leadToDelete.id);
+    if (orcamentoToDelete) {
+      await deleteOrcamento(orcamentoToDelete.id);
       setIsDeleteOpen(false);
-      setLeadToDelete(null);
+      setOrcamentoToDelete(null);
     }
+  };
+
+  // Convert orcamento to lead format for conversion dialog
+  const handleConvertOrcamento = (orc: OrcamentoDisplayItem) => {
+    const leadForConversion: Lead = {
+      id: orc.lead_id,
+      lead_code: orc.lead_code,
+      nome: orc.nome,
+      telefone: orc.telefone,
+      telefone_normalized: null,
+      cep: orc.cep,
+      estado: orc.estado,
+      cidade: orc.cidade,
+      bairro: orc.bairro,
+      rua: orc.rua,
+      numero: orc.numero,
+      complemento: null,
+      area: orc.area,
+      tipo_telhado: orc.tipo_telhado,
+      rede_atendimento: orc.rede_atendimento,
+      media_consumo: orc.media_consumo,
+      consumo_previsto: orc.consumo_previsto,
+      observacoes: orc.observacoes,
+      arquivos_urls: orc.arquivos_urls,
+      vendedor: orc.vendedor,
+      visto: orc.visto,
+      visto_admin: orc.visto_admin,
+      status_id: orc.status_id,
+      ultimo_contato: orc.ultimo_contato,
+      proxima_acao: orc.proxima_acao,
+      data_proxima_acao: orc.data_proxima_acao,
+      created_at: orc.created_at,
+      updated_at: orc.updated_at,
+    };
+    setLeadToConvert(leadForConversion);
+    setIsConvertOpen(true);
   };
 
   const handleLeadFromWidget = (lead: Lead) => {
@@ -78,7 +121,7 @@ export function LeadsView() {
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <CardTitle className="text-brand-blue">Leads Cadastrados</CardTitle>
+            <CardTitle className="text-brand-blue">Orçamentos Cadastrados</CardTitle>
           </div>
           <LeadFilters
             searchTerm={searchTerm}
@@ -95,34 +138,31 @@ export function LeadsView() {
           />
         </CardHeader>
         <CardContent>
-          <LeadsTable
-            leads={filteredLeads}
+          <OrcamentosTable
+            orcamentos={filteredOrcamentos}
             statuses={statuses}
             onToggleVisto={toggleVisto}
-            onView={(lead) => {
-              setSelectedLead(lead);
+            onView={(orc) => {
+              setSelectedOrcamento(orc);
               setIsViewOpen(true);
             }}
-            onDelete={(lead) => {
-              setLeadToDelete(lead);
+            onDelete={(orc) => {
+              setOrcamentoToDelete(orc);
               setIsDeleteOpen(true);
             }}
-            onConvert={(lead) => {
-              setLeadToConvert(lead);
-              setIsConvertOpen(true);
-            }}
+            onConvert={handleConvertOrcamento}
           />
         </CardContent>
       </Card>
 
-      <LeadViewDialog
-        lead={selectedLead}
+      <OrcamentoViewDialog
+        orcamento={selectedOrcamento}
         open={isViewOpen}
         onOpenChange={setIsViewOpen}
       />
 
-      <LeadDeleteDialog
-        lead={leadToDelete}
+      <OrcamentoDeleteDialog
+        orcamento={orcamentoToDelete}
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         onConfirm={handleDelete}
@@ -132,7 +172,7 @@ export function LeadsView() {
         lead={leadToConvert}
         open={isConvertOpen}
         onOpenChange={setIsConvertOpen}
-        onSuccess={fetchLeads}
+        onSuccess={fetchOrcamentos}
       />
     </>
   );
