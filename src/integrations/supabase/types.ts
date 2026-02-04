@@ -741,6 +741,33 @@ export type Database = {
           },
         ]
       }
+      disjuntores: {
+        Row: {
+          amperagem: number
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          amperagem: number
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          amperagem?: number
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       financiamento_api_config: {
         Row: {
           api_key: string | null
@@ -1338,6 +1365,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      transformadores: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          potencia_kva: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          potencia_kva: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          potencia_kva?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
