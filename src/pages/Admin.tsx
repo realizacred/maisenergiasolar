@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Menu } from "lucide-react";
+import { Loader2, Menu, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLeads } from "@/hooks/useLeads";
+import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/sidebar/AdminSidebar";
 import { StatsCards } from "@/components/admin/stats/StatsCards";
@@ -23,17 +24,56 @@ import { ConcessionariasManager } from "@/components/admin/ConcessionariasManage
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Footer from "@/components/layout/Footer";
 
+const ALLOWED_ADMIN_ROLES = ["admin", "gerente", "financeiro"];
+
 export default function Admin() {
   const [activeTab, setActiveTab] = useState("leads");
   const { user, signOut, loading: authLoading } = useAuth();
   const { leads, loading, stats, fetchLeads } = useLeads();
   const navigate = useNavigate();
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth?from=admin", { replace: true });
+      return;
+    }
+
+    if (user) {
+      checkAdminAccess();
     }
   }, [user, authLoading, navigate]);
+
+  const checkAdminAccess = async () => {
+    if (!user) return;
+
+    try {
+      const { data: roles, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      const userHasAccess = roles?.some(r => 
+        ALLOWED_ADMIN_ROLES.includes(r.role)
+      );
+
+      if (!userHasAccess) {
+        // Redirect to portal selector instead of showing blocked screen
+        navigate("/portal", { replace: true });
+        return;
+      }
+
+      setHasAccess(true);
+    } catch (error) {
+      console.error("Error checking admin access:", error);
+      navigate("/portal", { replace: true });
+    } finally {
+      setCheckingAccess(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -47,7 +87,15 @@ export default function Admin() {
     }
   };
 
-  if (authLoading || loading) {
+  if (authLoading || loading || checkingAccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
