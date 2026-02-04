@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock, Loader2, CheckCircle, KeyRound, ArrowRight, Sparkles, ArrowLeft } from "lucide-react";
@@ -18,7 +18,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { loginSchema, LoginData } from "@/lib/validations";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const newPasswordSchema = z
   .object({
@@ -32,15 +31,42 @@ const newPasswordSchema = z
 
 type NewPasswordData = z.infer<typeof newPasswordSchema>;
 
-type RecoveryStep = "idle" | "email_sent" | "verify_otp" | "new_password" | "success";
+type RecoveryStep = "idle" | "email_sent" | "new_password" | "success";
 
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [recoveryStep, setRecoveryStep] = useState<RecoveryStep>("idle");
   const [recoveryEmail, setRecoveryEmail] = useState("");
-  const [otpCode, setOtpCode] = useState("");
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+
+  const isRecoveryFlow = useMemo(() => {
+    const hash = window.location.hash ?? "";
+    const search = window.location.search ?? "";
+    return /type=recovery/i.test(hash) || /type=recovery/i.test(search);
+  }, []);
+
+  useEffect(() => {
+    const enterRecovery = () => {
+      setRecoveryStep("new_password");
+    };
+
+    // If user landed here from the recovery link, enable the new password screen
+    if (isRecoveryFlow) {
+      enterRecovery();
+    }
+
+    // Also listen for the PASSWORD_RECOVERY event (covers cases where the session is detected after initial render)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        enterRecovery();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [isRecoveryFlow]);
 
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -78,11 +104,17 @@ export function AuthForm() {
           description: "Sua senha foi alterada com sucesso.",
         });
 
+        // Remove recovery tokens from the URL (avoid keeping sensitive data in the address bar)
+        try {
+          window.history.replaceState({}, document.title, "/auth");
+        } catch {
+          // ignore
+        }
+
         // Redireciona após alguns segundos
         setTimeout(() => {
           setRecoveryStep("idle");
           setRecoveryEmail("");
-          setOtpCode("");
         }, 2000);
       }
     } finally {
@@ -103,7 +135,9 @@ export function AuthForm() {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?type=recovery`,
+      });
 
       if (error) {
         toast({
@@ -113,46 +147,10 @@ export function AuthForm() {
         });
       } else {
         setRecoveryEmail(email);
-        setRecoveryStep("verify_otp");
+        setRecoveryStep("email_sent");
         toast({
-          title: "Código enviado! 📧",
-          description: "Verifique sua caixa de entrada e digite o código de 6 dígitos.",
-        });
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (otpCode.length !== 6) {
-      toast({
-        title: "Código incompleto",
-        description: "Digite o código de 6 dígitos recebido por email.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        email: recoveryEmail,
-        token: otpCode,
-        type: "recovery",
-      });
-
-      if (error) {
-        toast({
-          title: "Código inválido",
-          description: "O código está incorreto ou expirou. Solicite um novo.",
-          variant: "destructive",
-        });
-      } else {
-        setRecoveryStep("new_password");
-        toast({
-          title: "Código verificado! ✅",
-          description: "Agora defina sua nova senha.",
+          title: "Email enviado! 📧",
+          description: "Abra o email e clique no link para redefinir sua senha.",
         });
       }
     } finally {
@@ -163,7 +161,13 @@ export function AuthForm() {
   const handleBackToLogin = () => {
     setRecoveryStep("idle");
     setRecoveryEmail("");
-    setOtpCode("");
+
+    // Clear any recovery tokens that might be present in the URL
+    try {
+      window.history.replaceState({}, document.title, "/auth");
+    } catch {
+      // ignore
+    }
   };
 
   const handleSignIn = async (data: LoginData) => {
@@ -233,8 +237,8 @@ export function AuthForm() {
     );
   }
 
-  // Tela de verificação do código OTP
-  if (recoveryStep === "verify_otp") {
+  // Tela informando que o email foi enviado
+  if (recoveryStep === "email_sent") {
     return (
       <div className="space-y-6 animate-fade-in">
         <button
@@ -254,39 +258,24 @@ export function AuthForm() {
             Verifique seu Email
           </h3>
           <p className="text-sm text-muted-foreground mt-2">
-            Enviamos um código de 6 dígitos para <strong>{recoveryEmail}</strong>
+            Enviamos um link de redefinição para <strong>{recoveryEmail}</strong>
           </p>
         </div>
 
         <div className="flex flex-col items-center gap-4">
-          <InputOTP
-            maxLength={6}
-            value={otpCode}
-            onChange={(value) => setOtpCode(value)}
-          >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
-            </InputOTPGroup>
-          </InputOTP>
+          <p className="text-sm text-muted-foreground text-center">
+            Abra o email e clique no link para continuar. Se não encontrar, verifique o spam/lixo eletrônico.
+          </p>
 
           <Button
-            onClick={handleVerifyOtp}
+            type="button"
+            onClick={handleBackToLogin}
             className="w-full h-11"
-            disabled={isLoading || otpCode.length !== 6}
+            disabled={isLoading}
+            variant="outline"
           >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                Verificar Código
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </>
-            )}
+            Voltar ao login
+            <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
 
           <button
@@ -295,7 +284,7 @@ export function AuthForm() {
             className="text-sm text-muted-foreground hover:text-primary transition-colors"
             disabled={isLoading}
           >
-            Reenviar código
+            Reenviar email
           </button>
         </div>
       </div>
