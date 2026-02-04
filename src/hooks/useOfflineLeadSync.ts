@@ -39,6 +39,8 @@ export function useOfflineLeadSync() {
   const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const syncInProgressRef = useRef(false);
+  // Keep a reliable, up-to-date online flag (navigator.onLine can be inconsistent in some contexts)
+  const isOnlineRef = useRef(navigator.onLine);
   const syncedIdsRef = useRef<Set<string>>(new Set());
 
   const countPending = useCallback(() => {
@@ -101,9 +103,12 @@ export function useOfflineLeadSync() {
       return result;
     }
 
-    // Check online status at call time (not from stale state)
-    const currentlyOnline = navigator.onLine;
-    console.log("[syncPendingLeads] Online status check:", currentlyOnline);
+    // Check online status at call time (from ref updated by online/offline events)
+    const currentlyOnline = isOnlineRef.current;
+    console.log("[syncPendingLeads] Online status check:", {
+      isOnlineRef: currentlyOnline,
+      navigatorOnLine: navigator.onLine,
+    });
     
     if (!currentlyOnline) {
       if (showToast) {
@@ -236,9 +241,12 @@ export function useOfflineLeadSync() {
   };
 
   const saveLead = async (lead: Omit<LeadData, "id" | "synced">): Promise<{ success: boolean; offline: boolean; error?: string }> => {
-    console.log("[saveLead] Starting save, isOnline:", navigator.onLine);
+    console.log("[saveLead] Starting save, online:", {
+      isOnlineRef: isOnlineRef.current,
+      navigatorOnLine: navigator.onLine,
+    });
     
-    if (navigator.onLine) {
+    if (isOnlineRef.current) {
       const syncResult = await syncLead({ ...lead, synced: true });
       if (syncResult.success) {
         console.log("[saveLead] Online save successful");
@@ -264,6 +272,7 @@ export function useOfflineLeadSync() {
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
+      isOnlineRef.current = true;
       
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current);
@@ -284,6 +293,7 @@ export function useOfflineLeadSync() {
 
     const handleOffline = () => {
       setIsOnline(false);
+      isOnlineRef.current = false;
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current);
       }
