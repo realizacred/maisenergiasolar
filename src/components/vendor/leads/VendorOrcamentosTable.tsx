@@ -25,6 +25,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { OrcamentoStatusSelector } from "@/components/vendor/OrcamentoStatusSelector";
+import { VendorOrcamentoCard } from "./VendorOrcamentoCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { LeadStatus } from "@/types/lead";
 import type { OrcamentoVendedor } from "@/hooks/useOrcamentosVendedor";
 
@@ -49,6 +51,7 @@ export function VendorOrcamentosTable({
 }: VendorOrcamentosTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [orcamentoToDelete, setOrcamentoToDelete] = useState<OrcamentoVendedor | null>(null);
+  const isMobile = useIsMobile();
 
   const handleDeleteClick = (orcamento: OrcamentoVendedor) => {
     setOrcamentoToDelete(orcamento);
@@ -63,6 +66,8 @@ export function VendorOrcamentosTable({
     setOrcamentoToDelete(null);
   };
 
+  const getConvertedStatus = () => statuses.find(s => s.nome === "Convertido");
+
   if (orcamentos.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -71,9 +76,60 @@ export function VendorOrcamentosTable({
     );
   }
 
+  // Mobile: Card Layout
+  if (isMobile) {
+    const convertidoStatus = getConvertedStatus();
+    
+    return (
+      <>
+        <div className="space-y-3">
+          {orcamentos.map((orc) => {
+            const isConverted = convertidoStatus && orc.status_id === convertidoStatus.id;
+            
+            return (
+              <VendorOrcamentoCard
+                key={orc.id}
+                orcamento={orc}
+                statuses={statuses}
+                isConverted={!!isConverted}
+                onToggleVisto={() => onToggleVisto(orc)}
+                onView={() => onView(orc)}
+                onStatusChange={(newStatusId) => onStatusChange(orc.id, newStatusId)}
+                onDelete={onDelete ? () => handleDeleteClick(orc) : undefined}
+                onConvert={onConvert ? () => onConvert(orc) : undefined}
+              />
+            );
+          })}
+        </div>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Orçamento</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir o orçamento de <strong>{orcamentoToDelete?.nome}</strong>?
+                Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
+  }
+
+  // Desktop: Table Layout
   return (
     <>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -91,24 +147,23 @@ export function VendorOrcamentosTable({
           </TableHeader>
           <TableBody>
             {orcamentos.map((orc) => {
-              // Check if converted
-              const convertidoStatus = statuses.find(s => s.nome === "Convertido");
+              const convertidoStatus = getConvertedStatus();
               const isConverted = convertidoStatus && orc.status_id === convertidoStatus.id;
               
               return (
                 <TableRow
                   key={orc.id}
-                  className={`${orc.visto ? "bg-green-50 dark:bg-green-950/20" : ""} ${isConverted ? "bg-primary/5" : ""}`}
+                  className={`${orc.visto ? "bg-green-50/50 dark:bg-green-950/20" : ""} ${isConverted ? "bg-primary/5" : ""}`}
                 >
                   <TableCell>
                     <Checkbox
                       checked={orc.visto}
                       onCheckedChange={() => onToggleVisto(orc)}
-                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
                   </TableCell>
                   <TableCell>
-                    <Badge variant="default" className="font-mono text-xs bg-primary">
+                    <Badge variant="default" className="font-mono text-xs">
                       {orc.orc_code || "-"}
                     </Badge>
                   </TableCell>
@@ -141,7 +196,7 @@ export function VendorOrcamentosTable({
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className="bg-secondary/10 text-secondary"
+                      className="bg-secondary/10 text-secondary-foreground"
                     >
                       {orc.cidade}, {orc.estado}
                     </Badge>
@@ -192,7 +247,7 @@ export function VendorOrcamentosTable({
                         {isConverted && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="inline-flex items-center justify-center h-8 w-8 text-green-600">
+                              <span className="inline-flex items-center justify-center h-8 w-8 text-primary">
                                 <UserCheck className="w-4 h-4" />
                               </span>
                             </TooltipTrigger>

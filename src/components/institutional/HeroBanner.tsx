@@ -49,7 +49,7 @@ export function HeroBanner() {
   };
 
   return (
-    <section className="relative h-[400px] md:h-[500px] overflow-hidden">
+    <section className="relative h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden">
       {slides.map((slide, index) => (
         <div
           key={slide.id}
@@ -67,17 +67,17 @@ export function HeroBanner() {
           <div className="absolute inset-0 flex items-center">
             <div className="container mx-auto px-4">
               <div className="max-w-2xl ml-auto text-right text-white">
-                <h1 className="text-4xl md:text-6xl font-bold mb-2">
+                <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold mb-1 sm:mb-2">
                   {slide.title}
                 </h1>
-                <p className="text-3xl md:text-5xl font-bold text-brand-orange mb-6">
+                <p className="text-xl sm:text-3xl md:text-5xl font-bold text-brand-orange mb-3 sm:mb-6">
                   {slide.highlight}
                 </p>
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex flex-wrap justify-end gap-1.5 sm:gap-2">
                   {slide.categories.map((cat, i) => (
                     <span 
                       key={i}
-                      className={`px-3 py-1 rounded text-sm font-medium ${
+                      className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded text-xs sm:text-sm font-medium ${
                         i === 0 
                           ? "bg-brand-orange text-white" 
                           : "bg-white/20 backdrop-blur-sm"
@@ -97,27 +97,27 @@ export function HeroBanner() {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full"
+        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full h-8 w-8 sm:h-10 sm:w-10"
         onClick={prevSlide}
       >
-        <ChevronLeft className="w-6 h-6" />
+        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
       </Button>
       <Button
         variant="ghost"
         size="icon"
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full"
+        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full h-8 w-8 sm:h-10 sm:w-10"
         onClick={nextSlide}
       >
-        <ChevronRight className="w-6 h-6" />
+        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
       </Button>
 
       {/* Dots */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+      <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`w-3 h-3 rounded-full transition-colors ${
+            className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-colors ${
               index === currentSlide ? "bg-brand-orange" : "bg-white/50"
             }`}
           />

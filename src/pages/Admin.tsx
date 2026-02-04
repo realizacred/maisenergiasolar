@@ -167,15 +167,15 @@ export default function Admin() {
           onSignOut={handleSignOut}
         />
         
-        <SidebarInset className="flex-1">
-          <header className="flex h-14 items-center gap-4 border-b bg-background px-6">
+        <SidebarInset className="flex-1 min-w-0">
+          <header className="flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6 sticky top-0 z-40">
             <SidebarTrigger className="-ml-2">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
-            <h1 className="text-lg font-semibold capitalize">{activeTab}</h1>
+            <h1 className="text-base md:text-lg font-semibold capitalize truncate">{activeTab}</h1>
           </header>
 
-          <main className="flex-1 p-6 space-y-6">
+          <main className="flex-1 p-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden">
             {activeTab === "leads" && (
               <StatsCards
                 totalLeads={stats.total}
