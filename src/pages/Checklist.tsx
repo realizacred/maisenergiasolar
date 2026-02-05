@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logoImg from "@/assets/logo.png";
 
- const PAGE_TITLE = "Checklist de Instalação";
+ const PAGE_TITLE = "Registro de Serviço";
 
 interface ChecklistRecord {
   id: string;
@@ -86,7 +86,7 @@ export default function Checklist() {
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3">
               <img src={logoImg} alt="Logo" className="h-8" />
-              <span className="font-semibold hidden sm:inline">Checklist</span>
+               <span className="font-semibold hidden sm:inline">Registro</span>
                <span className="sr-only">{PAGE_TITLE}</span>
             </div>
 
@@ -100,8 +100,8 @@ export default function Checklist() {
                     onClick={() => setView("form")}
                     className="gap-1"
                   >
-                    <Plus className="h-4 w-4" />
-                    Novo
+                 <Plus className="h-4 w-4" />
+                 Novo
                   </Button>
                   <Button
                     variant={view === "history" ? "secondary" : "ghost"}
@@ -176,8 +176,8 @@ export default function Checklist() {
                 }}
                 className="w-full justify-start gap-2"
               >
-                <Plus className="h-4 w-4" />
-                Novo Checklist
+                 <Plus className="h-4 w-4" />
+                 Novo Registro
               </Button>
               <Button
                 variant="ghost"
@@ -214,9 +214,9 @@ export default function Checklist() {
                 <ClipboardList className="h-6 w-6 text-primary" />
                 {PAGE_TITLE}
               </h1>
-              <p className="text-muted-foreground text-sm mt-1">
-                Preencha os dados da instalação realizada
-              </p>
+             <p className="text-muted-foreground text-sm mt-1">
+               Preencha os dados do serviço realizado
+             </p>
             </div>
             <ChecklistForm onSuccess={() => setView("form")} />
           </>
@@ -239,14 +239,14 @@ export default function Checklist() {
             ) : checklists.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <ClipboardList className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>Nenhum checklist encontrado</p>
-                <Button
-                  variant="link"
-                  onClick={() => setView("form")}
-                  className="mt-2"
-                >
-                  Criar primeiro checklist
-                </Button>
+             <p>Nenhum registro encontrado</p>
+                 <Button
+                   variant="link"
+                   onClick={() => setView("form")}
+                   className="mt-2"
+                 >
+                   Criar primeiro registro
+                 </Button>
               </div>
             ) : (
               <div className="space-y-3">
