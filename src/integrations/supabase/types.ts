@@ -1496,6 +1496,57 @@ export type Database = {
           },
         ]
       }
+      parcelas: {
+        Row: {
+          created_at: string
+          data_vencimento: string
+          id: string
+          numero_parcela: number
+          pagamento_id: string | null
+          recebimento_id: string
+          status: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data_vencimento: string
+          id?: string
+          numero_parcela: number
+          pagamento_id?: string | null
+          recebimento_id: string
+          status?: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          data_vencimento?: string
+          id?: string
+          numero_parcela?: number
+          pagamento_id?: string | null
+          recebimento_id?: string
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parcelas_pagamento_id_fkey"
+            columns: ["pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "pagamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parcelas_recebimento_id_fkey"
+            columns: ["recebimento_id"]
+            isOneToOne: false
+            referencedRelation: "recebimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           ativo: boolean
@@ -2088,6 +2139,7 @@ export type Database = {
         Returns: boolean
       }
       unaccent: { Args: { "": string }; Returns: string }
+      update_parcelas_atrasadas: { Args: never; Returns: undefined }
     }
     Enums: {
       achievement_type:
