@@ -1722,6 +1722,7 @@ export type Database = {
       }
       servicos_agendados: {
         Row: {
+          audio_url: string | null
           bairro: string | null
           checklist_id: string | null
           cidade: string | null
@@ -1738,6 +1739,7 @@ export type Database = {
           hora_inicio: string | null
           id: string
           instalador_id: string
+          layout_modulos: Json | null
           lead_id: string | null
           observacoes: string | null
           observacoes_conclusao: string | null
@@ -1745,8 +1747,10 @@ export type Database = {
           status: Database["public"]["Enums"]["servico_status"]
           tipo: Database["public"]["Enums"]["servico_tipo"]
           updated_at: string
+          video_url: string | null
         }
         Insert: {
+          audio_url?: string | null
           bairro?: string | null
           checklist_id?: string | null
           cidade?: string | null
@@ -1763,6 +1767,7 @@ export type Database = {
           hora_inicio?: string | null
           id?: string
           instalador_id: string
+          layout_modulos?: Json | null
           lead_id?: string | null
           observacoes?: string | null
           observacoes_conclusao?: string | null
@@ -1770,8 +1775,10 @@ export type Database = {
           status?: Database["public"]["Enums"]["servico_status"]
           tipo: Database["public"]["Enums"]["servico_tipo"]
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
+          audio_url?: string | null
           bairro?: string | null
           checklist_id?: string | null
           cidade?: string | null
@@ -1788,6 +1795,7 @@ export type Database = {
           hora_inicio?: string | null
           id?: string
           instalador_id?: string
+          layout_modulos?: Json | null
           lead_id?: string | null
           observacoes?: string | null
           observacoes_conclusao?: string | null
@@ -1795,6 +1803,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["servico_status"]
           tipo?: Database["public"]["Enums"]["servico_tipo"]
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {

@@ -41,10 +41,14 @@ import { PhotoCapture } from "@/components/checklist/PhotoCapture";
   Mic,
   Square,
   Volume2,
+   Video,
+   Grid3X3,
  } from "lucide-react";
  import { cn } from "@/lib/utils";
 import logoWhite from "@/assets/logo-branca.png";
 import logoBlue from "@/assets/logo.png";
+ import { VideoCapture } from "./VideoCapture";
+ import { ModuleLayoutCanvas } from "./ModuleLayoutCanvas";
  
  interface ServicoAgendado {
    id: string;
@@ -69,6 +73,12 @@ import logoBlue from "@/assets/logo.png";
    servico: ServicoAgendado;
    onClose: () => void;
    onServiceUpdated: () => void;
+ }
+ 
+ interface LayoutData {
+   backgroundImage: string | null;
+   modules: { id: string; x: number; y: number; rotation: number; width: number; height: number }[];
+   totalModules: number;
  }
  
  const tipoLabels: Record<string, string> = {
@@ -100,6 +110,9 @@ import logoBlue from "@/assets/logo.png";
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
+   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+   const [layoutData, setLayoutData] = useState<LayoutData | null>(null);
+   const [isLayoutOpen, setIsLayoutOpen] = useState(false);
    
    // Signatures
    const [installerSignature, setInstallerSignature] = useState<string | null>(null);
@@ -334,6 +347,9 @@ import logoBlue from "@/assets/logo.png";
            data_hora_fim: new Date().toISOString(),
           fotos_urls: allPhotos,
            observacoes_conclusao: observacoes,
+         audio_url: audioUrl,
+         video_url: videoUrl,
+         layout_modulos: layoutData ? JSON.parse(JSON.stringify(layoutData)) : null,
          })
          .eq("id", servico.id);
  
@@ -710,6 +726,55 @@ import logoBlue from "@/assets/logo.png";
                   )}
                 </div>
 
+                 {/* Vídeo */}
+                 <VideoCapture
+                   videoUrl={videoUrl}
+                   onVideoChange={setVideoUrl}
+                   servicoId={servico.id}
+                 />
+
+                 {/* Layout de Módulos */}
+                 <div className="space-y-3 pt-4 border-t">
+                   <div className="flex items-center gap-2">
+                     <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
+                       <Grid3X3 className="h-4 w-4 text-warning" />
+                     </div>
+                     <div>
+                       <Label className="text-sm font-medium">Layout de Módulos</Label>
+                       <p className="text-xs text-muted-foreground">Desenhe o posicionamento das placas</p>
+                     </div>
+                   </div>
+                   
+                   {layoutData && layoutData.totalModules > 0 ? (
+                     <div className="p-3 bg-success/5 rounded-lg border border-success/20 flex items-center justify-between">
+                       <div className="flex items-center gap-2">
+                         <CheckCircle2 className="h-4 w-4 text-success" />
+                         <span className="text-sm font-medium text-success">
+                           {layoutData.totalModules} módulos posicionados
+                         </span>
+                       </div>
+                       <Button
+                         type="button"
+                         variant="outline"
+                         size="sm"
+                         onClick={() => setIsLayoutOpen(true)}
+                       >
+                         Editar
+                       </Button>
+                     </div>
+                   ) : (
+                     <Button
+                       type="button"
+                       variant="outline"
+                       className="w-full gap-2 h-10"
+                       onClick={() => setIsLayoutOpen(true)}
+                     >
+                       <Grid3X3 className="h-4 w-4" />
+                       Desenhar Layout
+                     </Button>
+                   )}
+                 </div>
+
                   {/* Observações */}
                   <div className="space-y-2 pt-4 border-t">
                     <Label className="text-sm font-medium">Observações</Label>
@@ -821,6 +886,14 @@ import logoBlue from "@/assets/logo.png";
           </div>
         </div>
       </div>
+
+       {/* Modal de Layout */}
+       <ModuleLayoutCanvas
+         layout={layoutData}
+         onLayoutChange={setLayoutData}
+         isOpen={isLayoutOpen}
+         onClose={() => setIsLayoutOpen(false)}
+       />
     </div>
   );
 }
