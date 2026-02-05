@@ -646,18 +646,6 @@ import logoWhite from "@/assets/logo-branca.png";
                     onPasswordChange={(value) => handleExtraDataChange('configuracao_wifi', value)}
                   />
 
-                  {/* Observações */}
-                  <div className="space-y-2 pt-4 border-t">
-                    <Label className="text-sm font-medium">Observações</Label>
-                    <Textarea
-                      placeholder="Observações sobre o serviço realizado..."
-                      value={observacoes}
-                      onChange={(e) => setObservacoes(e.target.value)}
-                      rows={3}
-                      className="resize-none"
-                    />
-                  </div>
-
                   {/* Fotos Extras */}
                   <div className="space-y-3 pt-4 border-t">
                     <div className="flex items-center gap-2">
@@ -744,6 +732,18 @@ import logoWhite from "@/assets/logo-branca.png";
                     </div>
                   )}
                 </div>
+
+                  {/* Observações */}
+                  <div className="space-y-2 pt-4 border-t">
+                    <Label className="text-sm font-medium">Observações</Label>
+                    <Textarea
+                      placeholder="Observações sobre o serviço realizado..."
+                      value={observacoes}
+                      onChange={(e) => setObservacoes(e.target.value)}
+                      rows={3}
+                      className="resize-none"
+                    />
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
