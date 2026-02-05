@@ -18,7 +18,9 @@ import {
   Loader2,
   Save,
   RefreshCw,
-  Plug
+  Plug,
+  Zap,
+  XCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -53,6 +55,11 @@ export function WhatsAppAutomationConfig() {
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -125,6 +132,41 @@ export function WhatsAppAutomationConfig() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    setTestingConnection(true);
+    setConnectionStatus(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('test-evolution-connection');
+      
+      if (error) throw error;
+      
+      setConnectionStatus({
+        success: data.success,
+        message: data.message || data.error || 'Teste concluído'
+      });
+      
+      toast({
+        title: data.success ? "Conexão OK!" : "Erro na conexão",
+        description: data.message || data.error,
+        variant: data.success ? "default" : "destructive",
+      });
+    } catch (error: any) {
+      console.error("Error testing connection:", error);
+      setConnectionStatus({
+        success: false,
+        message: error.message || 'Erro ao testar conexão'
+      });
+      toast({
+        title: "Erro ao testar",
+        description: error.message || "Não foi possível testar a conexão.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingConnection(false);
     }
   };
 
@@ -367,6 +409,43 @@ export function WhatsAppAutomationConfig() {
                       <p className="text-xs text-muted-foreground">
                         Nome da instância do WhatsApp configurada na Evolution API
                       </p>
+                    </div>
+
+                    {/* Test Connection Button */}
+                    <div className="pt-2 border-t">
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={handleTestConnection}
+                        disabled={testingConnection || !config.evolution_api_url || !config.evolution_api_key || !config.evolution_instance}
+                      >
+                        {testingConnection ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Zap className="h-4 w-4" />
+                        )}
+                        Testar Conexão
+                      </Button>
+                      
+                      {/* Connection Status */}
+                      {connectionStatus && (
+                        <div className={`mt-3 p-3 rounded-lg flex items-start gap-2 ${
+                          connectionStatus.success 
+                            ? 'bg-green-500/10 border border-green-500/30' 
+                            : 'bg-destructive/10 border border-destructive/30'
+                        }`}>
+                          {connectionStatus.success ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                          )}
+                          <p className={`text-sm ${
+                            connectionStatus.success ? 'text-green-700' : 'text-destructive'
+                          }`}>
+                            {connectionStatus.message}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
