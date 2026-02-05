@@ -44,7 +44,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PagamentosComissaoDialog } from "./PagamentosComissaoDialog";
-import { BulkPaymentDialog } from "./comissoes/BulkPaymentDialog";
+import { BulkPaymentDialog, VendorBalanceCard } from "./comissoes";
  
  interface Vendedor {
    id: string;
@@ -276,6 +276,20 @@ export function ComissoesManager() {
   const totalComissoes = comissoes.reduce((acc, c) => acc + c.valor_comissao, 0);
   const totalPago = comissoes.reduce((acc, c) => acc + calcularValorPago(c), 0);
   const totalPendente = comissoes.reduce((acc, c) => acc + calcularSaldoRestante(c), 0);
+
+  // Calculate vendor balances (positive = credit/overpaid, negative = pending)
+  const vendorBalances = vendedores.map(v => {
+    const vendorComissoes = comissoes.filter(c => c.vendedor_id === v.id);
+    const totalVendorComissoes = vendorComissoes.reduce((acc, c) => acc + c.valor_comissao, 0);
+    const totalVendorPago = vendorComissoes.reduce((acc, c) => acc + calcularValorPago(c), 0);
+    return {
+      vendedor_id: v.id,
+      vendedor_nome: v.nome,
+      total_comissoes: totalVendorComissoes,
+      total_pago: totalVendorPago,
+      saldo: totalVendorPago - totalVendorComissoes, // positive = credit, negative = pending
+    };
+  }).filter(b => b.total_comissoes > 0 || b.total_pago > 0); // Only show vendors with activity
  
    const anos = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - i);
  
@@ -287,67 +301,72 @@ export function ComissoesManager() {
      );
    }
  
-   return (
-     <div className="space-y-6">
-       {/* Stats Cards */}
-       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-         <Card>
-           <CardContent className="pt-6">
-             <div className="flex items-center gap-3">
-               <div className="p-2 rounded-lg bg-primary/10">
-                 <TrendingUp className="h-5 w-5 text-primary" />
-               </div>
-               <div>
-                 <p className="text-sm text-muted-foreground">Total Comissões</p>
-                 <p className="text-xl font-bold">{formatCurrency(totalComissoes)}</p>
-               </div>
-             </div>
-           </CardContent>
-         </Card>
- 
-         <Card>
-           <CardContent className="pt-6">
-             <div className="flex items-center gap-3">
-               <div className="p-2 rounded-lg bg-green-500/10">
-                 <DollarSign className="h-5 w-5 text-green-600" />
-               </div>
-               <div>
-                 <p className="text-sm text-muted-foreground">Total Pago</p>
-                 <p className="text-xl font-bold text-green-600">{formatCurrency(totalPago)}</p>
-               </div>
-             </div>
-           </CardContent>
-         </Card>
- 
-         <Card>
-           <CardContent className="pt-6">
-             <div className="flex items-center gap-3">
-               <div className="p-2 rounded-lg bg-orange-500/10">
-                 <Calendar className="h-5 w-5 text-orange-600" />
-               </div>
-               <div>
-                 <p className="text-sm text-muted-foreground">Pendente</p>
-                 <p className="text-xl font-bold text-orange-600">{formatCurrency(totalPendente)}</p>
-               </div>
-             </div>
-           </CardContent>
-         </Card>
- 
-         <Card>
-           <CardContent className="pt-6">
-             <div className="flex items-center gap-3">
-               <div className="p-2 rounded-lg bg-blue-500/10">
-                 <Users className="h-5 w-5 text-blue-600" />
-               </div>
-               <div>
-                 <p className="text-sm text-muted-foreground">Registros</p>
-                 <p className="text-xl font-bold">{comissoes.length}</p>
-               </div>
-             </div>
-           </CardContent>
-         </Card>
-       </div>
- 
+  return (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Comissões</p>
+                  <p className="text-xl font-bold">{formatCurrency(totalComissoes)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <DollarSign className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Pago</p>
+                  <p className="text-xl font-bold text-green-600">{formatCurrency(totalPago)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-orange-500/10">
+                  <Calendar className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Pendente</p>
+                  <p className="text-xl font-bold text-orange-600">{formatCurrency(totalPendente)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <Users className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Registros</p>
+                  <p className="text-xl font-bold">{comissoes.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Vendor Balance Card */}
+        <VendorBalanceCard balances={vendorBalances} />
+      </div>
+
        {/* Filters and Actions */}
        <Card>
         <CardHeader className="pb-4">
