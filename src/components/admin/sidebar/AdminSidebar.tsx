@@ -110,7 +110,39 @@ export function AdminSidebar({
       </SidebarHeader>
 
       <SidebarContent className="scrollbar-thin">
-        {/* Seção Financeira - Destaque */}
+        {/* Seção de Análises - Primeiro */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400 px-3 py-2 flex items-center gap-1.5">
+            <BarChart3 className="h-3 w-3" />
+            Análises
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {analyticsMenuItems.map((item, index) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    onClick={() => onTabChange(item.id)}
+                    isActive={activeTab === item.id}
+                    tooltip={item.title}
+                    className={`
+                      transition-all duration-200 rounded-lg mx-2
+                      ${activeTab === item.id 
+                        ? "bg-violet-500/10 text-violet-600 dark:text-violet-400 font-medium shadow-xs" 
+                        : "hover:bg-violet-500/5"
+                      }
+                    `}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Seção Financeira */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 px-3 py-2 flex items-center gap-1.5">
             <Coins className="h-3 w-3" />
@@ -131,7 +163,7 @@ export function AdminSidebar({
                         : "hover:bg-emerald-500/5"
                       }
                     `}
-                    style={{ animationDelay: `${index * 50}ms` }}
+                    style={{ animationDelay: `${(analyticsMenuItems.length + index) * 50}ms` }}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
@@ -144,7 +176,7 @@ export function AdminSidebar({
 
         {/* Seção de Vendas */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-2 flex items-center gap-1.5">
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 px-3 py-2 flex items-center gap-1.5">
             <TrendingUp className="h-3 w-3" />
             Vendas
           </SidebarGroupLabel>
@@ -159,43 +191,11 @@ export function AdminSidebar({
                     className={`
                       transition-all duration-200 rounded-lg mx-2
                       ${activeTab === item.id 
-                        ? "bg-primary/10 text-primary font-medium shadow-xs" 
-                        : "hover:bg-accent"
+                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium shadow-xs" 
+                        : "hover:bg-blue-500/5"
                       }
                     `}
-                    style={{ animationDelay: `${(financeMenuItems.length + index) * 50}ms` }}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Seção de Análises */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-2 flex items-center gap-1.5">
-            <BarChart3 className="h-3 w-3" />
-            Análises
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {analyticsMenuItems.map((item, index) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    onClick={() => onTabChange(item.id)}
-                    isActive={activeTab === item.id}
-                    tooltip={item.title}
-                    className={`
-                      transition-all duration-200 rounded-lg mx-2
-                      ${activeTab === item.id 
-                        ? "bg-primary/10 text-primary font-medium shadow-xs" 
-                        : "hover:bg-accent"
-                      }
-                    `}
-                    style={{ animationDelay: `${(financeMenuItems.length + salesMenuItems.length + index) * 50}ms` }}
+                    style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + index) * 50}ms` }}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
@@ -208,7 +208,7 @@ export function AdminSidebar({
 
         {/* Configurações */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-2 flex items-center gap-1.5">
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 px-3 py-2 flex items-center gap-1.5">
             <Settings className="h-3 w-3" />
             Configurações
           </SidebarGroupLabel>
@@ -223,11 +223,11 @@ export function AdminSidebar({
                     className={`
                       transition-all duration-200 rounded-lg mx-2
                       ${activeTab === item.id 
-                        ? "bg-primary/10 text-primary font-medium shadow-xs" 
-                        : "hover:bg-accent"
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium shadow-xs" 
+                        : "hover:bg-amber-500/5"
                       }
                     `}
-                    style={{ animationDelay: `${(financeMenuItems.length + salesMenuItems.length + analyticsMenuItems.length + index) * 50}ms` }}
+                    style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + salesMenuItems.length + index) * 50}ms` }}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
