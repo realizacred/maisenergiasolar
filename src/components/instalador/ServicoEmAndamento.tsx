@@ -101,9 +101,7 @@ import logoWhite from "@/assets/logo-branca.png";
   const audioInputRef = useRef<HTMLInputElement>(null);
    
    // Signatures
-   const [clientSignature, setClientSignature] = useState<string | null>(null);
    const [installerSignature, setInstallerSignature] = useState<string | null>(null);
-   const clientSignatureRef = useRef<SignaturePadRef>(null);
    const installerSignatureRef = useRef<SignaturePadRef>(null);
  
   const totalSteps = 2;
@@ -310,17 +308,7 @@ import logoWhite from "@/assets/logo-branca.png";
    // Concluir serviço
    const handleFinishService = async () => {
      // Validar assinaturas
-     const clientSig = clientSignature || clientSignatureRef.current?.getSignatureDataUrl();
      const installerSig = installerSignature || installerSignatureRef.current?.getSignatureDataUrl();
-     
-     if (!clientSig) {
-       toast({
-         title: "Assinatura do cliente obrigatória",
-         description: "Por favor, peça ao cliente para assinar.",
-         variant: "destructive",
-       });
-       return;
-     }
      
      if (!installerSig) {
        toast({
@@ -770,27 +758,6 @@ import logoWhite from "@/assets/logo-branca.png";
               exit={{ opacity: 0, x: -20 }}
               className="space-y-4"
             >
-              <Card className="border border-border/50 shadow-sm">
-                <CardHeader className="pb-3 border-b bg-muted/30">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                      <User className="h-4 w-4 text-blue-600" />
-                    </div>
-                    Assinatura do Cliente
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Solicite a assinatura do cliente
-                  </p>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <SignaturePad
-                    ref={clientSignatureRef}
-                    label=""
-                    onSignatureChange={setClientSignature}
-                  />
-                </CardContent>
-              </Card>
-
               <Card className="border border-border/50 shadow-sm">
                 <CardHeader className="pb-3 border-b bg-muted/30">
                   <CardTitle className="flex items-center gap-2 text-lg">
