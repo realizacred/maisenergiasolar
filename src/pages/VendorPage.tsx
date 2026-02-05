@@ -1,38 +1,100 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
 import LeadFormWizard from "@/components/LeadFormWizard";
 import { OfflineStatusBar } from "@/components/vendor/OfflineStatusBar";
 import { OfflineDuplicateResolver } from "@/components/vendor/OfflineDuplicateResolver";
+import { InstallAppBanner } from "@/components/vendor/InstallAppBanner";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+type ValidationState = "loading" | "valid" | "invalid";
 
 export default function VendorPage() {
   const { codigo } = useParams<{ codigo: string }>();
+  const navigate = useNavigate();
   const [vendedorNome, setVendedorNome] = useState<string | null>(null);
+  const [validationState, setValidationState] = useState<ValidationState>("loading");
 
-  // Load vendedor name from code for offline data isolation
+  // Validate vendor code and load name
   useEffect(() => {
-    const loadVendedorNome = async () => {
-      if (!codigo) return;
-      
-      const { data } = await supabase
-        .from("vendedores")
-        .select("nome")
-        .eq("codigo", codigo)
-        .eq("ativo", true)
-        .maybeSingle();
-      
-      if (data) {
-        setVendedorNome(data.nome);
+    const validateAndLoadVendedor = async () => {
+      if (!codigo) {
+        setValidationState("invalid");
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("vendedores")
+          .select("nome")
+          .eq("codigo", codigo)
+          .eq("ativo", true)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error validating vendor:", error);
+          setValidationState("invalid");
+          return;
+        }
+
+        if (data) {
+          setVendedorNome(data.nome);
+          setValidationState("valid");
+        } else {
+          setValidationState("invalid");
+        }
+      } catch (err) {
+        console.error("Error validating vendor:", err);
+        setValidationState("invalid");
       }
     };
 
-    loadVendedorNome();
+    validateAndLoadVendedor();
   }, [codigo]);
 
+  // Loading state
+  if (validationState === "loading") {
+    return <LoadingSpinner />;
+  }
+
+  // Invalid vendor code - show error page
+  if (validationState === "invalid") {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-12">
+          <div className="container mx-auto px-4 text-center max-w-md">
+            <div className="bg-card border rounded-lg p-8 shadow-lg">
+              <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-destructive" />
+              </div>
+              <h1 className="text-2xl font-bold text-foreground mb-2">
+                Link Inválido
+              </h1>
+              <p className="text-muted-foreground mb-6">
+                O código de vendedor "{codigo}" não foi encontrado ou não está mais ativo.
+              </p>
+              <Button 
+                onClick={() => navigate("/")} 
+                className="w-full"
+              >
+                Ir para a Página Inicial
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Valid vendor - show landing page
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col">
       <Header />
+      <InstallAppBanner vendedorNome={vendedorNome} />
       <OfflineStatusBar vendedorNome={vendedorNome} />
 
       {/* Form Section - passa o código do vendedor */}
