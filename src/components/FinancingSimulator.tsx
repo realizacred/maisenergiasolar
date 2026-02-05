@@ -12,7 +12,6 @@ interface FinancingSimulatorProps {
 }
 
 interface Banco {
-  id: string;
   nome: string;
   taxa_mensal: number;
   max_parcelas: number;
@@ -20,10 +19,10 @@ interface Banco {
 
 // Fallback options if database is empty
 const FALLBACK_OPTIONS = [
-  { id: "1", nome: "Santander Solar", taxa_mensal: 1.29, max_parcelas: 60 },
-  { id: "2", nome: "BV Financeira", taxa_mensal: 1.49, max_parcelas: 72 },
-  { id: "3", nome: "Banco do Brasil", taxa_mensal: 1.19, max_parcelas: 48 },
-  { id: "4", nome: "Caixa Econômica", taxa_mensal: 1.09, max_parcelas: 60 },
+  { nome: "Santander Solar", taxa_mensal: 1.29, max_parcelas: 60 },
+  { nome: "BV Financeira", taxa_mensal: 1.49, max_parcelas: 72 },
+  { nome: "Banco do Brasil", taxa_mensal: 1.19, max_parcelas: 48 },
+  { nome: "Caixa Econômica", taxa_mensal: 1.09, max_parcelas: 60 },
 ];
 
 export default function FinancingSimulator({ investimento, economia }: FinancingSimulatorProps) {
@@ -35,11 +34,8 @@ export default function FinancingSimulator({ investimento, economia }: Financing
   useEffect(() => {
     const fetchBancos = async () => {
       try {
-        const { data, error } = await supabase
-          .from("financiamento_bancos")
-          .select("id, nome, taxa_mensal, max_parcelas")
-          .eq("ativo", true)
-          .order("ordem");
+        // Use secure RPC function that exposes only necessary fields (no IDs)
+        const { data, error } = await supabase.rpc("get_active_financing_banks");
 
         if (error) throw error;
         if (data && data.length > 0) {
@@ -123,7 +119,7 @@ export default function FinancingSimulator({ investimento, economia }: Financing
           <div className="grid grid-cols-2 gap-2">
             {bancos.map((bank, index) => (
               <button
-                key={bank.id}
+                key={`${bank.nome}-${index}`}
                 onClick={() => setSelectedBank(index)}
                 className={`p-2 rounded-lg border text-left transition-all ${
                   selectedBank === index

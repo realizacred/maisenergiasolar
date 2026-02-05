@@ -2309,6 +2309,32 @@ export type Database = {
     }
     Functions: {
       check_phone_duplicate: { Args: { _telefone: string }; Returns: boolean }
+      get_active_financing_banks: {
+        Args: never
+        Returns: {
+          max_parcelas: number
+          nome: string
+          taxa_mensal: number
+        }[]
+      }
+      get_active_utilities: {
+        Args: never
+        Returns: {
+          estado: string
+          nome: string
+          sigla: string
+        }[]
+      }
+      get_calculator_config: {
+        Args: never
+        Returns: {
+          custo_por_kwp: number
+          geracao_mensal_por_kwp: number
+          kg_co2_por_kwh: number
+          percentual_economia: number
+          tarifa_media_kwh: number
+        }[]
+      }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
