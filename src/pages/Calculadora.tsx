@@ -62,15 +62,14 @@ export default function Calculadora() {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const { data, error } = await supabase
-          .from("calculadora_config")
-          .select("tarifa_media_kwh, custo_por_kwp, geracao_mensal_por_kwp, kg_co2_por_kwh, percentual_economia")
-          .single();
+        // Use secure RPC function that exposes only necessary fields
+        const { data, error } = await supabase.rpc("get_calculator_config");
 
         if (error) throw error;
-        if (data) {
-          setConfig(data);
-          setTarifaKwh(Number(data.tarifa_media_kwh));
+        if (data && data.length > 0) {
+          const configData = data[0];
+          setConfig(configData);
+          setTarifaKwh(Number(configData.tarifa_media_kwh));
         }
       } catch (error) {
         console.error("Erro ao buscar configuração:", error);
