@@ -44,6 +44,7 @@ import { PhotoCapture } from "@/components/checklist/PhotoCapture";
  } from "lucide-react";
  import { cn } from "@/lib/utils";
 import logoWhite from "@/assets/logo-branca.png";
+import logoBlue from "@/assets/logo.png";
  
  interface ServicoAgendado {
    id: string;
@@ -366,19 +367,19 @@ import logoWhite from "@/assets/logo-branca.png";
       <div className="fixed inset-0 z-50 bg-background overflow-auto">
          <div className="min-h-screen flex flex-col">
            {/* Header */}
-          <header className="sticky top-0 z-10 bg-gradient-to-r from-orange-600 to-orange-500 shadow-lg">
+          <header className="sticky top-0 z-10 bg-card border-b border-border shadow-sm">
              <div className="container mx-auto px-4">
               <div className="flex items-center justify-between h-16">
                  <Button
                    variant="ghost"
                    size="sm"
                    onClick={onClose}
-                   className="text-white hover:bg-white/10 gap-2"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted gap-2"
                  >
                    <ChevronLeft className="h-4 w-4" />
                    Voltar
                  </Button>
-                <img src={logoWhite} alt="Mais Energia Solar" className="h-8" />
+                <img src={logoBlue} alt="Mais Energia Solar" className="h-8" />
                  <div className="w-20" />
                </div>
              </div>
@@ -393,8 +394,8 @@ import logoWhite from "@/assets/logo-branca.png";
             >
               <Card className="border border-border/50 shadow-lg">
                 <CardHeader className="text-center pb-4 border-b">
-                  <div className="mx-auto w-16 h-16 rounded-2xl bg-orange-500/10 flex items-center justify-center mb-4">
-                    <Wrench className="h-8 w-8 text-orange-600" />
+                  <div className="mx-auto w-16 h-16 rounded-2xl bg-secondary/10 flex items-center justify-center mb-4">
+                    <Wrench className="h-8 w-8 text-secondary" />
                   </div>
                   <CardTitle className="text-xl font-semibold">{tipoLabels[servico.tipo]}</CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">Pronto para iniciar o atendimento</p>
@@ -403,8 +404,8 @@ import logoWhite from "@/assets/logo-branca.png";
                   {/* Cliente */}
                   {servico.cliente && (
                     <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl border border-border/50">
-                      <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
-                        <User className="h-5 w-5 text-orange-600" />
+                      <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
+                        <User className="h-5 w-5 text-secondary" />
                       </div>
                       <div>
                         <p className="font-medium text-foreground">{servico.cliente.nome}</p>
@@ -416,8 +417,8 @@ import logoWhite from "@/assets/logo-branca.png";
                   {/* Endereço */}
                   {(servico.endereco || servico.bairro || servico.cidade) && (
                     <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl border border-border/50">
-                      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                        <MapPin className="h-5 w-5 text-blue-600" />
+                      <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="h-5 w-5 text-secondary" />
                       </div>
                       <span className="text-sm text-foreground leading-relaxed">
                         {[servico.endereco, servico.bairro, servico.cidade].filter(Boolean).join(", ")}
@@ -427,8 +428,8 @@ import logoWhite from "@/assets/logo-branca.png";
                   
                   {/* Data */}
                   <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl border border-border/50">
-                    <div className="w-10 h-10 rounded-full bg-violet-500/10 flex items-center justify-center">
-                      <Calendar className="h-5 w-5 text-violet-600" />
+                    <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-secondary" />
                     </div>
                     <span className="text-sm text-foreground">
                       {format(new Date(servico.data_agendada), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
@@ -447,7 +448,7 @@ import logoWhite from "@/assets/logo-branca.png";
                   <Button
                     onClick={handleStartService}
                     disabled={isSubmitting}
-                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white h-14 text-lg gap-3 rounded-xl shadow-lg"
+                    className="w-full bg-success hover:bg-success/90 text-success-foreground h-14 text-lg gap-3 rounded-xl shadow-lg"
                   >
                     {isSubmitting ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
@@ -482,11 +483,11 @@ import logoWhite from "@/assets/logo-branca.png";
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", delay: 0.2 }}
-            className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
+            className="w-24 h-24 bg-success rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
           >
-            <CheckCircle2 className="h-12 w-12 text-white" />
+            <CheckCircle2 className="h-12 w-12 text-success-foreground" />
           </motion.div>
-          <h2 className="text-2xl font-bold text-emerald-600 mb-2">Serviço Concluído!</h2>
+          <h2 className="text-2xl font-bold text-success mb-2">Serviço Concluído!</h2>
           <p className="text-muted-foreground">Registro salvo com sucesso</p>
         </motion.div>
       </div>
@@ -497,7 +498,7 @@ import logoWhite from "@/assets/logo-branca.png";
   return (
     <div className="fixed inset-0 z-50 bg-background overflow-auto">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-sidebar border-b border-border shadow-sm">
+      <header className="sticky top-0 z-10 bg-card border-b border-border shadow-sm">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             <Button
@@ -509,14 +510,7 @@ import logoWhite from "@/assets/logo-branca.png";
               <X className="h-4 w-4" />
               Fechar
             </Button>
-            <div className="text-center">
-              <span className="text-foreground font-medium text-sm">{tipoLabels[servico.tipo]}</span>
-              <p className="text-muted-foreground text-xs">
-                Iniciado às {servico.data_hora_inicio 
-                  ? format(new Date(servico.data_hora_inicio), "HH:mm", { locale: ptBR })
-                  : "--:--"}
-              </p>
-            </div>
+            <img src={logoBlue} alt="Mais Energia Solar" className="h-8" />
             <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
               <Clock className="h-3 w-3 mr-1" />
               Em andamento
@@ -537,9 +531,9 @@ import logoWhite from "@/assets/logo-branca.png";
                 className={cn(
                   "w-10 h-10 rounded-xl flex items-center justify-center font-medium transition-all duration-300",
                   currentStep === step
-                    ? "bg-orange-600 text-white shadow-lg"
+                    ? "bg-secondary text-secondary-foreground shadow-lg"
                     : currentStep > step
-                    ? "bg-emerald-600 text-white"
+                    ? "bg-success text-success-foreground"
                     : "bg-muted text-muted-foreground border border-border"
                 )}
               >
@@ -554,7 +548,7 @@ import logoWhite from "@/assets/logo-branca.png";
               {step < totalSteps && (
                 <div className={cn(
                   "w-8 h-0.5 rounded-full hidden sm:block",
-                  currentStep > step ? "bg-emerald-600" : "bg-border"
+                  currentStep > step ? "bg-success" : "bg-border"
                 )} />
               )}
             </div>
@@ -573,8 +567,8 @@ import logoWhite from "@/assets/logo-branca.png";
               <Card className="border border-border/50 shadow-sm">
                 <CardHeader className="pb-3 border-b bg-muted/30">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                      <ClipboardCheck className="h-4 w-4 text-orange-600" />
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <ClipboardCheck className="h-4 w-4 text-primary" />
                     </div>
                     Checklist do Serviço
                   </CardTitle>
@@ -647,28 +641,11 @@ import logoWhite from "@/assets/logo-branca.png";
                   />
 
                   {/* Fotos Extras */}
-                  <div className="space-y-3 pt-4 border-t">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                        <Camera className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Fotos Extras</Label>
-                        <p className="text-xs text-muted-foreground">Opcional - fotos adicionais do serviço</p>
-                      </div>
-                    </div>
-                    <PhotoCapture
-                      photos={fotosExtras}
-                      onPhotosChange={setFotosExtras}
-                      maxPhotos={10}
-                    />
-                  </div>
-
                 {/* Áudio */}
                 <div className="space-y-3 pt-4 border-t">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                      <Volume2 className="h-4 w-4 text-violet-600" />
+                    <div className="w-8 h-8 rounded-lg bg-info/10 flex items-center justify-center">
+                      <Volume2 className="h-4 w-4 text-info" />
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Áudio</Label>
@@ -744,6 +721,24 @@ import logoWhite from "@/assets/logo-branca.png";
                       className="resize-none"
                     />
                   </div>
+
+                  {/* Fotos Extras */}
+                  <div className="space-y-3 pt-4 border-t">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                        <Camera className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">Fotos Extras</Label>
+                        <p className="text-xs text-muted-foreground">Opcional - fotos adicionais do serviço</p>
+                      </div>
+                    </div>
+                    <PhotoCapture
+                      photos={fotosExtras}
+                      onPhotosChange={setFotosExtras}
+                      maxPhotos={10}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -761,8 +756,8 @@ import logoWhite from "@/assets/logo-branca.png";
               <Card className="border border-border/50 shadow-sm">
                 <CardHeader className="pb-3 border-b bg-muted/30">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                      <Wrench className="h-4 w-4 text-orange-600" />
+                    <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+                      <Wrench className="h-4 w-4 text-secondary" />
                     </div>
                     Assinatura do Instalador
                   </CardTitle>
@@ -784,13 +779,14 @@ import logoWhite from "@/assets/logo-branca.png";
       </main>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-sidebar/95 backdrop-blur-md border-t border-border p-4 safe-area-bottom">
-        <div className="container mx-auto max-w-lg flex gap-3">
+      <div className="fixed bottom-0 left-0 right-0 gradient-blue p-4 pb-6 safe-area-bottom">
+        <div className="container mx-auto max-w-lg flex flex-col gap-3">
+          <div className="flex gap-3">
           {currentStep > 1 && (
             <Button
               variant="outline"
               onClick={prevStep}
-              className="flex-1 h-11 border-border"
+              className="flex-1 h-11 bg-white/10 border-white/20 text-white hover:bg-white/20"
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
               Voltar
@@ -800,7 +796,7 @@ import logoWhite from "@/assets/logo-branca.png";
           {currentStep < totalSteps ? (
             <Button
               onClick={nextStep}
-              className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="flex-1 h-11 bg-white text-secondary hover:bg-white/90 font-medium"
             >
               Próximo
               <ChevronRight className="h-4 w-4 ml-1" />
@@ -809,7 +805,7 @@ import logoWhite from "@/assets/logo-branca.png";
             <Button
               onClick={handleFinishService}
               disabled={isSubmitting}
-              className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="flex-1 h-11 bg-success hover:bg-success/90 text-success-foreground font-medium"
             >
               {isSubmitting ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -819,6 +815,10 @@ import logoWhite from "@/assets/logo-branca.png";
               Concluir Serviço
             </Button>
           )}
+          </div>
+          <div className="flex justify-center">
+            <img src={logoWhite} alt="Mais Energia Solar" className="h-5 opacity-80" />
+          </div>
         </div>
       </div>
     </div>
@@ -875,7 +875,7 @@ function ChecklistItemWithPhoto({
       className={cn(
         "p-4 rounded-xl transition-all duration-200 border",
         item.checked && item.photos.length > 0 
-          ? "bg-emerald-500/5 border-emerald-500/30" 
+        ? "bg-success/5 border-success/30" 
           : "bg-muted/30 border-border/50 hover:border-border"
       )}
     >
@@ -883,14 +883,14 @@ function ChecklistItemWithPhoto({
         <Checkbox
           checked={item.checked}
           onCheckedChange={(checked) => onToggleChecked(checked as boolean)}
-          className="mt-1 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+          className="mt-1 data-[state=checked]:bg-success data-[state=checked]:border-success"
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <div className={cn("w-6 h-6 rounded-md flex items-center justify-center", bgColor)}>
-              <Icon className={cn("h-3.5 w-3.5", item.checked ? "text-emerald-600" : iconColor)} />
+              <Icon className={cn("h-3.5 w-3.5", item.checked ? "text-success" : iconColor)} />
             </div>
-            <span className={cn("font-medium text-sm", item.checked && "text-emerald-700 dark:text-emerald-400")}>{title}</span>
+            <span className={cn("font-medium text-sm", item.checked && "text-success")}>{title}</span>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
           
