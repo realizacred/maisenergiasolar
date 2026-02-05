@@ -178,7 +178,7 @@ export default function Admin() {
          return (
            <Card>
              <CardHeader>
-               <CardTitle>Checklists de Instalação</CardTitle>
+               <CardTitle>Registros de Serviço</CardTitle>
              </CardHeader>
              <CardContent>
                <ChecklistsManager />
