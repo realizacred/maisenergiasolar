@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Phone, Eye, Trash2, ShoppingCart, UserCheck } from "lucide-react";
+import { Phone, Eye, Trash2, ShoppingCart, UserCheck, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ScheduleWhatsAppDialog } from "@/components/vendor/ScheduleWhatsAppDialog";
 import {
   Table,
   TableBody,
@@ -51,7 +52,14 @@ export function VendorOrcamentosTable({
 }: VendorOrcamentosTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [orcamentoToDelete, setOrcamentoToDelete] = useState<OrcamentoVendedor | null>(null);
+  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
+  const [selectedOrcForWhatsapp, setSelectedOrcForWhatsapp] = useState<OrcamentoVendedor | null>(null);
   const isMobile = useIsMobile();
+
+  const handleWhatsappClick = (orc: OrcamentoVendedor) => {
+    setSelectedOrcForWhatsapp(orc);
+    setWhatsappDialogOpen(true);
+  };
 
   const handleDeleteClick = (orcamento: OrcamentoVendedor) => {
     setOrcamentoToDelete(orcamento);
@@ -221,6 +229,19 @@ export function VendorOrcamentosTable({
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              onClick={() => handleWhatsappClick(orc)}
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Enviar WhatsApp</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="text-secondary hover:text-secondary"
                               onClick={() => onView(orc)}
                             >
@@ -299,6 +320,16 @@ export function VendorOrcamentosTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ScheduleWhatsAppDialog
+        lead={selectedOrcForWhatsapp ? {
+          id: selectedOrcForWhatsapp.lead_id,
+          nome: selectedOrcForWhatsapp.nome,
+          telefone: selectedOrcForWhatsapp.telefone,
+        } : null}
+        open={whatsappDialogOpen}
+        onOpenChange={setWhatsappDialogOpen}
+      />
     </>
   );
 }

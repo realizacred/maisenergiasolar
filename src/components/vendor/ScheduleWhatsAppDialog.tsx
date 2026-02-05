@@ -20,8 +20,14 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { Lead } from "@/types/lead";
 
+interface MinimalLead {
+  id?: string;
+  nome: string;
+  telefone: string;
+}
+
 interface ScheduleWhatsAppDialogProps {
-  lead: Lead | null;
+  lead: MinimalLead | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vendedorNome?: string;

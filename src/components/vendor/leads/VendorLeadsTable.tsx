@@ -1,11 +1,12 @@
-import { useState, useMemo } from "react";
-import { Phone, Eye, MapPin, Calendar, Trash2, ShoppingCart, UserCheck, Pencil } from "lucide-react";
+import { useState } from "react";
+import { Phone, Eye, MapPin, Calendar, Trash2, ShoppingCart, UserCheck, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ScheduleWhatsAppDialog } from "@/components/vendor/ScheduleWhatsAppDialog";
 import {
   Table,
   TableBody,
@@ -48,6 +49,13 @@ export function VendorLeadsTable({
 }: VendorLeadsTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
+  const [selectedLeadForWhatsapp, setSelectedLeadForWhatsapp] = useState<Lead | null>(null);
+
+  const handleWhatsappClick = (lead: Lead) => {
+    setSelectedLeadForWhatsapp(lead);
+    setWhatsappDialogOpen(true);
+  };
 
   const handleDeleteClick = (lead: Lead) => {
     setLeadToDelete(lead);
@@ -171,6 +179,19 @@ export function VendorLeadsTable({
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          onClick={() => handleWhatsappClick(lead)}
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Enviar WhatsApp</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="text-secondary hover:text-secondary"
                           onClick={() => onView(lead)}
                         >
@@ -248,6 +269,12 @@ export function VendorLeadsTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ScheduleWhatsAppDialog
+        lead={selectedLeadForWhatsapp}
+        open={whatsappDialogOpen}
+        onOpenChange={setWhatsappDialogOpen}
+      />
     </div>
   );
 }
