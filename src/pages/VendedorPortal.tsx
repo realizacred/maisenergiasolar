@@ -135,19 +135,25 @@ export default function VendedorPortal() {
             </div>
 
             {/* Productivity Tools Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {vendedor && (
-                <SmartReminders 
-                  leads={leadsForAlerts} 
-                  vendedorNome={vendedor.nome}
-                />
+                <div className="lg:col-span-1">
+                  <SmartReminders 
+                    leads={leadsForAlerts} 
+                    vendedorNome={vendedor.nome}
+                  />
+                </div>
               )}
               {vendedor && (
-                <WhatsAppTemplates vendedorNome={vendedor.nome} />
+                <div className="lg:col-span-1">
+                  <WhatsAppTemplates vendedorNome={vendedor.nome} />
+                </div>
               )}
-              <div className="space-y-4">
-                <FollowUpStatsCards leads={leadsForAlerts} />
-              </div>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="w-full">
+              <FollowUpStatsCards leads={leadsForAlerts} />
             </div>
 
             {/* Follow-Up Calendar */}
