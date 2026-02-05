@@ -14,6 +14,7 @@ import VendorPage from "./pages/VendorPage";
 import PortalSelector from "./pages/PortalSelector";
 import Instalar from "./pages/Instalar";
 import Avaliacao from "./pages/Avaliacao";
+ import Instalador from "./pages/Instalador";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/checklist" element={<Checklist />} />
             <Route path="/instalar" element={<Instalar />} />
             <Route path="/avaliacao" element={<Avaliacao />} />
+             <Route path="/instalador" element={<Instalador />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1720,6 +1720,104 @@ export type Database = {
           },
         ]
       }
+      servicos_agendados: {
+        Row: {
+          bairro: string | null
+          checklist_id: string | null
+          cidade: string | null
+          cliente_id: string | null
+          created_at: string
+          created_by: string | null
+          data_agendada: string
+          descricao: string | null
+          endereco: string | null
+          hora_fim: string | null
+          hora_inicio: string | null
+          id: string
+          instalador_id: string
+          lead_id: string | null
+          observacoes: string | null
+          observacoes_conclusao: string | null
+          projeto_id: string | null
+          status: Database["public"]["Enums"]["servico_status"]
+          tipo: Database["public"]["Enums"]["servico_tipo"]
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string | null
+          checklist_id?: string | null
+          cidade?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_agendada: string
+          descricao?: string | null
+          endereco?: string | null
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          instalador_id: string
+          lead_id?: string | null
+          observacoes?: string | null
+          observacoes_conclusao?: string | null
+          projeto_id?: string | null
+          status?: Database["public"]["Enums"]["servico_status"]
+          tipo: Database["public"]["Enums"]["servico_tipo"]
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string | null
+          checklist_id?: string | null
+          cidade?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_agendada?: string
+          descricao?: string | null
+          endereco?: string | null
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          instalador_id?: string
+          lead_id?: string | null
+          observacoes?: string | null
+          observacoes_conclusao?: string | null
+          projeto_id?: string | null
+          status?: Database["public"]["Enums"]["servico_status"]
+          tipo?: Database["public"]["Enums"]["servico_tipo"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servicos_agendados_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists_instalacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "servicos_agendados_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "servicos_agendados_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "servicos_agendados_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       simulacoes: {
         Row: {
           cidade: string | null
@@ -2192,6 +2290,13 @@ export type Database = {
         | "comissionado"
         | "concluido"
         | "cancelado"
+      servico_status:
+        | "agendado"
+        | "em_andamento"
+        | "concluido"
+        | "cancelado"
+        | "reagendado"
+      servico_tipo: "instalacao" | "manutencao" | "visita_tecnica" | "suporte"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2375,6 +2480,14 @@ export const Constants = {
         "concluido",
         "cancelado",
       ],
+      servico_status: [
+        "agendado",
+        "em_andamento",
+        "concluido",
+        "cancelado",
+        "reagendado",
+      ],
+      servico_tipo: ["instalacao", "manutencao", "visita_tecnica", "suporte"],
     },
   },
 } as const

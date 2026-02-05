@@ -18,6 +18,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logoImg from "@/assets/logo.png";
 
+ const PAGE_TITLE = "Checklist de Instalação";
+
 interface ChecklistRecord {
   id: string;
   data_instalacao: string;
@@ -85,6 +87,7 @@ export default function Checklist() {
             <div className="flex items-center gap-3">
               <img src={logoImg} alt="Logo" className="h-8" />
               <span className="font-semibold hidden sm:inline">Checklist</span>
+               <span className="sr-only">{PAGE_TITLE}</span>
             </div>
 
             {/* Desktop nav - só mostra opções completas se logado */}
@@ -209,10 +212,10 @@ export default function Checklist() {
             <div className="mb-6">
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <ClipboardList className="h-6 w-6 text-primary" />
-                Novo Checklist
+                {PAGE_TITLE}
               </h1>
               <p className="text-muted-foreground text-sm mt-1">
-                Preencha após cada instalação
+                Preencha os dados da instalação realizada
               </p>
             </div>
             <ChecklistForm onSuccess={() => setView("form")} />

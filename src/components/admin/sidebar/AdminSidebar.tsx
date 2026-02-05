@@ -23,6 +23,7 @@ import {
   Coins,
    ClipboardList,
    Star,
+    CalendarClock,
 } from "lucide-react";
 import {
   Sidebar,
@@ -65,6 +66,7 @@ const salesMenuItems = [
  
  // Seção de Operações
  const operationsMenuItems = [
+   { id: "servicos", title: "Serviços", icon: CalendarClock },
    { id: "checklists", title: "Checklists", icon: ClipboardList },
    { id: "avaliacoes", title: "Avaliações", icon: Star },
  ];
