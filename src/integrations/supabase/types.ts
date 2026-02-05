@@ -1102,6 +1102,120 @@ export type Database = {
         }
         Relationships: []
       }
+      instalador_config: {
+        Row: {
+          bonus_meta_atingida: number
+          created_at: string
+          id: string
+          meta_avaliacoes_positivas: number
+          meta_servicos_mensal: number
+          meta_tempo_medio_minutos: number
+          pontos_por_avaliacao_positiva: number
+          pontos_por_servico: number
+          updated_at: string
+        }
+        Insert: {
+          bonus_meta_atingida?: number
+          created_at?: string
+          id?: string
+          meta_avaliacoes_positivas?: number
+          meta_servicos_mensal?: number
+          meta_tempo_medio_minutos?: number
+          pontos_por_avaliacao_positiva?: number
+          pontos_por_servico?: number
+          updated_at?: string
+        }
+        Update: {
+          bonus_meta_atingida?: number
+          created_at?: string
+          id?: string
+          meta_avaliacoes_positivas?: number
+          meta_servicos_mensal?: number
+          meta_tempo_medio_minutos?: number
+          pontos_por_avaliacao_positiva?: number
+          pontos_por_servico?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      instalador_metas: {
+        Row: {
+          created_at: string
+          id: string
+          instalador_id: string
+          meta_avaliacoes_positivas: number
+          meta_servicos_mensal: number
+          meta_tempo_medio_minutos: number
+          updated_at: string
+          usar_metas_individuais: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instalador_id: string
+          meta_avaliacoes_positivas?: number
+          meta_servicos_mensal?: number
+          meta_tempo_medio_minutos?: number
+          updated_at?: string
+          usar_metas_individuais?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instalador_id?: string
+          meta_avaliacoes_positivas?: number
+          meta_servicos_mensal?: number
+          meta_tempo_medio_minutos?: number
+          updated_at?: string
+          usar_metas_individuais?: boolean
+        }
+        Relationships: []
+      }
+      instalador_performance_mensal: {
+        Row: {
+          ano: number
+          avaliacoes_positivas: number
+          avaliacoes_totais: number
+          created_at: string
+          id: string
+          instalador_id: string
+          mes: number
+          pontuacao_total: number
+          servicos_concluidos: number
+          tempo_medio_minutos: number | null
+          total_servicos: number
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          avaliacoes_positivas?: number
+          avaliacoes_totais?: number
+          created_at?: string
+          id?: string
+          instalador_id: string
+          mes: number
+          pontuacao_total?: number
+          servicos_concluidos?: number
+          tempo_medio_minutos?: number | null
+          total_servicos?: number
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          avaliacoes_positivas?: number
+          avaliacoes_totais?: number
+          created_at?: string
+          id?: string
+          instalador_id?: string
+          mes?: number
+          pontuacao_total?: number
+          servicos_concluidos?: number
+          tempo_medio_minutos?: number | null
+          total_servicos?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       layouts_solares: {
         Row: {
           cliente_id: string | null
@@ -1816,10 +1930,14 @@ export type Database = {
           lead_id: string | null
           observacoes: string | null
           observacoes_conclusao: string | null
+          observacoes_validacao: string | null
           projeto_id: string | null
           status: Database["public"]["Enums"]["servico_status"]
           tipo: Database["public"]["Enums"]["servico_tipo"]
           updated_at: string
+          validado: boolean | null
+          validado_em: string | null
+          validado_por: string | null
           video_url: string | null
         }
         Insert: {
@@ -1844,10 +1962,14 @@ export type Database = {
           lead_id?: string | null
           observacoes?: string | null
           observacoes_conclusao?: string | null
+          observacoes_validacao?: string | null
           projeto_id?: string | null
           status?: Database["public"]["Enums"]["servico_status"]
           tipo: Database["public"]["Enums"]["servico_tipo"]
           updated_at?: string
+          validado?: boolean | null
+          validado_em?: string | null
+          validado_por?: string | null
           video_url?: string | null
         }
         Update: {
@@ -1872,10 +1994,14 @@ export type Database = {
           lead_id?: string | null
           observacoes?: string | null
           observacoes_conclusao?: string | null
+          observacoes_validacao?: string | null
           projeto_id?: string | null
           status?: Database["public"]["Enums"]["servico_status"]
           tipo?: Database["public"]["Enums"]["servico_tipo"]
           updated_at?: string
+          validado?: boolean | null
+          validado_em?: string | null
+          validado_por?: string | null
           video_url?: string | null
         }
         Relationships: [

@@ -21,9 +21,10 @@ import {
   TrendingUp,
   Settings,
   Coins,
-   ClipboardList,
-   Star,
-    CalendarClock,
+  ClipboardList,
+  Star,
+  CalendarClock,
+  Wrench,
 } from "lucide-react";
 import {
   Sidebar,
@@ -64,12 +65,13 @@ const salesMenuItems = [
   { id: "validacao", title: "Validar Vendas", icon: ClipboardCheck },
 ];
  
- // Seção de Operações
- const operationsMenuItems = [
-   { id: "servicos", title: "Serviços", icon: CalendarClock },
-   { id: "checklists", title: "Checklists", icon: ClipboardList },
-   { id: "avaliacoes", title: "Avaliações", icon: Star },
- ];
+// Seção de Operações
+const operationsMenuItems = [
+  { id: "instaladores", title: "Instaladores", icon: Wrench },
+  { id: "servicos", title: "Serviços", icon: CalendarClock },
+  { id: "checklists", title: "Checklists", icon: ClipboardList },
+  { id: "avaliacoes", title: "Avaliações", icon: Star },
+];
 
 // Seção de Análises
 const analyticsMenuItems = [

@@ -28,6 +28,7 @@ import { GamificacaoConfig } from "@/components/admin/GamificacaoConfig";
  import { ChecklistsManager } from "@/components/admin/ChecklistsManager";
  import { AvaliacoesManager } from "@/components/admin/AvaliacoesManager";
  import { ServicosManager } from "@/components/admin/ServicosManager";
+import { InstaladorManager } from "@/components/admin/InstaladorManager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Footer from "@/components/layout/Footer";
 
@@ -204,6 +205,17 @@ export default function Admin() {
              </CardHeader>
              <CardContent>
                <ServicosManager />
+             </CardContent>
+           </Card>
+         );
+       case "instaladores":
+         return (
+           <Card>
+             <CardHeader>
+               <CardTitle>Gestão de Instaladores</CardTitle>
+             </CardHeader>
+             <CardContent>
+               <InstaladorManager />
              </CardContent>
            </Card>
          );
