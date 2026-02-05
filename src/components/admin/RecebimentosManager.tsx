@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -41,10 +42,16 @@ import {
   CreditCard,
   Eye,
   Calendar,
+  BarChart3,
+  CalendarDays,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PagamentosDialog } from "./PagamentosDialog";
+import { ParcelasManager } from "./recebimentos/ParcelasManager";
+import { RelatoriosFinanceiros } from "./recebimentos/RelatoriosFinanceiros";
+import { CalendarioPagamentos } from "./recebimentos/CalendarioPagamentos";
+import { ParcelasAtrasadasWidget } from "./widgets/ParcelasAtrasadasWidget";
 
 interface Cliente {
   id: string;
@@ -109,6 +116,8 @@ export function RecebimentosManager() {
   const [saving, setSaving] = useState(false);
   const [selectedRecebimento, setSelectedRecebimento] = useState<Recebimento | null>(null);
   const [pagamentosDialogOpen, setPagamentosDialogOpen] = useState(false);
+  const [parcelasDialogOpen, setParcelasDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("lista");
 
   const [formData, setFormData] = useState({
     cliente_id: "",
@@ -282,33 +291,42 @@ export function RecebimentosManager() {
 
   return (
     <div className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsTrigger value="lista" className="gap-2">
+            <Receipt className="h-4 w-4" />
+            Recebimentos
+          </TabsTrigger>
+          <TabsTrigger value="relatorios" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Relatórios
+          </TabsTrigger>
+          <TabsTrigger value="calendario" className="gap-2">
+            <CalendarDays className="h-4 w-4" />
+            Calendário
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="lista" className="space-y-6 mt-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">A Receber</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{formatCurrency(totalPendente)}</div>
-          </CardContent>
-        </Card>
+        <ParcelasAtrasadasWidget />
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Recebido</CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(totalRecebido)}</div>
+            <div className="text-2xl font-bold text-primary">{formatCurrency(totalRecebido)}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Recebimentos</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">A Receber</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{recebimentos.length}</div>
+            <div className="text-2xl font-bold text-muted-foreground">{formatCurrency(totalPendente)}</div>
           </CardContent>
         </Card>
       </div>
@@ -541,6 +559,17 @@ export function RecebimentosManager() {
                         <Button
                           size="sm"
                           variant="ghost"
+                          onClick={() => {
+                            setSelectedRecebimento(recebimento);
+                            setParcelasDialogOpen(true);
+                          }}
+                          title="Gerenciar Parcelas"
+                        >
+                          <Calendar className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           onClick={() => handleEdit(recebimento)}
                         >
                           <Edit className="h-4 w-4" />
@@ -561,6 +590,16 @@ export function RecebimentosManager() {
           </Table>
         </Card>
       )}
+        </TabsContent>
+
+        <TabsContent value="relatorios" className="mt-6">
+          <RelatoriosFinanceiros />
+        </TabsContent>
+
+        <TabsContent value="calendario" className="mt-6">
+          <CalendarioPagamentos />
+        </TabsContent>
+      </Tabs>
 
       {/* Pagamentos Dialog */}
       {selectedRecebimento && (
@@ -568,6 +607,19 @@ export function RecebimentosManager() {
           open={pagamentosDialogOpen}
           onOpenChange={(open) => {
             setPagamentosDialogOpen(open);
+            if (!open) setSelectedRecebimento(null);
+          }}
+          recebimento={selectedRecebimento}
+          onUpdate={fetchRecebimentos}
+        />
+      )}
+
+      {/* Parcelas Dialog */}
+      {selectedRecebimento && (
+        <ParcelasManager
+          open={parcelasDialogOpen}
+          onOpenChange={(open) => {
+            setParcelasDialogOpen(open);
             if (!open) setSelectedRecebimento(null);
           }}
           recebimento={selectedRecebimento}
