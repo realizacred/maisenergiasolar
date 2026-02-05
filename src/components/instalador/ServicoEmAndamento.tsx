@@ -38,6 +38,9 @@ import { PhotoCapture } from "@/components/checklist/PhotoCapture";
   Trash2,
   FileCheck,
   PenTool,
+  Mic,
+  Square,
+  Volume2,
  } from "lucide-react";
  import { cn } from "@/lib/utils";
 import logoWhite from "@/assets/logo-branca.png";
@@ -92,6 +95,10 @@ import logoWhite from "@/assets/logo-branca.png";
    
    const [observacoes, setObservacoes] = useState(servico.observacoes_conclusao || "");
   const [fotosExtras, setFotosExtras] = useState<string[]>([]);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
    
    // Signatures
    const [clientSignature, setClientSignature] = useState<string | null>(null);
@@ -101,6 +108,80 @@ import logoWhite from "@/assets/logo-branca.png";
  
   const totalSteps = 2;
  
+  // Audio recording handlers
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+      
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        await uploadAudio(blob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      toast({
+        title: "Erro ao gravar",
+        description: "Permita o acesso ao microfone.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder) {
+      mediaRecorder.stop();
+      setMediaRecorder(null);
+      setIsRecording(false);
+    }
+  };
+
+  const uploadAudio = async (blob: Blob) => {
+    try {
+      const fileName = `${servico.id}/audio_${Date.now()}.webm`;
+      
+      const { error } = await supabase.storage
+        .from('checklist-assets')
+        .upload(fileName, blob, { upsert: true });
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from('checklist-assets')
+        .getPublicUrl(fileName);
+
+      setAudioUrl(urlData.publicUrl);
+      toast({
+        title: "Áudio salvo",
+        description: "Gravação anexada com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error uploading audio:", error);
+      toast({
+        title: "Erro ao salvar áudio",
+        description: "Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAudioFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await uploadAudio(file);
+    }
+    if (audioInputRef.current) {
+      audioInputRef.current.value = '';
+    }
+  };
+
    // Iniciar serviço - registra data/hora de início
    const handleStartService = async () => {
      setIsSubmitting(true);
@@ -428,27 +509,27 @@ import logoWhite from "@/assets/logo-branca.png";
   return (
     <div className="fixed inset-0 z-50 bg-background overflow-auto">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-gradient-to-r from-orange-600 to-orange-500 shadow-lg">
+      <header className="sticky top-0 z-10 bg-sidebar border-b border-border shadow-sm">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14">
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="text-white hover:bg-white/10 gap-2"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted gap-2"
             >
               <X className="h-4 w-4" />
               Fechar
             </Button>
             <div className="text-center">
-              <span className="text-white font-medium text-sm">{tipoLabels[servico.tipo]}</span>
-              <p className="text-white/70 text-xs">
+              <span className="text-foreground font-medium text-sm">{tipoLabels[servico.tipo]}</span>
+              <p className="text-muted-foreground text-xs">
                 Iniciado às {servico.data_hora_inicio 
                   ? format(new Date(servico.data_hora_inicio), "HH:mm", { locale: ptBR })
                   : "--:--"}
               </p>
             </div>
-            <Badge className="bg-amber-500/20 text-amber-100 border border-amber-400/30">
+            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
               <Clock className="h-3 w-3 mr-1" />
               Em andamento
             </Badge>
@@ -606,6 +687,75 @@ import logoWhite from "@/assets/logo-branca.png";
                       maxPhotos={10}
                     />
                   </div>
+
+                {/* Áudio */}
+                <div className="space-y-3 pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                      <Volume2 className="h-4 w-4 text-violet-600" />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Áudio</Label>
+                      <p className="text-xs text-muted-foreground">Grave ou anexe um áudio</p>
+                    </div>
+                  </div>
+                  
+                  {audioUrl ? (
+                    <div className="p-3 bg-muted/50 rounded-lg border border-border/50">
+                      <audio controls className="w-full h-10" src={audioUrl} />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2 text-destructive hover:text-destructive"
+                        onClick={() => setAudioUrl(null)}
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Remover áudio
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        ref={audioInputRef}
+                        type="file"
+                        accept="audio/*"
+                        className="hidden"
+                        onChange={handleAudioFileSelect}
+                      />
+                      <Button
+                        type="button"
+                        variant={isRecording ? "destructive" : "outline"}
+                        size="sm"
+                        className="flex-1 gap-2 h-10"
+                        onClick={isRecording ? stopRecording : startRecording}
+                      >
+                        {isRecording ? (
+                          <>
+                            <Square className="h-4 w-4" />
+                            Parar Gravação
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="h-4 w-4" />
+                            Gravar Áudio
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 gap-2 h-10"
+                        onClick={() => audioInputRef.current?.click()}
+                        disabled={isRecording}
+                      >
+                        <FileCheck className="h-4 w-4" />
+                        Anexar Áudio
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -667,13 +817,13 @@ import logoWhite from "@/assets/logo-branca.png";
       </main>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t p-4 safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 bg-sidebar/95 backdrop-blur-md border-t border-border p-4 safe-area-bottom">
         <div className="container mx-auto max-w-lg flex gap-3">
           {currentStep > 1 && (
             <Button
               variant="outline"
               onClick={prevStep}
-              className="flex-1 h-12"
+              className="flex-1 h-11 border-border"
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
               Voltar
@@ -683,7 +833,7 @@ import logoWhite from "@/assets/logo-branca.png";
           {currentStep < totalSteps ? (
             <Button
               onClick={nextStep}
-              className="flex-1 h-12 bg-orange-600 hover:bg-orange-700 text-white"
+              className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               Próximo
               <ChevronRight className="h-4 w-4 ml-1" />
@@ -692,7 +842,7 @@ import logoWhite from "@/assets/logo-branca.png";
             <Button
               onClick={handleFinishService}
               disabled={isSubmitting}
-              className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white"
+              className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               {isSubmitting ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
