@@ -256,11 +256,11 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", delay: 0.2 }}
-          className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-4"
+          className="w-20 h-20 bg-success rounded-full flex items-center justify-center mb-4"
         >
-          <CheckCircle2 className="h-10 w-10 text-white" />
+          <CheckCircle2 className="h-10 w-10 text-success-foreground" />
         </motion.div>
-         <h2 className="text-2xl font-bold text-green-600">Registro Enviado!</h2>
+        <h2 className="text-2xl font-bold text-success">Registro Enviado!</h2>
          <p className="text-muted-foreground mt-2">Preparando novo registro...</p>
       </motion.div>
     );
@@ -272,9 +272,9 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
       <div className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
         <div className="flex items-center gap-2">
           {isOnline ? (
-            <Wifi className="h-4 w-4 text-green-500" />
+            <Wifi className="h-4 w-4 text-success" />
           ) : (
-            <WifiOff className="h-4 w-4 text-orange-500" />
+            <WifiOff className="h-4 w-4 text-warning" />
           )}
           <span className="text-sm">
             {isOnline ? "Online" : "Offline"}
@@ -310,7 +310,7 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
               currentStep === step
                 ? "bg-primary text-primary-foreground"
                 : currentStep > step
-                ? "bg-green-500 text-white"
+                ? "bg-success text-success-foreground"
                 : "bg-muted text-muted-foreground"
             )}
           >
@@ -473,8 +473,8 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
                 </div>
 
                 {/* Declaração de aceitação */}
-                <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-                  <p className="text-sm text-green-800 dark:text-green-200">
+                <div className="p-4 bg-success/10 rounded-lg border border-success/30">
+                  <p className="text-sm text-success dark:text-success">
                     <strong>Declaração de Aceitação:</strong> Eu declaro que todas as etapas 
                     da instalação do sistema fotovoltaico foram realizadas conforme descrito 
                     acima e que estou plenamente satisfeito com a execução dos serviços.
