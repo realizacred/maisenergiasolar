@@ -81,6 +81,13 @@ const analyticsMenuItems = [
   { id: "dashboard", title: "Dashboard", icon: BarChart3 },
 ];
 
+// Integrações (nova seção)
+const integrationsMenuItems = [
+  { id: "instagram", title: "Instagram", icon: Instagram },
+  { id: "whatsapp", title: "WhatsApp", icon: MessageCircle },
+  { id: "webhooks", title: "Webhooks", icon: Webhook },
+];
+
 // Configurações
 const configMenuItems = [
   { id: "vendedores", title: "Vendedores", icon: Users },
@@ -90,9 +97,6 @@ const configMenuItems = [
   { id: "concessionarias", title: "Concessionárias", icon: Lightbulb },
   { id: "config", title: "Calculadora", icon: Calculator },
   { id: "financiamento", title: "Bancos", icon: Building2 },
-  { id: "instagram", title: "Instagram", icon: Instagram },
-  { id: "whatsapp", title: "WhatsApp", icon: MessageCircle },
-  { id: "webhooks", title: "Webhooks", icon: Webhook },
 ];
 
 export function AdminSidebar({
@@ -253,6 +257,38 @@ export function AdminSidebar({
              </SidebarMenu>
            </SidebarGroupContent>
          </SidebarGroup>
+
+        {/* Integrações */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400 px-3 py-2 flex items-center gap-1.5">
+            <Webhook className="h-3 w-3" />
+            Integrações
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {integrationsMenuItems.map((item, index) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    onClick={() => onTabChange(item.id)}
+                    isActive={activeTab === item.id}
+                    tooltip={item.title}
+                    className={`
+                      transition-all duration-200 rounded-lg mx-2
+                      ${activeTab === item.id 
+                        ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 font-medium shadow-xs" 
+                        : "hover:bg-purple-500/5"
+                      }
+                    `}
+                    style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + salesMenuItems.length + operationsMenuItems.length + index) * 50}ms` }}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
  
         {/* Configurações */}
         <SidebarGroup>
@@ -275,7 +311,7 @@ export function AdminSidebar({
                         : "hover:bg-amber-500/5"
                       }
                     `}
-                     style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + salesMenuItems.length + operationsMenuItems.length + index) * 50}ms` }}
+                    style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + salesMenuItems.length + operationsMenuItems.length + integrationsMenuItems.length + index) * 50}ms` }}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
