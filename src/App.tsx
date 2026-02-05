@@ -13,6 +13,7 @@ import VendedorPortal from "./pages/VendedorPortal";
 import VendorPage from "./pages/VendorPage";
 import PortalSelector from "./pages/PortalSelector";
 import Instalar from "./pages/Instalar";
+import Avaliacao from "./pages/Avaliacao";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/calculadora" element={<Calculadora />} />
             <Route path="/checklist" element={<Checklist />} />
             <Route path="/instalar" element={<Instalar />} />
+            <Route path="/avaliacao" element={<Avaliacao />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
