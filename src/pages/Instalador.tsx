@@ -64,6 +64,7 @@
    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
    const [view, setView] = useState<"lista" | "calendario">("lista");
    const [hasAccess, setHasAccess] = useState(false);
+  const [accessChecked, setAccessChecked] = useState(false);
  
    useEffect(() => {
      if (!authLoading && !user) {
@@ -71,10 +72,10 @@
        return;
      }
  
-     if (user) {
+    if (user && !accessChecked) {
        checkAccess();
      }
-   }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, accessChecked]);
  
    const checkAccess = async () => {
      if (!user) return;
@@ -91,14 +92,17 @@
        const isAdmin = roles?.some(r => ["admin", "gerente"].includes(r.role));
  
        if (!isInstalador && !isAdmin) {
+        setAccessChecked(true);
          navigate("/portal", { replace: true });
          return;
        }
  
        setHasAccess(true);
+      setAccessChecked(true);
        fetchServicos();
      } catch (error) {
        console.error("Error checking access:", error);
+      setAccessChecked(true);
        navigate("/portal", { replace: true });
      }
    };
@@ -181,13 +185,17 @@
  
    const diasComServico = servicos.map(s => parseISO(s.data_agendada));
  
-   if (authLoading || !hasAccess) {
+  if (authLoading || (!accessChecked)) {
      return (
        <div className="min-h-screen flex items-center justify-center bg-background">
          <Loader2 className="h-8 w-8 animate-spin text-primary" />
        </div>
      );
    }
+
+  if (accessChecked && !hasAccess) {
+    return null; // Redirect in progress
+  }
  
    const ServicoCard = ({ servico }: { servico: ServicoAgendado }) => {
      const config = statusConfig[servico.status];
