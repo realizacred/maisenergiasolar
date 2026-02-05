@@ -352,16 +352,27 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
                                 onClick={() => openWhatsApp(clientGroup.lead, orc)}
                               >
                                 <div className="flex items-center gap-2 justify-between">
-                                  <div className="flex items-center gap-1.5">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
                                     <Badge 
-                                      variant={isLatest ? "default" : "outline"} 
-                                      className={`text-[10px] h-4 ${isLatest ? "bg-success text-success-foreground" : ""}`}
+                                      variant={isLatest ? "default" : isFirst ? "default" : "outline"} 
+                                      className={`text-[10px] h-4 ${
+                                        isLatest 
+                                          ? "bg-success text-success-foreground" 
+                                          : isFirst 
+                                          ? "bg-primary/80 text-primary-foreground" 
+                                          : ""
+                                      }`}
                                     >
                                       {orc.orc_code || "-"}
                                     </Badge>
                                     {isLatest && (
                                       <Badge variant="secondary" className="text-[10px] h-4 bg-success/20 text-success">
                                         Mais Recente
+                                      </Badge>
+                                    )}
+                                    {isFirst && clientGroup.count > 1 && (
+                                      <Badge variant="secondary" className="text-[10px] h-4 bg-primary/20 text-primary">
+                                        Primeiro
                                       </Badge>
                                     )}
                                   </div>
@@ -375,11 +386,6 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
                                 <p className="mt-1 opacity-70">
                                   {orc.cidade}, {orc.estado} • {orc.media_consumo} kWh
                                 </p>
-                                {isFirst && clientGroup.count > 1 && (
-                                  <Badge variant="outline" className="text-[10px] h-4 mt-1">
-                                    Primeiro Orçamento
-                                  </Badge>
-                                )}
                               </div>
                             );
                           })}

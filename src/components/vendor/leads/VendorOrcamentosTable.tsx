@@ -172,6 +172,7 @@ export function VendorOrcamentosTable({
           statuses={statuses}
           onViewOrcamento={(orc) => onView(orc as OrcamentoVendedor)}
           onWhatsApp={handleWhatsAppFromHistory}
+          onConvertOrcamento={onConvert ? (orc) => onConvert(orc as OrcamentoVendedor) : undefined}
         />
       </>
     );
@@ -417,6 +418,7 @@ export function VendorOrcamentosTable({
         statuses={statuses}
         onViewOrcamento={(orc) => onView(orc as OrcamentoVendedor)}
         onWhatsApp={handleWhatsAppFromHistory}
+        onConvertOrcamento={onConvert ? (orc) => onConvert(orc as OrcamentoVendedor) : undefined}
       />
     </>
   );
