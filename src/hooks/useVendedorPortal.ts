@@ -1,5 +1,5 @@
  import { useState, useEffect, useMemo, useCallback } from "react";
- import { useNavigate } from "react-router-dom";
+ import { useNavigate, useSearchParams } from "react-router-dom";
  import { useAuth } from "@/hooks/useAuth";
  import { supabase } from "@/integrations/supabase/client";
  import { toast } from "@/hooks/use-toast";
@@ -60,6 +60,8 @@
  export function useVendedorPortal() {
    const { user, signOut } = useAuth();
    const navigate = useNavigate();
+   const [searchParams] = useSearchParams();
+   const adminAsVendedor = searchParams.get("as"); // Admin viewing as specific vendor
    const [vendedor, setVendedor] = useState<VendedorProfile | null>(null);
    const [isAdminMode, setIsAdminMode] = useState(false);
    const [initialLoading, setInitialLoading] = useState(true);
@@ -95,7 +97,7 @@
      }
  
      loadVendedorProfile();
-   }, [user, navigate]);
+   }, [user, navigate, adminAsVendedor]);
  
    const loadVendedorProfile = async () => {
      if (!user) return;
@@ -108,6 +110,32 @@
  
        const isAdmin = userRoles?.some(r => r.role === "admin" || r.role === "gerente" || r.role === "financeiro");
  
+       // If admin is viewing as specific vendor (via ?as=codigo parameter)
+       if (isAdmin && adminAsVendedor) {
+         const { data: targetVendedor, error: targetError } = await supabase
+           .from("vendedores")
+           .select("*")
+           .eq("codigo", adminAsVendedor)
+           .eq("ativo", true)
+           .single();
+ 
+         if (targetError || !targetVendedor) {
+           toast({
+             title: "Vendedor não encontrado",
+             description: `Código "${adminAsVendedor}" não existe ou está inativo.`,
+             variant: "destructive",
+           });
+           navigate("/admin", { replace: true });
+           return;
+         }
+ 
+         setIsAdminMode(true);
+         setVendedor(targetVendedor);
+         setInitialLoading(false);
+         return;
+       }
+ 
+       // Normal flow: load user's own vendedor profile
        const { data: vendedorData, error: vendedorError } = await supabase
          .from("vendedores")
          .select("*")
