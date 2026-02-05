@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Printer } from "lucide-react";
+import { ReciboDialog } from "./recebimentos/ReciboDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -92,6 +94,8 @@ export function PagamentosDialog({
 }: PagamentosDialogProps) {
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [selectedPagamento, setSelectedPagamento] = useState<Pagamento | null>(null);
+  const [reciboOpen, setReciboOpen] = useState(false);
   const [formData, setFormData] = useState({
     valor_pago: "",
     forma_pagamento: "",
@@ -171,8 +175,14 @@ export function PagamentosDialog({
     return formaPaga !== recebimento.forma_pagamento_acordada;
   };
 
+  const handlePrintRecibo = (pagamento: Pagamento, index: number) => {
+    setSelectedPagamento({ ...pagamento, index } as Pagamento & { index: number });
+    setReciboOpen(true);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -334,11 +344,11 @@ export function PagamentosDialog({
                   <TableHead>Valor</TableHead>
                   <TableHead>Forma</TableHead>
                   <TableHead>Obs</TableHead>
-                  <TableHead className="w-12"></TableHead>
+                  <TableHead className="w-24"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pagamentos.map((pagamento) => (
+                {pagamentos.map((pagamento, index) => (
                   <TableRow key={pagamento.id}>
                     <TableCell>
                       {format(new Date(pagamento.data_pagamento), "dd/MM/yyyy", { locale: ptBR })}
@@ -361,6 +371,14 @@ export function PagamentosDialog({
                       <Button
                         size="sm"
                         variant="ghost"
+                        onClick={() => handlePrintRecibo(pagamento, index + 1)}
+                        title="Imprimir Recibo"
+                      >
+                        <Printer className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={() => handleDelete(pagamento.id)}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -374,5 +392,17 @@ export function PagamentosDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
+
+    {selectedPagamento && (
+      <ReciboDialog
+        open={reciboOpen}
+        onOpenChange={setReciboOpen}
+        pagamento={selectedPagamento}
+        clienteNome={recebimento.clientes?.nome || "Cliente"}
+        descricaoRecebimento={recebimento.descricao}
+        numeroRecibo={(selectedPagamento as Pagamento & { index: number }).index}
+      />
+    )}
+    </>
+   );
 }
