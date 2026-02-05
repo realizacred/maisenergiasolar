@@ -1,4 +1,4 @@
- import { useEffect, useState } from "react";
+ import { useEffect, useState, useCallback } from "react";
  import { useNavigate } from "react-router-dom";
  import { useAuth } from "@/hooks/useAuth";
  import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ import { format, isSameDay, parseISO } from "date-fns";
  } from "lucide-react";
 import logoBrancaImg from "@/assets/logo-branca.png";
  import { toast } from "@/hooks/use-toast";
+ import { ServicoEmAndamento } from "@/components/instalador/ServicoEmAndamento";
  
  interface ServicoAgendado {
    id: string;
@@ -35,11 +36,15 @@ import logoBrancaImg from "@/assets/logo-branca.png";
    data_agendada: string;
    hora_inicio: string | null;
    hora_fim: string | null;
+   data_hora_inicio: string | null;
+   data_hora_fim: string | null;
    endereco: string | null;
    bairro: string | null;
    cidade: string | null;
    descricao: string | null;
    observacoes: string | null;
+   observacoes_conclusao: string | null;
+   fotos_urls: string[] | null;
    cliente: { nome: string; telefone: string } | null;
  }
  
@@ -67,6 +72,7 @@ const statusConfig: Record<string, { label: string; bgColor: string; textColor: 
    const [view, setView] = useState<"lista" | "calendario">("lista");
    const [hasAccess, setHasAccess] = useState(false);
   const [accessChecked, setAccessChecked] = useState(false);
+   const [activeServico, setActiveServico] = useState<ServicoAgendado | null>(null);
  
    useEffect(() => {
      if (!authLoading && !user) {
@@ -109,7 +115,7 @@ const statusConfig: Record<string, { label: string; bgColor: string; textColor: 
      }
    };
  
-   const fetchServicos = async () => {
+   const fetchServicos = useCallback(async () => {
      if (!user) return;
  
      setLoading(true);
@@ -123,11 +129,15 @@ const statusConfig: Record<string, { label: string; bgColor: string; textColor: 
            data_agendada,
            hora_inicio,
            hora_fim,
+           data_hora_inicio,
+           data_hora_fim,
            endereco,
            bairro,
            cidade,
            descricao,
            observacoes,
+           observacoes_conclusao,
+           fotos_urls,
            cliente:clientes(nome, telefone)
          `)
          .eq("instalador_id", user.id)
@@ -145,7 +155,7 @@ const statusConfig: Record<string, { label: string; bgColor: string; textColor: 
      } finally {
        setLoading(false);
      }
-   };
+   }, [user]);
  
    const updateServicoStatus = async (id: string, status: "agendado" | "em_andamento" | "concluido" | "cancelado" | "reagendado") => {
      try {
@@ -186,6 +196,21 @@ const statusConfig: Record<string, { label: string; bgColor: string; textColor: 
    );
  
    const diasComServico = servicos.map(s => parseISO(s.data_agendada));
+ 
+   // Abrir serviço para execução
+   const handleOpenServico = (servico: ServicoAgendado) => {
+     setActiveServico(servico);
+   };
+ 
+   // Fechar tela de serviço ativo
+   const handleCloseServico = () => {
+     setActiveServico(null);
+   };
+ 
+   // Callback quando serviço é atualizado
+   const handleServiceUpdated = () => {
+     fetchServicos();
+   };
  
   if (authLoading || (!accessChecked)) {
      return (
@@ -276,9 +301,8 @@ const statusConfig: Record<string, { label: string; bgColor: string; textColor: 
             <div className="pt-3 border-t">
                <Button
                 size="default"
-                 variant="outline"
-                className="w-full border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground transition-colors"
-                 onClick={() => updateServicoStatus(servico.id, "em_andamento")}
+                className="w-full bg-success hover:bg-success/90 text-success-foreground shadow-md"
+                 onClick={() => handleOpenServico(servico)}
                >
                 <Play className="h-4 w-4 mr-2" />
                 Iniciar Atendimento
@@ -290,17 +314,17 @@ const statusConfig: Record<string, { label: string; bgColor: string; textColor: 
             <div className="flex gap-3 pt-3 border-t">
                <Button
                 size="default"
-                className="flex-1 bg-success hover:bg-success/90 text-success-foreground shadow-md"
-                 onClick={() => updateServicoStatus(servico.id, "concluido")}
+                 variant="outline"
+                className="flex-1 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
+                 onClick={() => handleOpenServico(servico)}
                >
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                 Concluir
+                <ClipboardCheck className="h-4 w-4 mr-2" />
+                 Continuar
                </Button>
                <Button
                 size="default"
-                 variant="outline"
-                className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
-                 onClick={() => navigate("/checklist")}
+                className="bg-success hover:bg-success/90 text-success-foreground"
+                  onClick={() => handleOpenServico(servico)}
                >
                 <ClipboardCheck className="h-4 w-4" />
                </Button>
@@ -312,6 +336,16 @@ const statusConfig: Record<string, { label: string; bgColor: string; textColor: 
    };
  
    return (
+     <>
+       {/* Modal de Serviço Ativo */}
+       {activeServico && (
+         <ServicoEmAndamento
+           servico={activeServico}
+           onClose={handleCloseServico}
+           onServiceUpdated={handleServiceUpdated}
+         />
+       )}
+ 
     <div className="min-h-screen bg-muted/30">
       {/* Header Profissional - Azul Corporativo */}
       <header className="sticky top-0 z-50 gradient-blue shadow-lg">
@@ -473,5 +507,6 @@ const statusConfig: Record<string, { label: string; bgColor: string; textColor: 
          </Tabs>
        </main>
      </div>
+     </>
    );
  }
