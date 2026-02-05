@@ -16,8 +16,11 @@ import {
   Plug,
   Lightbulb,
   Trophy,
-   Wallet,
-   ClipboardCheck,
+  Wallet,
+  ClipboardCheck,
+  TrendingUp,
+  Settings,
+  Coins,
 } from "lucide-react";
 import {
   Sidebar,
@@ -43,17 +46,27 @@ interface AdminSidebarProps {
   onSignOut: () => void;
 }
 
-const mainMenuItems = [
+// Seção Financeira (destaque)
+const financeMenuItems = [
+  { id: "recebimentos", title: "Recebimentos", icon: DollarSign },
+  { id: "comissoes", title: "Comissões", icon: Wallet },
+  { id: "clientes", title: "Clientes", icon: UserCheck },
+];
+
+// Seção de Vendas
+const salesMenuItems = [
   { id: "leads", title: "Leads", icon: Users },
   { id: "pipeline", title: "Pipeline", icon: Kanban },
   { id: "followup", title: "Follow-up", icon: Bell },
   { id: "validacao", title: "Validar Vendas", icon: ClipboardCheck },
-  { id: "clientes", title: "Clientes", icon: UserCheck },
-  { id: "recebimentos", title: "Recebimentos", icon: DollarSign },
-   { id: "comissoes", title: "Comissões", icon: Wallet },
+];
+
+// Seção de Análises
+const analyticsMenuItems = [
   { id: "dashboard", title: "Dashboard", icon: BarChart3 },
 ];
 
+// Configurações
 const configMenuItems = [
   { id: "vendedores", title: "Vendedores", icon: Users },
   { id: "usuarios", title: "Usuários", icon: Shield },
@@ -97,13 +110,15 @@ export function AdminSidebar({
       </SidebarHeader>
 
       <SidebarContent className="scrollbar-thin">
+        {/* Seção Financeira - Destaque */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-2">
-            Operações
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 px-3 py-2 flex items-center gap-1.5">
+            <Coins className="h-3 w-3" />
+            Financeiro
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainMenuItems.map((item, index) => (
+              {financeMenuItems.map((item, index) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     onClick={() => onTabChange(item.id)}
@@ -112,8 +127,8 @@ export function AdminSidebar({
                     className={`
                       transition-all duration-200 rounded-lg mx-2
                       ${activeTab === item.id 
-                        ? "bg-primary/10 text-primary font-medium shadow-xs" 
-                        : "hover:bg-accent"
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium shadow-xs" 
+                        : "hover:bg-emerald-500/5"
                       }
                     `}
                     style={{ animationDelay: `${index * 50}ms` }}
@@ -127,8 +142,74 @@ export function AdminSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Seção de Vendas */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-2">
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-2 flex items-center gap-1.5">
+            <TrendingUp className="h-3 w-3" />
+            Vendas
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {salesMenuItems.map((item, index) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    onClick={() => onTabChange(item.id)}
+                    isActive={activeTab === item.id}
+                    tooltip={item.title}
+                    className={`
+                      transition-all duration-200 rounded-lg mx-2
+                      ${activeTab === item.id 
+                        ? "bg-primary/10 text-primary font-medium shadow-xs" 
+                        : "hover:bg-accent"
+                      }
+                    `}
+                    style={{ animationDelay: `${(financeMenuItems.length + index) * 50}ms` }}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Seção de Análises */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-2 flex items-center gap-1.5">
+            <BarChart3 className="h-3 w-3" />
+            Análises
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {analyticsMenuItems.map((item, index) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    onClick={() => onTabChange(item.id)}
+                    isActive={activeTab === item.id}
+                    tooltip={item.title}
+                    className={`
+                      transition-all duration-200 rounded-lg mx-2
+                      ${activeTab === item.id 
+                        ? "bg-primary/10 text-primary font-medium shadow-xs" 
+                        : "hover:bg-accent"
+                      }
+                    `}
+                    style={{ animationDelay: `${(financeMenuItems.length + salesMenuItems.length + index) * 50}ms` }}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Configurações */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-2 flex items-center gap-1.5">
+            <Settings className="h-3 w-3" />
             Configurações
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -146,7 +227,7 @@ export function AdminSidebar({
                         : "hover:bg-accent"
                       }
                     `}
-                    style={{ animationDelay: `${(mainMenuItems.length + index) * 50}ms` }}
+                    style={{ animationDelay: `${(financeMenuItems.length + salesMenuItems.length + analyticsMenuItems.length + index) * 50}ms` }}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
