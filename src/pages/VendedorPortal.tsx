@@ -13,8 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Users, 
-  TrendingUp, 
-  Eye, 
   LogOut, 
   Copy,
   ExternalLink,
@@ -23,6 +21,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { LeadAlerts } from "@/components/vendor/LeadAlerts";
 import { FollowUpStatsCards } from "@/components/vendor/FollowUpStatsCards";
+ import { VendorPersonalDashboard } from "@/components/vendor/VendorPersonalDashboard";
 import { VendorFollowUpManager } from "@/components/vendor/VendorFollowUpManager";
 import { VendorPendingDocumentation } from "@/components/vendor/VendorPendingDocumentation";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
@@ -284,52 +283,19 @@ export default function VendedorPortal() {
       </header>
 
       <main className="container mx-auto px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Personal Dashboard */}
+        {vendedor && (
+          <VendorPersonalDashboard
+            orcamentos={orcamentos}
+            statuses={statuses}
+            vendedorNome={vendedor.nome}
+          />
+        )}
+ 
         {/* Sync Status & Notifications Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <SyncStatusWidget />
           {vendedor && <NotificationSettings vendedorNome={vendedor.nome} />}
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Total de Orçamentos</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">
-                Orçamentos cadastrados
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Orçamentos Novos</CardTitle>
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">{stats.novos}</div>
-              <p className="text-xs text-muted-foreground">
-                Aguardando contato
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="sm:col-span-2 lg:col-span-1">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Este Mês</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">{stats.esteMes}</div>
-              <p className="text-xs text-muted-foreground">
-                Captados no mês atual
-              </p>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Follow-Up Stats Cards (Urgentes, Pendentes, Em dia) */}
