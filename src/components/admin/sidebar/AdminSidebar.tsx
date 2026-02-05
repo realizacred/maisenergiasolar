@@ -265,26 +265,31 @@ export function AdminSidebar({
             Integrações
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {integrationsMenuItems.map((item, index) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    onClick={() => onTabChange(item.id)}
-                    isActive={activeTab === item.id}
-                    tooltip={item.title}
-                    className={`
-                      transition-all duration-200 rounded-lg mx-2
-                      ${activeTab === item.id 
-                        ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 font-medium shadow-xs" 
-                        : "hover:bg-purple-500/5"
-                      }
-                    `}
-                    style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + salesMenuItems.length + operationsMenuItems.length + index) * 50}ms` }}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <div key={item.id}>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => onTabChange(item.id)}
+                      isActive={activeTab === item.id}
+                      tooltip={item.title}
+                      className={`
+                        transition-all duration-200 rounded-lg mx-2
+                        ${activeTab === item.id 
+                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 font-medium shadow-xs" 
+                          : "hover:bg-purple-500/5"
+                        }
+                      `}
+                      style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + salesMenuItems.length + operationsMenuItems.length + index) * 50}ms` }}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  {index < integrationsMenuItems.length - 1 && (
+                    <div className="mx-4 my-1 border-b border-border/30" />
+                  )}
+                </div>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
