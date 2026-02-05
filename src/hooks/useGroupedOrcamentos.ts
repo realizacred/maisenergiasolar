@@ -54,10 +54,20 @@ export function useGroupedOrcamentos<T extends OrcamentoDisplayItem | OrcamentoV
       });
     });
 
-    // Sort by latest orcamento created_at
-    return result.sort((a, b) => 
-      new Date(b.latestOrcamento.created_at).getTime() - 
-      new Date(a.latestOrcamento.created_at).getTime()
-    );
+    // Sort by status_id first (nulls last), then by name alphabetically
+    return result.sort((a, b) => {
+      const statusA = a.latestOrcamento.status_id || '';
+      const statusB = b.latestOrcamento.status_id || '';
+      
+      // Compare status first
+      if (statusA !== statusB) {
+        if (!statusA) return 1; // nulls last
+        if (!statusB) return -1;
+        return statusA.localeCompare(statusB);
+      }
+      
+      // Then sort by name alphabetically
+      return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
+    });
   }, [orcamentos]);
 }
