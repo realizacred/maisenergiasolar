@@ -84,11 +84,12 @@
    // Advanced metrics hook
    const advancedMetrics = useAdvancedMetrics(vendedor?.id || null, vendedor?.nome || null);
  
-   // Orcamentos hook
-   const orcamentosData = useOrcamentosVendedor({
-     vendedorNome: vendedor?.nome || null,
-     isAdminMode,
-   });
+  // Orcamentos hook - when viewing as specific vendor, filter by that vendor
+  const orcamentosData = useOrcamentosVendedor({
+    vendedorNome: vendedor?.nome || null,
+    isAdminMode,
+    filterByVendedor: isViewingAsVendedor, // Force filter when viewing as specific vendor
+  });
  
    // Load vendedor profile
    useEffect(() => {
