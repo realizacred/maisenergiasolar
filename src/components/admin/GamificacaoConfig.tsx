@@ -31,8 +31,10 @@
    Flame,
    Calendar,
  } from "lucide-react";
+ import { User } from "lucide-react";
  import { format, startOfMonth, endOfMonth } from "date-fns";
  import { ptBR } from "date-fns/locale";
+ import { VendedorMetasIndividuais } from "./VendedorMetasIndividuais";
  
  interface GamificationConfig {
    id: string;
@@ -192,7 +194,7 @@
    return (
      <div className="space-y-6">
        <Tabs defaultValue="ranking" className="w-full">
-         <TabsList className="grid w-full max-w-lg grid-cols-3">
+         <TabsList className="grid w-full max-w-2xl grid-cols-4">
            <TabsTrigger value="ranking" className="gap-2">
              <Trophy className="h-4 w-4" />
              Ranking
@@ -200,6 +202,10 @@
            <TabsTrigger value="metas" className="gap-2">
              <Target className="h-4 w-4" />
              Metas
+           </TabsTrigger>
+           <TabsTrigger value="individuais" className="gap-2">
+             <User className="h-4 w-4" />
+             Por Vendedor
            </TabsTrigger>
            <TabsTrigger value="conquistas" className="gap-2">
              <Medal className="h-4 w-4" />
@@ -408,6 +414,11 @@
                )}
              </CardContent>
            </Card>
+         </TabsContent>
+ 
+         {/* Metas Individuais Tab */}
+         <TabsContent value="individuais" className="mt-6">
+           <VendedorMetasIndividuais />
          </TabsContent>
  
          {/* Conquistas Tab */}

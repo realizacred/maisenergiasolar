@@ -15,6 +15,7 @@
    meta_conversoes: number | null;
    meta_valor: number | null;
    comissao_percent: number | null;
+   usa_meta_individual: boolean;
  }
  
  export interface Achievement {
@@ -138,6 +139,7 @@
          meta_conversoes: data.meta_conversoes,
          meta_valor: data.meta_valor ? Number(data.meta_valor) : null,
          comissao_percent: data.comissao_percent ? Number(data.comissao_percent) : null,
+         usa_meta_individual: data.usa_meta_individual || false,
        });
      }
    }, [vendedorId, currentYear, currentMonth]);
@@ -281,11 +283,18 @@
      ) => {
        if (!config) return;
  
-       const metaOrcamentos =
-         vendedorMeta?.meta_orcamentos ?? config.meta_orcamentos_mensal;
-       const metaConversoes =
-         vendedorMeta?.meta_conversoes ?? config.meta_conversoes_mensal;
-       const metaValor = vendedorMeta?.meta_valor ?? config.meta_valor_mensal;
+       // Use individual metas only if usa_meta_individual is true
+       const useIndividual = vendedorMeta?.usa_meta_individual ?? false;
+       
+       const metaOrcamentos = useIndividual && vendedorMeta?.meta_orcamentos != null
+         ? vendedorMeta.meta_orcamentos
+         : config.meta_orcamentos_mensal;
+       const metaConversoes = useIndividual && vendedorMeta?.meta_conversoes != null
+         ? vendedorMeta.meta_conversoes
+         : config.meta_conversoes_mensal;
+       const metaValor = useIndividual && vendedorMeta?.meta_valor != null
+         ? vendedorMeta.meta_valor
+         : config.meta_valor_mensal;
  
        const goalsList: GoalProgress[] = [
          {
