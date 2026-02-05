@@ -6,6 +6,7 @@
  import { Label } from "@/components/ui/label";
  import { Checkbox } from "@/components/ui/checkbox";
  import { Badge } from "@/components/ui/badge";
+import { PhotoCapture } from "@/components/checklist/PhotoCapture";
  import { SignaturePad, SignaturePadRef } from "@/components/checklist/SignaturePad";
  import { supabase } from "@/integrations/supabase/client";
  import { toast } from "@/hooks/use-toast";
@@ -72,18 +73,19 @@
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [isSuccess, setIsSuccess] = useState(false);
    
-  // Checklist items with photos
+  // Checklist items with checkbox and multiple photos
   const [checklistItems, setChecklistItems] = useState<{
-    [key: string]: { checked: boolean; photo: string | null };
+    [key: string]: { checked: boolean; photos: string[] };
   }>({
-    placas_local_aprovado: { checked: false, photo: null },
-    inversor_local_aprovado: { checked: false, photo: null },
-    adesivo_inversor: { checked: false, photo: null },
-    plaquinha_relogio: { checked: false, photo: null },
-    configuracao_wifi: { checked: false, photo: null },
+    placas_local_aprovado: { checked: false, photos: [] },
+    inversor_local_aprovado: { checked: false, photos: [] },
+    adesivo_inversor: { checked: false, photos: [] },
+    plaquinha_relogio: { checked: false, photos: [] },
+    configuracao_wifi: { checked: false, photos: [] },
    });
    
    const [observacoes, setObservacoes] = useState(servico.observacoes_conclusao || "");
+  const [fotosExtras, setFotosExtras] = useState<string[]>([]);
    
    // Signatures
    const [clientSignature, setClientSignature] = useState<string | null>(null);
@@ -126,29 +128,38 @@
    };
  
   // Handle photo upload for checklist item
-  const handlePhotoUpload = async (itemKey: string, file: File) => {
+  const handlePhotoUpload = async (itemKey: string, files: File[]) => {
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${servico.id}/${itemKey}_${Date.now()}.${fileExt}`;
+      const uploadedUrls: string[] = [];
       
-      const { data, error } = await supabase.storage
-        .from('checklist-assets')
-        .upload(fileName, file, { upsert: true });
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${servico.id}/${itemKey}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        
+        const { error } = await supabase.storage
+          .from('checklist-assets')
+          .upload(fileName, file, { upsert: true });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const { data: urlData } = supabase.storage
-        .from('checklist-assets')
-        .getPublicUrl(fileName);
+        const { data: urlData } = supabase.storage
+          .from('checklist-assets')
+          .getPublicUrl(fileName);
+
+        uploadedUrls.push(urlData.publicUrl);
+      }
 
       setChecklistItems(prev => ({
         ...prev,
-        [itemKey]: { ...prev[itemKey], photo: urlData.publicUrl, checked: true }
+        [itemKey]: { 
+          ...prev[itemKey], 
+          photos: [...prev[itemKey].photos, ...uploadedUrls]
+        }
       }));
 
       toast({
-        title: "Foto anexada",
-        description: "A foto foi salva com sucesso.",
+        title: "Foto(s) anexada(s)",
+        description: `${files.length} foto(s) salva(s) com sucesso.`,
       });
     } catch (error) {
       console.error("Error uploading photo:", error);
@@ -160,23 +171,34 @@
      }
    };
  
-  // Remove photo from checklist item
-  const handleRemovePhoto = (itemKey: string) => {
+  // Remove photo from checklist item by index
+  const handleRemovePhoto = (itemKey: string, photoIndex: number) => {
     setChecklistItems(prev => ({
       ...prev,
-      [itemKey]: { ...prev[itemKey], photo: null, checked: false }
+      [itemKey]: { 
+        ...prev[itemKey], 
+        photos: prev[itemKey].photos.filter((_, i) => i !== photoIndex)
+      }
+    }));
+  };
+
+  // Toggle checkbox
+  const handleToggleChecked = (itemKey: string, checked: boolean) => {
+    setChecklistItems(prev => ({
+      ...prev,
+      [itemKey]: { ...prev[itemKey], checked }
     }));
   };
 
    // Validar step antes de avançar
    const validateStep = (): boolean => {
      if (currentStep === 1) {
-      // Checklist - todos os itens devem ter foto
-      const allHavePhotos = Object.values(checklistItems).every(item => item.photo !== null);
-      if (!allHavePhotos) {
+      // Checklist - todos os itens devem estar marcados e ter pelo menos 1 foto
+      const allComplete = Object.values(checklistItems).every(item => item.checked && item.photos.length > 0);
+      if (!allComplete) {
          toast({
           title: "Complete o checklist",
-          description: "Anexe fotos em todos os itens antes de continuar.",
+          description: "Marque todos os itens e anexe pelo menos uma foto em cada.",
            variant: "destructive",
          });
          return false;
@@ -223,8 +245,8 @@
  
     // Collect all photos from checklist items
     const allPhotos = Object.values(checklistItems)
-      .map(item => item.photo)
-      .filter((photo): photo is string => photo !== null);
+      .flatMap(item => item.photos)
+      .concat(fotosExtras);
 
      setIsSubmitting(true);
      try {
@@ -459,8 +481,9 @@
                     title="Placas instaladas no local correto"
                     description="Local com boa exposição solar"
                     item={checklistItems.placas_local_aprovado}
-                    onPhotoUpload={(file) => handlePhotoUpload('placas_local_aprovado', file)}
-                    onRemovePhoto={() => handleRemovePhoto('placas_local_aprovado')}
+                    onPhotoUpload={(files) => handlePhotoUpload('placas_local_aprovado', files)}
+                    onRemovePhoto={(index) => handleRemovePhoto('placas_local_aprovado', index)}
+                    onToggleChecked={(checked) => handleToggleChecked('placas_local_aprovado', checked)}
                   />
                   
                   <ChecklistItemWithPhoto
@@ -468,8 +491,9 @@
                     title="Inversor instalado corretamente"
                     description="Local seguro e protegido"
                     item={checklistItems.inversor_local_aprovado}
-                    onPhotoUpload={(file) => handlePhotoUpload('inversor_local_aprovado', file)}
-                    onRemovePhoto={() => handleRemovePhoto('inversor_local_aprovado')}
+                    onPhotoUpload={(files) => handlePhotoUpload('inversor_local_aprovado', files)}
+                    onRemovePhoto={(index) => handleRemovePhoto('inversor_local_aprovado', index)}
+                    onToggleChecked={(checked) => handleToggleChecked('inversor_local_aprovado', checked)}
                   />
                   
                   <ChecklistItemWithPhoto
@@ -477,8 +501,9 @@
                     title="Adesivo do inversor aplicado"
                     description="Identificação visível"
                     item={checklistItems.adesivo_inversor}
-                    onPhotoUpload={(file) => handlePhotoUpload('adesivo_inversor', file)}
-                    onRemovePhoto={() => handleRemovePhoto('adesivo_inversor')}
+                    onPhotoUpload={(files) => handlePhotoUpload('adesivo_inversor', files)}
+                    onRemovePhoto={(index) => handleRemovePhoto('adesivo_inversor', index)}
+                    onToggleChecked={(checked) => handleToggleChecked('adesivo_inversor', checked)}
                   />
                   
                   <ChecklistItemWithPhoto
@@ -486,8 +511,9 @@
                     title="Plaquinha do relógio instalada"
                     description="Identificação no medidor"
                     item={checklistItems.plaquinha_relogio}
-                    onPhotoUpload={(file) => handlePhotoUpload('plaquinha_relogio', file)}
-                    onRemovePhoto={() => handleRemovePhoto('plaquinha_relogio')}
+                    onPhotoUpload={(files) => handlePhotoUpload('plaquinha_relogio', files)}
+                    onRemovePhoto={(index) => handleRemovePhoto('plaquinha_relogio', index)}
+                    onToggleChecked={(checked) => handleToggleChecked('plaquinha_relogio', checked)}
                    />
                   
                   <ChecklistItemWithPhoto
@@ -495,8 +521,9 @@
                     title="Configuração WiFi do inversor"
                     description="Conectado à rede"
                     item={checklistItems.configuracao_wifi}
-                    onPhotoUpload={(file) => handlePhotoUpload('configuracao_wifi', file)}
-                    onRemovePhoto={() => handleRemovePhoto('configuracao_wifi')}
+                    onPhotoUpload={(files) => handlePhotoUpload('configuracao_wifi', files)}
+                    onRemovePhoto={(index) => handleRemovePhoto('configuracao_wifi', index)}
+                    onToggleChecked={(checked) => handleToggleChecked('configuracao_wifi', checked)}
                   />
 
                   {/* Observações */}
@@ -507,6 +534,22 @@
                       value={observacoes}
                       onChange={(e) => setObservacoes(e.target.value)}
                       rows={3}
+                    />
+                  </div>
+
+                  {/* Fotos Extras */}
+                  <div className="space-y-2 pt-4 border-t">
+                    <Label className="flex items-center gap-2">
+                      <Camera className="h-4 w-4" />
+                      Fotos Extras (Opcional)
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Adicione fotos adicionais que não se encaixam nas categorias acima
+                    </p>
+                    <PhotoCapture
+                      photos={fotosExtras}
+                      onPhotosChange={setFotosExtras}
+                      maxPhotos={10}
                     />
                   </div>
                  </CardContent>
@@ -609,20 +652,22 @@ function ChecklistItemWithPhoto({
   item,
   onPhotoUpload,
   onRemovePhoto,
+  onToggleChecked,
  }: {
    icon: React.ElementType;
    title: string;
    description: string;
-  item: { checked: boolean; photo: string | null };
-  onPhotoUpload: (file: File) => void;
-  onRemovePhoto: () => void;
+  item: { checked: boolean; photos: string[] };
+  onPhotoUpload: (files: File[]) => void;
+  onRemovePhoto: (index: number) => void;
+  onToggleChecked: (checked: boolean) => void;
  }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onPhotoUpload(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      onPhotoUpload(Array.from(files));
     }
     // Reset input
     if (fileInputRef.current) {
@@ -634,62 +679,68 @@ function ChecklistItemWithPhoto({
     <div
       className={cn(
         "p-3 rounded-lg transition-colors",
-        item.photo ? "bg-success/10 border border-success/30" : "bg-muted/50"
+        item.checked && item.photos.length > 0 ? "bg-success/10 border border-success/30" : "bg-muted/50"
       )}
     >
       <div className="flex items-start gap-3">
-        <div className={cn(
-          "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-          item.photo ? "bg-success text-success-foreground" : "bg-muted-foreground/20"
-        )}>
-          {item.photo ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4 text-muted-foreground" />}
-        </div>
+        <Checkbox
+          checked={item.checked}
+          onCheckedChange={(checked) => onToggleChecked(checked as boolean)}
+          className="mt-1"
+        />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={cn("font-medium text-sm", item.photo && "text-success")}>{title}</span>
+          <div className="flex items-center gap-2 mb-1">
+            <Icon className={cn("h-4 w-4", item.checked ? "text-success" : "text-muted-foreground")} />
+            <span className={cn("font-medium text-sm", item.checked && "text-success")}>{title}</span>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
           
-          {/* Photo preview or upload button */}
-          {item.photo ? (
-            <div className="mt-3 relative">
-              <img 
-                src={item.photo} 
-                alt={title}
-                className="w-full h-32 object-cover rounded-lg"
-              />
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute top-2 right-2 h-8 w-8"
-                onClick={onRemovePhoto}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <div className="mt-3">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full gap-2"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Camera className="h-4 w-4" />
-                Anexar Foto
-              </Button>
+          {/* Photos grid */}
+          {item.photos.length > 0 && (
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {item.photos.map((photo, index) => (
+                <div key={index} className="relative">
+                  <img 
+                    src={photo} 
+                    alt={`${title} ${index + 1}`}
+                    className="w-full h-20 object-cover rounded-lg"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-6 w-6"
+                    onClick={() => onRemovePhoto(index)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
             </div>
           )}
+          
+          {/* Add photo button */}
+          <div className="mt-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full gap-2"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Camera className="h-4 w-4" />
+              {item.photos.length > 0 ? "Adicionar mais fotos" : "Anexar Foto"}
+            </Button>
+          </div>
         </div>
        </div>
     </div>
