@@ -207,30 +207,45 @@
  
          const rankingData: VendedorPerformance[] = [];
  
-         for (const v of vendedores) {
-           const { count: orcamentosCount } = await supabase
-             .from("orcamentos")
-             .select("*", { count: "exact", head: true })
-             .eq("vendedor", v.nome)
-             .gte("created_at", startOfMonth)
-             .lte("created_at", endOfMonth);
- 
-           const { count: clientesCount } = await supabase
-             .from("clientes")
-             .select("*", { count: "exact", head: true })
-             .gte("created_at", startOfMonth)
-             .lte("created_at", endOfMonth);
- 
-           rankingData.push({
-             vendedor_id: v.id,
-             vendedor_nome: v.nome,
-             total_orcamentos: orcamentosCount || 0,
-             total_conversoes: clientesCount || 0,
-             valor_total_vendas: 0,
-             pontuacao_total: (orcamentosCount || 0) * 10 + (clientesCount || 0) * 100,
-             posicao_ranking: 0,
-           });
-         }
+          for (const v of vendedores) {
+            // Count orcamentos for this vendor
+            const { count: orcamentosCount } = await supabase
+              .from("orcamentos")
+              .select("*", { count: "exact", head: true })
+              .eq("vendedor", v.nome)
+              .gte("created_at", startOfMonth)
+              .lte("created_at", endOfMonth);
+
+            // Get leads from this vendor to count their conversions
+            const { data: vendorLeads } = await supabase
+              .from("leads")
+              .select("id")
+              .eq("vendedor", v.nome);
+            
+            const vendorLeadIds = vendorLeads?.map(l => l.id) || [];
+            
+            // Count clients converted from this vendor's leads
+            let clientesCount = 0;
+            if (vendorLeadIds.length > 0) {
+              const { count } = await supabase
+                .from("clientes")
+                .select("*", { count: "exact", head: true })
+                .in("lead_id", vendorLeadIds)
+                .gte("created_at", startOfMonth)
+                .lte("created_at", endOfMonth);
+              clientesCount = count || 0;
+            }
+
+            rankingData.push({
+              vendedor_id: v.id,
+              vendedor_nome: v.nome,
+              total_orcamentos: orcamentosCount || 0,
+              total_conversoes: clientesCount,
+              valor_total_vendas: 0,
+              pontuacao_total: (orcamentosCount || 0) * 10 + clientesCount * 100,
+              posicao_ranking: 0,
+            });
+          }
  
          // Sort by points and assign positions
          rankingData.sort((a, b) => b.pontuacao_total - a.pontuacao_total);

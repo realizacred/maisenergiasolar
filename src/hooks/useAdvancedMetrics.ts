@@ -45,20 +45,25 @@
          .gte("created_at", startOfMonth)
          .lte("created_at", endOfMonth);
  
-       // Buscar clientes convertidos no mês
-       const { data: clientes } = await supabase
-         .from("clientes")
-         .select("id, created_at, valor_projeto, lead_id")
-         .gte("created_at", startOfMonth)
-         .lte("created_at", endOfMonth);
- 
-       // Buscar leads do vendedor para calcular conversões
-       const { data: leads } = await supabase
-         .from("leads")
-         .select("id, created_at")
-         .eq("vendedor", vendedorNome)
-         .gte("created_at", startOfMonth)
-         .lte("created_at", endOfMonth);
+        // Buscar leads do vendedor primeiro para obter os IDs
+        const { data: leads } = await supabase
+          .from("leads")
+          .select("id, created_at")
+          .eq("vendedor", vendedorNome)
+          .gte("created_at", startOfMonth)
+          .lte("created_at", endOfMonth);
+
+        const leadIds = leads?.map(l => l.id) || [];
+
+        // Buscar clientes convertidos no mês que pertencem aos leads do vendedor
+        const { data: clientes } = leadIds.length > 0
+          ? await supabase
+              .from("clientes")
+              .select("id, created_at, valor_projeto, lead_id")
+              .in("lead_id", leadIds)
+              .gte("created_at", startOfMonth)
+              .lte("created_at", endOfMonth)
+          : { data: [] };
  
        // Buscar statuses para identificar "perdido"
        const { data: statuses } = await supabase
@@ -70,13 +75,10 @@
          s.nome.toLowerCase().includes("cancelado")
        );
  
-       const totalOrcamentos = orcamentos?.length || 0;
-       const leadIds = leads?.map(l => l.id) || [];
-       
-       // Clientes convertidos do vendedor
-       const clientesDoVendedor = clientes?.filter(c => 
-         c.lead_id && leadIds.includes(c.lead_id)
-       ) || [];
+        const totalOrcamentos = orcamentos?.length || 0;
+        
+        // Clientes já estão filtrados pelos leads do vendedor
+        const clientesDoVendedor = clientes || [];
        
        // Calcular métricas
        let tempoMedioFechamento = 0;
