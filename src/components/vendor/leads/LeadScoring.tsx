@@ -9,7 +9,6 @@
    ThermometerSun, 
    Snowflake,
    RefreshCw,
-   TrendingUp,
    MessageCircle,
    ChevronDown,
    ChevronUp,
@@ -19,6 +18,7 @@
  import { toast } from "@/hooks/use-toast";
  import type { Lead } from "@/types/lead";
  import { cn } from "@/lib/utils";
+ import { ScheduleWhatsAppDialog } from "../ScheduleWhatsAppDialog";
  
  interface ScoreResult {
    lead_id: string;
@@ -160,12 +160,11 @@
    const warmLeads = scoredLeads.filter((s) => s.score?.level === "warm");
    const coldLeads = scoredLeads.filter((s) => s.score?.level === "cold");
  
-   const openWhatsApp = (lead: Lead) => {
-     const message = encodeURIComponent(`Olá ${lead.nome}! Tudo bem?`);
-     const phone = lead.telefone.replace(/\D/g, "");
-     const formattedPhone = phone.startsWith("55") ? phone : `55${phone}`;
-     window.open(`https://wa.me/${formattedPhone}?text=${message}`, "_blank");
-   };
+  const [whatsappDialogLead, setWhatsappDialogLead] = useState<Lead | null>(null);
+
+  const openWhatsAppDialog = (lead: Lead) => {
+    setWhatsappDialogLead(lead);
+  };
  
    return (
      <Card>
@@ -292,15 +291,15 @@
                                ))}
                              </div>
                            </div>
-                           <div className="flex flex-col gap-1 shrink-0">
-                             <Button
-                               size="sm"
-                               className="gap-1 h-8 bg-green-600 hover:bg-green-700"
-                               onClick={() => openWhatsApp(lead)}
-                             >
-                               <MessageCircle className="h-3 w-3" />
-                               WhatsApp
-                             </Button>
+                            <div className="flex flex-col gap-1 shrink-0">
+                              <Button
+                                size="sm"
+                                className="gap-1 h-8 bg-green-600 hover:bg-green-700"
+                                onClick={() => openWhatsAppDialog(lead)}
+                              >
+                                <MessageCircle className="h-3 w-3" />
+                                WhatsApp
+                              </Button>
                              {onSelectLead && (
                                <Button
                                  size="sm"
@@ -350,10 +349,16 @@
                    </div>
                  </div>
                )}
-             </div>
-           )}
-         </CardContent>
-       )}
-     </Card>
-   );
- }
+              </div>
+            )}
+          </CardContent>
+        )}
+
+        <ScheduleWhatsAppDialog
+          lead={whatsappDialogLead}
+          open={!!whatsappDialogLead}
+          onOpenChange={(open) => !open && setWhatsappDialogLead(null)}
+        />
+      </Card>
+    );
+  }
