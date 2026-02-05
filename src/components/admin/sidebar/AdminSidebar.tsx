@@ -15,6 +15,7 @@ import {
   Shield,
   Plug,
   Lightbulb,
+  Trophy,
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,6 +53,7 @@ const mainMenuItems = [
 const configMenuItems = [
   { id: "vendedores", title: "Vendedores", icon: Users },
   { id: "usuarios", title: "Usuários", icon: Shield },
+  { id: "gamificacao", title: "Gamificação", icon: Trophy },
   { id: "equipamentos", title: "Equipamentos", icon: Plug },
   { id: "concessionarias", title: "Concessionárias", icon: Lightbulb },
   { id: "config", title: "Calculadora", icon: Calculator },

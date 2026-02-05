@@ -22,6 +22,7 @@ import { InstagramConfig } from "@/components/admin/InstagramConfig";
 import { UsuariosManager } from "@/components/admin/UsuariosManager";
 import { EquipamentosManager } from "@/components/admin/EquipamentosManager";
 import { ConcessionariasManager } from "@/components/admin/ConcessionariasManager";
+import { GamificacaoConfig } from "@/components/admin/GamificacaoConfig";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Footer from "@/components/layout/Footer";
 
@@ -144,6 +145,8 @@ export default function Admin() {
         return <EquipamentosManager />;
       case "concessionarias":
         return <ConcessionariasManager />;
+      case "gamificacao":
+        return <GamificacaoConfig />;
       case "config":
         return <CalculadoraConfig />;
       case "financiamento":
