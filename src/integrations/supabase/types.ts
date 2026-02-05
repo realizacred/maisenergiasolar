@@ -2434,11 +2434,15 @@ export type Database = {
           api_token: string | null
           ativo: boolean
           created_at: string
+          evolution_api_key: string | null
+          evolution_api_url: string | null
+          evolution_instance: string | null
           id: string
           lembrete_ativo: boolean
           lembrete_dias: number
           mensagem_boas_vindas: string | null
           mensagem_followup: string | null
+          modo_envio: string
           updated_at: string
           webhook_url: string | null
         }
@@ -2446,11 +2450,15 @@ export type Database = {
           api_token?: string | null
           ativo?: boolean
           created_at?: string
+          evolution_api_key?: string | null
+          evolution_api_url?: string | null
+          evolution_instance?: string | null
           id?: string
           lembrete_ativo?: boolean
           lembrete_dias?: number
           mensagem_boas_vindas?: string | null
           mensagem_followup?: string | null
+          modo_envio?: string
           updated_at?: string
           webhook_url?: string | null
         }
@@ -2458,11 +2466,15 @@ export type Database = {
           api_token?: string | null
           ativo?: boolean
           created_at?: string
+          evolution_api_key?: string | null
+          evolution_api_url?: string | null
+          evolution_instance?: string | null
           id?: string
           lembrete_ativo?: boolean
           lembrete_dias?: number
           mensagem_boas_vindas?: string | null
           mensagem_followup?: string | null
+          modo_envio?: string
           updated_at?: string
           webhook_url?: string | null
         }
