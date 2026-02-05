@@ -3,11 +3,11 @@
  import { useAuth } from "@/hooks/useAuth";
  import { supabase } from "@/integrations/supabase/client";
  import { Button } from "@/components/ui/button";
- import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
  import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
  import { Badge } from "@/components/ui/badge";
  import { Calendar } from "@/components/ui/calendar";
- import { format, isSameDay, parseISO, startOfMonth, endOfMonth } from "date-fns";
+import { format, isSameDay, parseISO } from "date-fns";
  import { ptBR } from "date-fns/locale";
  import {
    Loader2,
@@ -22,8 +22,10 @@
    AlertCircle,
    Play,
    ClipboardCheck,
+  TrendingUp,
+  Phone,
  } from "lucide-react";
- import logoImg from "@/assets/logo.png";
+import logoBrancaImg from "@/assets/logo-branca.png";
  import { toast } from "@/hooks/use-toast";
  
  interface ServicoAgendado {
@@ -48,13 +50,13 @@
    suporte: "Suporte/Reparo",
  };
  
- const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  agendado: { label: "Agendado", color: "bg-info", icon: CalendarDays },
-  em_andamento: { label: "Em Andamento", color: "bg-warning", icon: Play },
-  concluido: { label: "Concluído", color: "bg-success", icon: CheckCircle2 },
-  cancelado: { label: "Cancelado", color: "bg-destructive", icon: AlertCircle },
-  reagendado: { label: "Reagendado", color: "bg-secondary", icon: CalendarDays },
- };
+const statusConfig: Record<string, { label: string; bgColor: string; textColor: string; borderColor: string; icon: typeof CheckCircle2 }> = {
+  agendado: { label: "Agendado", bgColor: "bg-info/10", textColor: "text-info", borderColor: "border-info/30", icon: CalendarDays },
+  em_andamento: { label: "Em Andamento", bgColor: "bg-warning/10", textColor: "text-warning", borderColor: "border-warning/30", icon: Play },
+  concluido: { label: "Concluído", bgColor: "bg-success/10", textColor: "text-success", borderColor: "border-success/30", icon: CheckCircle2 },
+  cancelado: { label: "Cancelado", bgColor: "bg-destructive/10", textColor: "text-destructive", borderColor: "border-destructive/30", icon: AlertCircle },
+  reagendado: { label: "Reagendado", bgColor: "bg-secondary/10", textColor: "text-secondary", borderColor: "border-secondary/30", icon: CalendarDays },
+};
  
  export default function Instalador() {
    const { user, loading: authLoading, signOut } = useAuth();
@@ -202,44 +204,58 @@
      const StatusIcon = config?.icon || CalendarDays;
  
      return (
-       <Card className="overflow-hidden">
-         <div className={`h-1 ${config?.color || "bg-muted"}`} />
-         <CardContent className="pt-4 space-y-3">
-           <div className="flex items-start justify-between gap-2">
-             <div className="flex-1">
-               <div className="flex items-center gap-2 mb-1">
-                 <Wrench className="h-4 w-4 text-primary" />
-                 <span className="font-semibold">{tipoLabels[servico.tipo]}</span>
-               </div>
-               <Badge variant="outline" className="text-xs">
-                 <StatusIcon className="h-3 w-3 mr-1" />
+      <Card className={`overflow-hidden border-l-4 ${config?.borderColor || "border-muted"} hover-lift`}>
+        <CardContent className="p-5 space-y-4">
+          {/* Header do Card */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-secondary/10">
+                  <Wrench className="h-4 w-4 text-secondary" />
+                </div>
+                <span className="font-semibold text-foreground">{tipoLabels[servico.tipo]}</span>
+              </div>
+              <Badge className={`${config?.bgColor} ${config?.textColor} border-0 font-medium`}>
+                <StatusIcon className="h-3 w-3 mr-1.5" />
                  {config?.label}
                </Badge>
              </div>
-             <div className="text-right text-sm text-muted-foreground">
-               <div className="flex items-center gap-1">
-                 <CalendarDays className="h-3 w-3" />
+            <div className="text-right space-y-1">
+              <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                <CalendarDays className="h-4 w-4 text-secondary" />
                  {format(parseISO(servico.data_agendada), "dd/MM", { locale: ptBR })}
                </div>
                {servico.hora_inicio && (
-                 <div className="flex items-center gap-1">
-                   <Clock className="h-3 w-3" />
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
                    {servico.hora_inicio.slice(0, 5)}
                  </div>
                )}
              </div>
            </div>
  
+          {/* Info do Cliente */}
            {servico.cliente && (
-             <div className="flex items-center gap-2 text-sm">
-               <User className="h-4 w-4 text-muted-foreground" />
-               <span>{servico.cliente.nome}</span>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <div className="p-2 rounded-full bg-background">
+                <User className="h-4 w-4 text-secondary" />
+              </div>
+              <div className="flex-1">
+                <span className="font-medium text-foreground">{servico.cliente.nome}</span>
+                {servico.cliente.telefone && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
+                    <Phone className="h-3 w-3" />
+                    {servico.cliente.telefone}
+                  </div>
+                )}
+              </div>
              </div>
            )}
  
+          {/* Endereço */}
            {(servico.endereco || servico.bairro || servico.cidade) && (
              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-               <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+              <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-secondary" />
                <span>
                  {[servico.endereco, servico.bairro, servico.cidade]
                    .filter(Boolean)
@@ -248,42 +264,45 @@
              </div>
            )}
  
+          {/* Descrição */}
            {servico.descricao && (
-             <p className="text-sm text-muted-foreground border-t pt-2">
+            <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
                {servico.descricao}
              </p>
            )}
  
+          {/* Ações */}
            {servico.status === "agendado" && (
-             <div className="flex gap-2 pt-2 border-t">
+            <div className="pt-3 border-t">
                <Button
-                 size="sm"
+                size="default"
                  variant="outline"
-                 className="flex-1"
+                className="w-full border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground transition-colors"
                  onClick={() => updateServicoStatus(servico.id, "em_andamento")}
                >
-                 <Play className="h-4 w-4 mr-1" />
-                 Iniciar
+                <Play className="h-4 w-4 mr-2" />
+                Iniciar Atendimento
                </Button>
              </div>
            )}
  
            {servico.status === "em_andamento" && (
-             <div className="flex gap-2 pt-2 border-t">
+            <div className="flex gap-3 pt-3 border-t">
                <Button
-                 size="sm"
-                 className="flex-1"
+                size="default"
+                className="flex-1 bg-success hover:bg-success/90 text-success-foreground shadow-md"
                  onClick={() => updateServicoStatus(servico.id, "concluido")}
                >
-                 <CheckCircle2 className="h-4 w-4 mr-1" />
+                <CheckCircle2 className="h-4 w-4 mr-2" />
                  Concluir
                </Button>
                <Button
-                 size="sm"
+                size="default"
                  variant="outline"
+                className="border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
                  onClick={() => navigate("/checklist")}
                >
-                   <ClipboardCheck className="h-4 w-4" />
+                <ClipboardCheck className="h-4 w-4" />
                </Button>
              </div>
            )}
@@ -293,21 +312,23 @@
    };
  
    return (
-     <div className="min-h-screen bg-background">
-       {/* Header */}
-       <header className="sticky top-0 z-50 bg-primary text-primary-foreground shadow-lg">
+    <div className="min-h-screen bg-muted/30">
+      {/* Header Profissional - Azul Corporativo */}
+      <header className="sticky top-0 z-50 gradient-blue shadow-lg">
          <div className="container mx-auto px-4">
-           <div className="flex items-center justify-between h-14">
-             <div className="flex items-center gap-3">
-               <img src={logoImg} alt="Logo" className="h-8" />
-               <span className="font-semibold hidden sm:inline">Portal do Instalador</span>
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <img src={logoBrancaImg} alt="Mais Energia Solar" className="h-9" />
+              <div className="hidden sm:block border-l border-white/20 pl-4">
+                <span className="text-white/90 text-sm font-medium">Portal do Instalador</span>
+              </div>
              </div>
  
              <Button
                variant="ghost"
                size="sm"
                onClick={handleSignOut}
-               className="gap-1"
+              className="text-white/90 hover:text-white hover:bg-white/10 gap-2"
              >
                <LogOut className="h-4 w-4" />
                <span className="hidden sm:inline">Sair</span>
@@ -318,34 +339,60 @@
  
        {/* Content */}
        <main className="container mx-auto px-4 py-6 max-w-4xl">
-         {/* Stats */}
-         <div className="grid grid-cols-3 gap-3 mb-6">
-           <Card className="text-center p-3 bg-card">
-             <div className="text-2xl font-bold text-primary">{servicosHoje.length}</div>
-             <div className="text-xs text-muted-foreground">Hoje</div>
+        {/* Stats Cards - Estilo Corporativo */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <Card className="relative overflow-hidden border-0 shadow-md hover-lift">
+            <div className="absolute inset-0 gradient-blue opacity-5" />
+            <CardContent className="p-4 text-center relative">
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-secondary/10 mb-2">
+                <CalendarDays className="h-5 w-5 text-secondary" />
+              </div>
+              <div className="text-3xl font-bold text-secondary">{servicosHoje.length}</div>
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Hoje</div>
+            </CardContent>
            </Card>
-           <Card className="text-center p-3 bg-card">
-             <div className="text-2xl font-bold text-warning">
-               {servicos.filter(s => s.status === "em_andamento").length}
-             </div>
-             <div className="text-xs text-muted-foreground">Em Andamento</div>
+          
+          <Card className="relative overflow-hidden border-0 shadow-md hover-lift">
+            <div className="absolute inset-0 bg-warning/5" />
+            <CardContent className="p-4 text-center relative">
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-warning/10 mb-2">
+                <Play className="h-5 w-5 text-warning" />
+              </div>
+              <div className="text-3xl font-bold text-warning">
+                {servicos.filter(s => s.status === "em_andamento").length}
+              </div>
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Em Andamento</div>
+            </CardContent>
            </Card>
-           <Card className="text-center p-3 bg-card">
-             <div className="text-2xl font-bold text-success">
-               {servicos.filter(s => s.status === "concluido").length}
-             </div>
-             <div className="text-xs text-muted-foreground">Concluídos</div>
+          
+          <Card className="relative overflow-hidden border-0 shadow-md hover-lift">
+            <div className="absolute inset-0 bg-success/5" />
+            <CardContent className="p-4 text-center relative">
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-success/10 mb-2">
+                <TrendingUp className="h-5 w-5 text-success" />
+              </div>
+              <div className="text-3xl font-bold text-success">
+                {servicos.filter(s => s.status === "concluido").length}
+              </div>
+              <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Concluídos</div>
+            </CardContent>
            </Card>
          </div>
  
-         {/* View Tabs */}
-         <Tabs value={view} onValueChange={(v) => setView(v as "lista" | "calendario")} className="space-y-4">
-           <TabsList className="grid w-full grid-cols-2">
-             <TabsTrigger value="lista" className="gap-2">
+        {/* View Tabs - Estilo Profissional */}
+        <Tabs value={view} onValueChange={(v) => setView(v as "lista" | "calendario")} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-card shadow-sm border">
+            <TabsTrigger 
+              value="lista" 
+              className="gap-2 data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground data-[state=active]:shadow-sm transition-all"
+            >
                <List className="h-4 w-4" />
                Lista
              </TabsTrigger>
-             <TabsTrigger value="calendario" className="gap-2">
+            <TabsTrigger 
+              value="calendario" 
+              className="gap-2 data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground data-[state=active]:shadow-sm transition-all"
+            >
                <CalendarDays className="h-4 w-4" />
                Calendário
              </TabsTrigger>
@@ -353,16 +400,20 @@
  
            <TabsContent value="lista" className="space-y-4">
              {loading ? (
-               <div className="flex justify-center py-12">
-                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="flex flex-col items-center justify-center py-16">
+                <Loader2 className="h-10 w-10 animate-spin text-secondary mb-3" />
+                <span className="text-sm text-muted-foreground">Carregando serviços...</span>
                </div>
              ) : servicos.filter(s => s.status !== "cancelado" && s.status !== "concluido").length === 0 ? (
-               <Card className="text-center py-12">
-                 <CalendarDays className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                 <p className="text-muted-foreground">Nenhum serviço agendado</p>
+              <Card className="text-center py-16 border-dashed border-2">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-secondary/10 mb-4">
+                  <CalendarDays className="h-8 w-8 text-secondary" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-1">Nenhum serviço agendado</h3>
+                <p className="text-muted-foreground text-sm">Novos atendimentos aparecerão aqui</p>
                </Card>
              ) : (
-               <div className="space-y-3">
+              <div className="space-y-4">
                  {servicos
                    .filter(s => s.status !== "cancelado" && s.status !== "concluido")
                    .map(servico => (
@@ -373,38 +424,44 @@
              )}
            </TabsContent>
  
-           <TabsContent value="calendario" className="space-y-4">
-             <Card>
-               <CardContent className="p-4">
+          <TabsContent value="calendario" className="space-y-6">
+            <Card className="border-0 shadow-md overflow-hidden">
+              <div className="h-1 gradient-blue" />
+              <CardContent className="p-5">
                  <Calendar
                    mode="single"
                    selected={selectedDate}
                    onSelect={(date) => date && setSelectedDate(date)}
                    locale={ptBR}
-                   className="pointer-events-auto"
+                  className="pointer-events-auto mx-auto"
                    modifiers={{
                      hasService: diasComServico,
                    }}
                    modifiersStyles={{
                      hasService: {
-                       fontWeight: "bold",
-                       backgroundColor: "hsl(var(--primary) / 0.1)",
-                       color: "hsl(var(--primary))",
+                      fontWeight: "700",
+                      backgroundColor: "hsl(var(--secondary) / 0.15)",
+                      color: "hsl(var(--secondary))",
+                      borderRadius: "50%",
                      },
                    }}
                  />
                </CardContent>
              </Card>
  
-             <div className="space-y-3">
-               <h3 className="font-semibold flex items-center gap-2">
-                 <CalendarDays className="h-4 w-4" />
-                 {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
-               </h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 pb-2 border-b">
+                <div className="p-2 rounded-lg bg-secondary/10">
+                  <CalendarDays className="h-5 w-5 text-secondary" />
+                </div>
+                <h3 className="font-semibold text-lg text-foreground">
+                  {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+                </h3>
+              </div>
  
                {servicosSelecionados.length === 0 ? (
-                 <Card className="text-center py-8">
-                   <p className="text-muted-foreground text-sm">Nenhum serviço neste dia</p>
+                <Card className="text-center py-10 border-dashed border-2">
+                  <p className="text-muted-foreground">Nenhum serviço neste dia</p>
                  </Card>
                ) : (
                  servicosSelecionados.map(servico => (
