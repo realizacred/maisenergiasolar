@@ -4,7 +4,7 @@ import logo from "@/assets/logo.png";
 
 export function AboutSection() {
   return (
-    <section id="quem-somos" className="py-10 sm:py-16 bg-white">
+    <section id="quem-somos" className="py-10 sm:py-16 bg-card">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
           <div>
@@ -48,7 +48,7 @@ export function AboutSection() {
               <Button 
                 asChild
                 size="sm"
-                className="bg-green-500 hover:bg-green-600 gap-2 w-full sm:w-auto"
+                className="bg-success hover:bg-success/90 gap-2 w-full sm:w-auto"
               >
                 <a href="https://wa.me/5532998437675" target="_blank" rel="noopener noreferrer">
                   <Phone className="w-4 h-4" />

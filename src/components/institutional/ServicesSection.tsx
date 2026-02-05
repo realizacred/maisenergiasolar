@@ -54,9 +54,9 @@ export function ServicesSection() {
                   alt={service.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-brand-orange flex items-center justify-center">
-                  <service.icon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
+                <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center">
+                  <service.icon className="w-4 h-4 sm:w-6 sm:h-6 text-primary-foreground" />
                 </div>
               </div>
               <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-6">
