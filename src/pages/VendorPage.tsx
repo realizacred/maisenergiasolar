@@ -27,12 +27,9 @@ export default function VendorPage() {
       }
 
       try {
+        // Use secure RPC that allows public access (no auth required)
         const { data, error } = await supabase
-          .from("vendedores")
-          .select("nome")
-          .eq("codigo", codigo)
-          .eq("ativo", true)
-          .maybeSingle();
+          .rpc("validate_vendedor_code", { _codigo: codigo });
 
         if (error) {
           console.error("Error validating vendor:", error);
@@ -40,8 +37,11 @@ export default function VendorPage() {
           return;
         }
 
-        if (data) {
-          setVendedorNome(data.nome);
+        // RPC returns array, get first result
+        const vendedor = Array.isArray(data) ? data[0] : data;
+
+        if (vendedor) {
+          setVendedorNome(vendedor.nome);
           setValidationState("valid");
         } else {
           setValidationState("invalid");
