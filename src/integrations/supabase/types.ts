@@ -2433,6 +2433,7 @@ export type Database = {
         Row: {
           api_token: string | null
           ativo: boolean
+          automacoes_ativas: boolean
           created_at: string
           evolution_api_key: string | null
           evolution_api_url: string | null
@@ -2449,6 +2450,7 @@ export type Database = {
         Insert: {
           api_token?: string | null
           ativo?: boolean
+          automacoes_ativas?: boolean
           created_at?: string
           evolution_api_key?: string | null
           evolution_api_url?: string | null
@@ -2465,6 +2467,7 @@ export type Database = {
         Update: {
           api_token?: string | null
           ativo?: boolean
+          automacoes_ativas?: boolean
           created_at?: string
           evolution_api_key?: string | null
           evolution_api_url?: string | null
@@ -2477,6 +2480,110 @@ export type Database = {
           modo_envio?: string
           updated_at?: string
           webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_automation_logs: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          erro_detalhes: string | null
+          id: string
+          lead_id: string | null
+          mensagem_enviada: string
+          servico_id: string | null
+          status: string
+          telefone: string
+          template_id: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          erro_detalhes?: string | null
+          id?: string
+          lead_id?: string | null
+          mensagem_enviada: string
+          servico_id?: string | null
+          status?: string
+          telefone: string
+          template_id?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          erro_detalhes?: string | null
+          id?: string
+          lead_id?: string | null
+          mensagem_enviada?: string
+          servico_id?: string | null
+          status?: string
+          telefone?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_automation_logs_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_automation_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_automation_logs_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "servicos_agendados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_automation_logs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_automation_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_automation_templates: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          gatilho_config: Json
+          id: string
+          mensagem: string
+          nome: string
+          ordem: number
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          gatilho_config?: Json
+          id?: string
+          mensagem: string
+          nome: string
+          ordem?: number
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          gatilho_config?: Json
+          id?: string
+          mensagem?: string
+          nome?: string
+          ordem?: number
+          tipo?: string
+          updated_at?: string
         }
         Relationships: []
       }
