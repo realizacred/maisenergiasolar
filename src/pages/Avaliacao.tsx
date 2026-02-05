@@ -5,21 +5,23 @@
  import { Textarea } from "@/components/ui/textarea";
  import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
  import { toast } from "@/hooks/use-toast";
- import { Loader2, Star, CheckCircle2, Sun } from "lucide-react";
- import logoImg from "@/assets/logo.png";
+ import { Loader2, CheckCircle2, Sun, Sparkles } from "lucide-react";
+ import { StarRating } from "@/components/ui/star-rating";
+ import logoBrancaImg from "@/assets/logo-branca.png";
  
- const avaliacaoOptions = [
-  { value: "otimo", label: "Ótimo", emoji: "😄", color: "bg-success hover:bg-success/90" },
-  { value: "bom", label: "Bom", emoji: "🙂", color: "bg-secondary hover:bg-secondary/90" },
-  { value: "razoavel", label: "Razoável", emoji: "😐", color: "bg-warning hover:bg-warning/90" },
-  { value: "ruim", label: "Ruim", emoji: "😕", color: "bg-primary hover:bg-primary/90" },
-  { value: "muito_ruim", label: "Muito Ruim", emoji: "😞", color: "bg-destructive hover:bg-destructive/90" },
- ];
+ // Mapeamento de estrelas para valores de avaliação
+ const starToValue: Record<number, string> = {
+   1: "muito_ruim",
+   2: "ruim",
+   3: "razoavel",
+   4: "bom",
+   5: "otimo",
+ };
  
  export default function Avaliacao() {
    const [nome, setNome] = useState("");
    const [endereco, setEndereco] = useState("");
-   const [avaliacao, setAvaliacao] = useState("");
+   const [rating, setRating] = useState(0);
    const [observacoes, setObservacoes] = useState("");
    const [submitting, setSubmitting] = useState(false);
    const [submitted, setSubmitted] = useState(false);
@@ -27,7 +29,7 @@
    const handleSubmit = async (e: React.FormEvent) => {
      e.preventDefault();
      
-     if (!nome.trim() || !endereco.trim() || !avaliacao) {
+     if (!nome.trim() || !endereco.trim() || rating === 0) {
        toast({
          title: "Campos obrigatórios",
          description: "Por favor, preencha seu nome, endereço e selecione uma avaliação.",
@@ -38,17 +40,17 @@
  
      setSubmitting(true);
      try {
-       // Inserir avaliação na tabela checklists_instalacao
-       // Usando um UUID fixo para instalador_id já que é avaliação pública
+       const avaliacaoValue = starToValue[rating] || "razoavel";
+       
        const { error } = await supabase
          .from("checklists_instalacao")
          .insert({
            nome_cliente: nome.trim(),
            endereco: endereco.trim(),
-           avaliacao_atendimento: avaliacao,
+           avaliacao_atendimento: avaliacaoValue,
            observacoes: observacoes.trim() || null,
            data_instalacao: new Date().toISOString().split('T')[0],
-           instalador_id: "00000000-0000-0000-0000-000000000000", // ID placeholder para avaliações públicas
+           instalador_id: "00000000-0000-0000-0000-000000000000",
          });
  
        if (error) throw error;
@@ -72,21 +74,24 @@
  
    if (submitted) {
      return (
-      <div className="min-h-screen gradient-mesh flex items-center justify-center p-4">
-         <Card className="w-full max-w-md text-center">
-           <CardContent className="pt-8 pb-8">
-            <div className="w-20 h-20 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="h-10 w-10 text-success" />
+       <div className="min-h-screen gradient-mesh flex items-center justify-center p-4">
+         <Card className="w-full max-w-md text-center animate-scale-in shadow-xl">
+           <CardContent className="pt-10 pb-10">
+             <div className="relative w-24 h-24 mx-auto mb-6">
+               <div className="absolute inset-0 bg-success/20 rounded-full animate-ping" />
+               <div className="relative w-24 h-24 bg-success/10 rounded-full flex items-center justify-center">
+                 <CheckCircle2 className="h-12 w-12 text-success" />
+               </div>
              </div>
-             <h2 className="text-2xl font-bold text-foreground mb-2">
+             <h2 className="text-2xl font-bold text-foreground mb-3">
                Obrigado pela sua avaliação!
              </h2>
-             <p className="text-muted-foreground mb-6">
-               Seu feedback é muito importante para continuarmos melhorando nossos serviços.
+             <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
+               Seu feedback é muito importante para continuarmos melhorando nossos serviços de energia solar.
              </p>
-             <div className="flex items-center justify-center gap-2 text-primary">
+             <div className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary">
                <Sun className="h-5 w-5" />
-               <span className="font-medium">Energia Solar - Mais Economia para Você!</span>
+               <span className="font-medium">Mais Economia para Você!</span>
              </div>
            </CardContent>
          </Card>
@@ -95,22 +100,22 @@
    }
  
    return (
-    <div className="min-h-screen gradient-mesh">
-       {/* Header simples */}
-       <header className="bg-primary text-primary-foreground py-4 shadow-lg">
+     <div className="min-h-screen gradient-mesh">
+       {/* Header corporativo */}
+       <header className="gradient-blue text-white py-5 shadow-lg">
          <div className="container mx-auto px-4 flex items-center justify-center">
-           <img src={logoImg} alt="Logo" className="h-10" />
+           <img src={logoBrancaImg} alt="Mais Energia Solar" className="h-10 sm:h-12" />
          </div>
        </header>
  
-       <main className="container mx-auto px-4 py-8 max-w-lg">
-         <Card className="shadow-xl border-0">
-           <CardHeader className="text-center pb-2">
-             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-               <Star className="h-8 w-8 text-primary" />
+       <main className="container mx-auto px-4 py-8 sm:py-12 max-w-lg">
+         <Card className="shadow-xl border-0 animate-fade-in">
+           <CardHeader className="text-center pb-4">
+             <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl flex items-center justify-center mx-auto mb-4 rotate-3">
+               <Sparkles className="h-8 w-8 text-primary" />
              </div>
-             <CardTitle className="text-2xl">Avalie Nosso Atendimento</CardTitle>
-             <CardDescription className="text-base">
+             <CardTitle className="text-2xl sm:text-3xl">Avalie Nosso Atendimento</CardTitle>
+             <CardDescription className="text-base mt-2">
                Sua opinião é muito importante para nós!
              </CardDescription>
            </CardHeader>
@@ -119,7 +124,7 @@
              <form onSubmit={handleSubmit} className="space-y-6">
                {/* Nome */}
                <div className="space-y-2">
-                 <label className="text-sm font-medium">
+                 <label className="text-sm font-medium text-foreground">
                    Seu Nome <span className="text-destructive">*</span>
                  </label>
                  <Input
@@ -127,12 +132,13 @@
                    onChange={(e) => setNome(e.target.value)}
                    placeholder="Digite seu nome completo"
                    disabled={submitting}
+                   className="h-12"
                  />
                </div>
  
                {/* Endereço */}
                <div className="space-y-2">
-                 <label className="text-sm font-medium">
+                 <label className="text-sm font-medium text-foreground">
                    Endereço da Instalação <span className="text-destructive">*</span>
                  </label>
                  <Input
@@ -140,54 +146,45 @@
                    onChange={(e) => setEndereco(e.target.value)}
                    placeholder="Rua, número, bairro"
                    disabled={submitting}
+                   className="h-12"
                  />
                </div>
  
-               {/* Avaliação */}
-               <div className="space-y-3">
-                 <label className="text-sm font-medium">
+               {/* Avaliação com Estrelas */}
+               <div className="space-y-4">
+                 <label className="text-sm font-medium text-foreground block text-center">
                    Como você avalia nosso atendimento? <span className="text-destructive">*</span>
                  </label>
-                 <div className="grid grid-cols-1 gap-2">
-                   {avaliacaoOptions.map((option) => (
-                     <button
-                       key={option.value}
-                       type="button"
-                       onClick={() => setAvaliacao(option.value)}
-                       disabled={submitting}
-                       className={`
-                         p-4 rounded-lg border-2 transition-all flex items-center gap-3
-                         ${avaliacao === option.value 
-                           ? `${option.color} text-white border-transparent scale-[1.02] shadow-lg` 
-                           : 'bg-card border-border hover:border-primary/50'
-                         }
-                       `}
-                     >
-                       <span className="text-2xl">{option.emoji}</span>
-                       <span className="font-medium">{option.label}</span>
-                     </button>
-                   ))}
+                 <div className="flex justify-center py-4 bg-muted/30 rounded-xl">
+                   <StarRating
+                     value={rating}
+                     onChange={setRating}
+                     size="xl"
+                     showLabel
+                   />
                  </div>
                </div>
  
                {/* Observações */}
                <div className="space-y-2">
-                 <label className="text-sm font-medium">
+                 <label className="text-sm font-medium text-foreground">
                    Observações (opcional)
                  </label>
                  <Textarea
                    value={observacoes}
                    onChange={(e) => setObservacoes(e.target.value)}
                    placeholder="Conte-nos mais sobre sua experiência..."
-                   rows={3}
+                   rows={4}
                    disabled={submitting}
+                   className="resize-none"
                  />
                </div>
  
                <Button 
                  type="submit" 
-                 className="w-full h-12 text-lg"
-                 disabled={submitting}
+                 size="xl"
+                 className="w-full shadow-primary hover-glow-primary"
+                 disabled={submitting || rating === 0}
                >
                  {submitting ? (
                    <>
@@ -202,7 +199,7 @@
            </CardContent>
          </Card>
  
-         <p className="text-center text-sm text-muted-foreground mt-6">
+         <p className="text-center text-sm text-muted-foreground mt-8">
            Obrigado por escolher nossos serviços de energia solar! ☀️
          </p>
        </main>
