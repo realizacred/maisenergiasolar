@@ -26,15 +26,25 @@ interface MinimalLead {
   telefone: string;
 }
 
+export interface OrcamentoContext {
+  orc_code: string | null;
+  cidade: string;
+  estado: string;
+  media_consumo: number;
+  created_at: string;
+}
+
 interface ScheduleWhatsAppDialogProps {
   lead: MinimalLead | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vendedorNome?: string;
   onSuccess?: () => void;
+  /** Optional: pass orcamento context for proposal-specific messages */
+  orcamentoContext?: OrcamentoContext | null;
 }
 
-const TEMPLATES = [
+const getTemplates = (hasOrcamento: boolean) => [
   {
     id: "followup",
     label: "Follow-up Padrão",
@@ -43,13 +53,20 @@ const TEMPLATES = [
   {
     id: "proposta",
     label: "Envio de Proposta",
-    message: "Olá {nome}! Preparei uma proposta especial para você economizar na conta de luz. Posso te enviar agora?",
+    message: hasOrcamento
+      ? "Olá {nome}! Sua proposta {orc_code} para {cidade}/{estado} com consumo de {consumo} kWh está pronta. Posso te enviar os detalhes?"
+      : "Olá {nome}! Preparei uma proposta especial para você economizar na conta de luz. Posso te enviar agora?",
   },
   {
     id: "urgente",
     label: "Oferta Urgente",
     message: "Olá {nome}! Estamos com uma condição especial por tempo limitado. Gostaria de saber mais sobre energia solar?",
   },
+  ...(hasOrcamento ? [{
+    id: "referencia",
+    label: "Referência à Proposta",
+    message: "Olá {nome}! Vi que você solicitou um orçamento ({orc_code}) para {cidade}/{estado}. Posso te ajudar com mais informações?",
+  }] : []),
 ];
 
 export function ScheduleWhatsAppDialog({
@@ -58,6 +75,7 @@ export function ScheduleWhatsAppDialog({
   onOpenChange,
   vendedorNome,
   onSuccess,
+  orcamentoContext,
 }: ScheduleWhatsAppDialogProps) {
   const [message, setMessage] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -65,11 +83,24 @@ export function ScheduleWhatsAppDialog({
   const [sending, setSending] = useState(false);
   const [scheduling, setScheduling] = useState(false);
 
+  const hasOrcamento = !!orcamentoContext;
+  const TEMPLATES = getTemplates(hasOrcamento);
+
   // Replace placeholders in template
   const processTemplate = (template: string) => {
-    return template
+    let result = template
       .replace("{nome}", lead?.nome.split(" ")[0] || "")
       .replace("{vendedor}", vendedorNome || "");
+    
+    if (orcamentoContext) {
+      result = result
+        .replace("{orc_code}", orcamentoContext.orc_code || "s/n")
+        .replace("{cidade}", orcamentoContext.cidade)
+        .replace("{estado}", orcamentoContext.estado)
+        .replace("{consumo}", String(orcamentoContext.media_consumo));
+    }
+    
+    return result;
   };
 
   const handleSelectTemplate = (templateMessage: string) => {
