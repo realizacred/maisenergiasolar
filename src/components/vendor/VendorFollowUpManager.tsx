@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Clock, Phone, CheckCircle, Bell, MessageCircle } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ScheduleWhatsAppDialog } from "@/components/vendor/ScheduleWhatsAppDialog";
 import type { Lead } from "@/types/lead";
 
 interface VendorFollowUpManagerProps {
@@ -15,6 +16,13 @@ interface VendorFollowUpManagerProps {
 
 export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: VendorFollowUpManagerProps) {
   const isMobile = useIsMobile();
+  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
+  const [selectedLeadForWhatsapp, setSelectedLeadForWhatsapp] = useState<Lead | null>(null);
+  
+  const handleWhatsappClick = (lead: Lead) => {
+    setSelectedLeadForWhatsapp(lead);
+    setWhatsappDialogOpen(true);
+  };
   
   const { urgentLeads, pendingLeads, upToDateLeads } = useMemo(() => {
     const now = new Date();
@@ -65,13 +73,6 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
         </Badge>
       );
     }
-  };
-
-  const openWhatsApp = (telefone: string, nome: string) => {
-    const message = encodeURIComponent(`Olá ${nome}! Tudo bem? Sou da equipe de energia solar e gostaria de dar continuidade ao seu interesse. Podemos conversar?`);
-    const phone = telefone.replace(/\D/g, "");
-    const formattedPhone = phone.startsWith("55") ? phone : `55${phone}`;
-    window.open(`https://wa.me/${formattedPhone}?text=${message}`, "_blank");
   };
 
   const hasIssues = urgentLeads.length > 0 || pendingLeads.length > 0;
@@ -140,15 +141,15 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
                       {getStatusBadge(lead)}
                     </div>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openWhatsApp(lead.telefone, lead.nome)}
-                        className="gap-1 h-8 text-xs flex-1"
-                      >
-                        <MessageCircle className="w-3 h-3" />
-                        WhatsApp
-                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleWhatsappClick(lead)}
+                                        className="gap-1 h-8 text-xs flex-1"
+                                      >
+                                        <MessageCircle className="w-3 h-3" />
+                                        WhatsApp
+                                      </Button>
                       {onViewLead && (
                         <Button size="sm" onClick={() => onViewLead(lead)} className="h-8 text-xs flex-1">
                           Ver Detalhes
@@ -193,7 +194,7 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => openWhatsApp(lead.telefone, lead.nome)}
+                              onClick={() => handleWhatsappClick(lead)}
                               className="gap-1"
                             >
                               <MessageCircle className="w-3 h-3" />
@@ -241,15 +242,15 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
                       {getStatusBadge(lead)}
                     </div>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openWhatsApp(lead.telefone, lead.nome)}
-                        className="gap-1 h-8 text-xs flex-1"
-                      >
-                        <MessageCircle className="w-3 h-3" />
-                        WhatsApp
-                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleWhatsappClick(lead)}
+                                        className="gap-1 h-8 text-xs flex-1"
+                                      >
+                                        <MessageCircle className="w-3 h-3" />
+                                        WhatsApp
+                                      </Button>
                       {onViewLead && (
                         <Button size="sm" variant="outline" onClick={() => onViewLead(lead)} className="h-8 text-xs flex-1">
                           Ver Detalhes
@@ -294,7 +295,7 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => openWhatsApp(lead.telefone, lead.nome)}
+                              onClick={() => handleWhatsappClick(lead)}
                               className="gap-1"
                             >
                               <MessageCircle className="w-3 h-3" />
@@ -314,8 +315,14 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
               </div>
             )}
           </CardContent>
-        </Card>
+      </Card>
       )}
+
+      <ScheduleWhatsAppDialog
+        lead={selectedLeadForWhatsapp}
+        open={whatsappDialogOpen}
+        onOpenChange={setWhatsappDialogOpen}
+      />
     </div>
   );
 }
