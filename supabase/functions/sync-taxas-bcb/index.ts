@@ -44,6 +44,57 @@ interface BancoDb {
   codigo_bcb: string | null;
 }
 
+// Função auxiliar para verificar se usuário é admin
+async function verifyAdminRole(req: Request): Promise<{ authorized: boolean; error?: Response }> {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return {
+      authorized: false,
+      error: new Response(
+        JSON.stringify({ success: false, error: 'Token de autenticação ausente' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    };
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+  
+  const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+
+  const { data: userData, error: userError } = await userClient.auth.getUser();
+  if (userError || !userData?.user) {
+    return {
+      authorized: false,
+      error: new Response(
+        JSON.stringify({ success: false, error: 'Não autorizado' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    };
+  }
+
+  // Check admin role
+  const { data: roles } = await userClient
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userData.user.id);
+
+  const isAdmin = roles?.some(r => r.role === 'admin');
+  if (!isAdmin) {
+    return {
+      authorized: false,
+      error: new Response(
+        JSON.stringify({ success: false, error: 'Apenas administradores podem sincronizar taxas' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    };
+  }
+
+  return { authorized: true };
+}
+
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -51,6 +102,12 @@ serve(async (req) => {
   }
 
   try {
+    // Verificar autenticação e role de admin
+    const authCheck = await verifyAdminRole(req);
+    if (!authCheck.authorized) {
+      return authCheck.error!;
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
