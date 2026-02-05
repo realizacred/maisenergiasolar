@@ -275,7 +275,7 @@
                  variant="outline"
                  onClick={() => navigate("/checklist")}
                >
-                 <ClipboardCheck className="h-4 w-4" />
+                   <ClipboardCheck className="h-4 w-4" />
                </Button>
              </div>
            )}

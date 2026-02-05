@@ -105,7 +105,7 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
     if (!installerSignature) {
       toast({
         title: "Assinatura do instalador obrigatória",
-        description: "Por favor, assine o checklist.",
+        description: "Por favor, assine o registro.",
         variant: "destructive",
       });
       return;
@@ -135,10 +135,10 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
       if (result.success) {
         setIsSuccess(true);
         toast({
-          title: result.offline ? "Salvo offline" : "Checklist enviado!",
+          title: result.offline ? "Salvo offline" : "Registro salvo!",
           description: result.offline 
             ? "Será sincronizado quando você estiver online."
-            : "O checklist foi registrado com sucesso.",
+            : "O registro foi salvo com sucesso.",
         });
         
         setTimeout(() => {
@@ -260,8 +260,8 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
         >
           <CheckCircle2 className="h-10 w-10 text-white" />
         </motion.div>
-        <h2 className="text-2xl font-bold text-green-600">Checklist Enviado!</h2>
-        <p className="text-muted-foreground mt-2">Preparando novo formulário...</p>
+         <h2 className="text-2xl font-bold text-green-600">Registro Enviado!</h2>
+         <p className="text-muted-foreground mt-2">Preparando novo registro...</p>
       </motion.div>
     );
   }
