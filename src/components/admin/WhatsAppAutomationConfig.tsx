@@ -20,10 +20,12 @@ import {
   RefreshCw,
   Plug,
   Zap,
-  XCircle
+  XCircle,
+  Bot
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { WhatsAppAutomationTemplates } from "./WhatsAppAutomationTemplates";
 
 interface WhatsAppConfig {
   id: string;
@@ -217,10 +219,14 @@ export function WhatsAppAutomationConfig() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="config" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="config" className="gap-2">
               <Settings className="h-4 w-4" />
               Geral
+            </TabsTrigger>
+            <TabsTrigger value="automacoes" className="gap-2">
+              <Bot className="h-4 w-4" />
+              Automações
             </TabsTrigger>
             <TabsTrigger value="integracao" className="gap-2">
               <Plug className="h-4 w-4" />
@@ -319,6 +325,10 @@ export function WhatsAppAutomationConfig() {
                 </Button>
               </>
             )}
+          </TabsContent>
+
+          <TabsContent value="automacoes" className="mt-4">
+            <WhatsAppAutomationTemplates />
           </TabsContent>
 
           <TabsContent value="integracao" className="space-y-6 mt-4">
