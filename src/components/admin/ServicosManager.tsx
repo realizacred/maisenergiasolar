@@ -45,8 +45,11 @@
    Video,
    Volume2,
    Grid3X3,
+   CheckCircle2,
+   ClipboardCheck,
  } from "lucide-react";
- import { ServicoDetailDialog } from "./ServicoDetailDialog";
+import { ServicoDetailDialog } from "./ServicoDetailDialog";
+import { ServicoValidacaoDialog } from "./ServicoValidacaoDialog";
 import { SolarLayoutEditor } from "@/components/solar-editor";
  
  interface Servico {
@@ -61,11 +64,12 @@ import { SolarLayoutEditor } from "@/components/solar-editor";
    descricao: string | null;
    cliente: { id: string; nome: string; telefone: string } | null;
    instalador_id: string;
-   fotos_urls: string[] | null;
-   audio_url: string | null;
-   video_url: string | null;
-   layout_modulos: unknown | null;
- }
+  fotos_urls: string[] | null;
+  audio_url: string | null;
+  video_url: string | null;
+  layout_modulos: unknown | null;
+  validado: boolean | null;
+}
  
  interface Cliente {
    id: string;
@@ -101,9 +105,10 @@ import { SolarLayoutEditor } from "@/components/solar-editor";
    const [clientes, setClientes] = useState<Cliente[]>([]);
    const [instaladores, setInstaladores] = useState<Instalador[]>([]);
    const [loading, setLoading] = useState(true);
-   const [dialogOpen, setDialogOpen] = useState(false);
-   const [saving, setSaving] = useState(false);
-   const [selectedServicoId, setSelectedServicoId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [selectedServicoId, setSelectedServicoId] = useState<string | null>(null);
+  const [validacaoServico, setValidacaoServico] = useState<Servico | null>(null);
   const [layoutEditorOpen, setLayoutEditorOpen] = useState(false);
   const [selectedServiceForLayout, setSelectedServiceForLayout] = useState<Servico | null>(null);
  
@@ -142,11 +147,12 @@ import { SolarLayoutEditor } from "@/components/solar-editor";
              descricao,
              instalador_id,
              cliente:clientes(id, nome, telefone),
-             fotos_urls,
-             audio_url,
-             video_url,
-             layout_modulos
-           `)
+            fotos_urls,
+            audio_url,
+            video_url,
+            layout_modulos,
+            validado
+          `)
            .order("data_agendada", { ascending: false }),
          supabase
            .from("clientes")
@@ -446,6 +452,7 @@ import { SolarLayoutEditor } from "@/components/solar-editor";
                  <TableHead>Instalador</TableHead>
                  <TableHead>Local</TableHead>
                  <TableHead>Status</TableHead>
+                 <TableHead>Validado</TableHead>
                      <TableHead>Mídia</TableHead>
                      <TableHead></TableHead>
                </TableRow>
@@ -453,7 +460,7 @@ import { SolarLayoutEditor } from "@/components/solar-editor";
              <TableBody>
                {servicos.length === 0 ? (
                  <TableRow>
-                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                      Nenhum serviço agendado
                    </TableCell>
                  </TableRow>
@@ -502,6 +509,28 @@ import { SolarLayoutEditor } from "@/components/solar-editor";
                        <Badge variant={statusConfig[servico.status]?.variant || "default"}>
                          {statusConfig[servico.status]?.label || servico.status}
                        </Badge>
+                     </TableCell>
+                     <TableCell>
+                       {servico.status === "concluido" ? (
+                         servico.validado ? (
+                           <Badge variant="outline" className="bg-success/10 text-success border-success/30">
+                             <CheckCircle2 className="h-3 w-3 mr-1" />
+                             Sim
+                           </Badge>
+                         ) : (
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             className="h-7 gap-1 text-xs"
+                             onClick={() => setValidacaoServico(servico)}
+                           >
+                             <ClipboardCheck className="h-3 w-3" />
+                             Validar
+                           </Button>
+                         )
+                       ) : (
+                         <span className="text-muted-foreground text-xs">—</span>
+                       )}
                      </TableCell>
                      <TableCell>
                        <div className="flex items-center gap-1">
@@ -575,6 +604,31 @@ import { SolarLayoutEditor } from "@/components/solar-editor";
           onSave={() => fetchData()}
         />
       )}
+
+      <ServicoValidacaoDialog
+        servico={validacaoServico ? {
+          id: validacaoServico.id,
+          tipo: validacaoServico.tipo,
+          status: validacaoServico.status,
+          data_agendada: validacaoServico.data_agendada,
+          endereco: validacaoServico.endereco,
+          bairro: validacaoServico.bairro,
+          cidade: validacaoServico.cidade,
+          cliente: validacaoServico.cliente,
+          fotos_urls: validacaoServico.fotos_urls || [],
+          audio_url: validacaoServico.audio_url,
+          video_url: validacaoServico.video_url,
+          layout_modulos: validacaoServico.layout_modulos as { totalModules: number; backgroundImage?: string } | null,
+          observacoes_conclusao: null,
+          validado: validacaoServico.validado || false,
+          validado_em: null,
+          observacoes_validacao: null,
+          instalador_nome: getInstaladorNome(validacaoServico.instalador_id),
+        } : null}
+        isOpen={!!validacaoServico}
+        onClose={() => setValidacaoServico(null)}
+        onValidated={() => fetchData()}
+      />
      </div>
    );
  }
