@@ -201,7 +201,7 @@
    }, {} as Record<Template["categoria"], Template[]>);
  
    return (
-     <Card>
+    <Card className="flex flex-col h-full w-full">
        <CardHeader className="pb-3">
          <div className="flex items-center justify-between">
            <div className="flex items-center gap-2">
@@ -217,7 +217,7 @@
            Mensagens prontas para agilizar seu atendimento
          </CardDescription>
        </CardHeader>
-       <CardContent className="space-y-4">
+      <CardContent className="flex-1 space-y-4 overflow-y-auto max-h-[500px]">
          {/* Create Form */}
          {isCreating && (
            <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
