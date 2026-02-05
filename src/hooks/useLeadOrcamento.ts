@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { LeadSimplified, DuplicateLeadsResult } from "@/types/orcamento";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LeadData {
   nome: string;
@@ -44,6 +45,8 @@ export function useLeadOrcamento() {
   // Track which lead the user selected (if any)
   const [selectedLead, setSelectedLead] = useState<LeadSimplified | null>(null);
 
+  const { user } = useAuth();
+
   /**
    * Normaliza o telefone removendo caracteres não numéricos
    */
@@ -52,46 +55,65 @@ export function useLeadOrcamento() {
   };
 
   /**
-   * Verifica se já existem leads com o mesmo telefone (retorna TODOS os matches)
+   * Verifica se já existem leads com o mesmo telefone
+   * Para usuários anônimos: usa função RPC segura (check_phone_duplicate)
+   * Para usuários autenticados: retorna leads completos para seleção
    */
   const checkExistingLeads = useCallback(async (telefone: string): Promise<DuplicateLeadsResult | null> => {
     const normalized = normalizePhone(telefone);
     if (normalized.length < 10) return null;
 
     try {
-      // Search for ALL leads with matching phone (ordered by most recent)
+      // For anonymous users: use secure RPC function that only returns boolean
+      // This prevents exposing lead data to unauthenticated users
+      if (!user) {
+        const { data: hasDuplicate, error } = await supabase
+          .rpc("check_phone_duplicate", { _telefone: telefone });
+
+        if (error) {
+          console.error("[checkExistingLeads] RPC error:", error.message);
+          return null;
+        }
+
+        // RPC returns true if duplicate exists
+        // For anonymous users, we just signal duplicate without exposing lead details
+        if (hasDuplicate) {
+          return {
+            leads: [], // Empty array signals duplicate exists but no details for anon users
+          };
+        }
+
+        return null;
+      }
+
+      // For authenticated users: fetch full lead details for selection
       const { data: leads, error } = await supabase
         .from("leads")
         .select("id, lead_code, nome, telefone, telefone_normalized, created_at, updated_at")
         .eq("telefone_normalized", normalized)
         .order("created_at", { ascending: false });
 
-       if (error) {
-         console.error("[checkExistingLeads] Error (likely RLS for anon users):", {
-           message: error.message,
-           details: (error as any).details,
-           hint: (error as any).hint,
-           code: (error as any).code,
-         });
+      if (error) {
+        console.error("[checkExistingLeads] Query error:", error.message);
         return null;
       }
 
       if (leads && leads.length > 0) {
         // Deduplicate by normalized name - keep only the most recent lead for each unique name
         const normalizedNameMap = new Map<string, typeof leads[0]>();
-        
+
         for (const lead of leads) {
           // Normalize name: lowercase, trim, remove extra spaces
-          const normalizedName = lead.nome.toLowerCase().trim().replace(/\s+/g, ' ');
-          
+          const normalizedName = lead.nome.toLowerCase().trim().replace(/\s+/g, " ");
+
           // Only keep the first (most recent) occurrence of each name
           if (!normalizedNameMap.has(normalizedName)) {
             normalizedNameMap.set(normalizedName, lead);
           }
         }
-        
+
         const uniqueLeads = Array.from(normalizedNameMap.values());
-        
+
         return {
           leads: uniqueLeads as LeadSimplified[],
         };
@@ -102,7 +124,7 @@ export function useLeadOrcamento() {
       console.error("[checkExistingLeads] Exception:", error);
       return null;
     }
-  }, []);
+  }, [user]);
 
   /**
    * Cria um novo lead
