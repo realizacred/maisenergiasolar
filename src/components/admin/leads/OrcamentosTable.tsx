@@ -282,6 +282,7 @@ export function OrcamentosTable({
         statuses={statuses}
         onViewOrcamento={onView}
         onWhatsApp={handleWhatsAppFromHistory}
+        onConvertOrcamento={onConvert}
       />
     </div>
   );
