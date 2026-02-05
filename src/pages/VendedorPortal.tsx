@@ -30,7 +30,7 @@ import { VendorPendingDocumentation } from "@/components/vendor/VendorPendingDoc
 import { WhatsAppTemplates, FollowUpCalendar, SmartReminders } from "@/components/vendor/productivity";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
 import { VendorLeadFilters, VendorOrcamentosTable, VendorLeadViewDialog, LeadScoring } from "@/components/vendor/leads";
- import { VendorLeaderboard, VendorAchievements, VendorGoals } from "@/components/vendor/gamification";
+ import { VendorAchievements, VendorGoals } from "@/components/vendor/gamification";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
 import { OfflineConversionsManager } from "@/components/leads/OfflineConversionsManager";
 import { OfflineDuplicateResolver } from "@/components/vendor/OfflineDuplicateResolver";
@@ -80,9 +80,7 @@ export default function VendedorPortal() {
    // Gamification hook
    const {
      achievements,
-     ranking,
      goals,
-     myRankPosition,
      totalPoints,
      calculateGoals,
    } = useGamification(vendedor?.id || null);
@@ -339,13 +337,8 @@ export default function VendedorPortal() {
             )}
 
             {/* Gamification Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <VendorGoals goals={goals} />
-              <VendorLeaderboard
-                ranking={ranking}
-                currentVendedorId={vendedor?.id || null}
-                myRankPosition={myRankPosition}
-              />
               <VendorAchievements
                 achievements={achievements}
                 totalPoints={totalPoints}
