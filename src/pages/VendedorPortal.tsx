@@ -14,14 +14,15 @@ import { OfflineConversionsManager } from "@/components/leads/OfflineConversions
 import { OfflineDuplicateResolver } from "@/components/vendor/OfflineDuplicateResolver";
 import NotificationSettings from "@/components/vendor/NotificationSettings";
 import SyncStatusWidget from "@/components/vendor/SyncStatusWidget";
- import { VendedorHeader, VendedorShareLink } from "@/components/vendor/portal";
- import { useVendedorPortal, orcamentoToLead } from "@/hooks/useVendedorPortal";
+import { VendedorHeader, VendedorShareLink } from "@/components/vendor/portal";
+import { useVendedorPortal, orcamentoToLead } from "@/hooks/useVendedorPortal";
 
 export default function VendedorPortal() {
    const {
      // Profile
      vendedor,
      isAdminMode,
+     isViewingAsVendedor,
      loading,
      // Filters
      searchTerm,
@@ -78,6 +79,7 @@ export default function VendedorPortal() {
        <VendedorHeader
          vendedorNome={vendedor?.nome || ""}
          isAdminMode={isAdminMode}
+         isViewingAsVendedor={isViewingAsVendedor}
          onSignOut={handleSignOut}
        />
 

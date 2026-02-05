@@ -62,9 +62,10 @@
    const navigate = useNavigate();
    const [searchParams] = useSearchParams();
    const adminAsVendedor = searchParams.get("as"); // Admin viewing as specific vendor
-   const [vendedor, setVendedor] = useState<VendedorProfile | null>(null);
-   const [isAdminMode, setIsAdminMode] = useState(false);
-   const [initialLoading, setInitialLoading] = useState(true);
+  const [vendedor, setVendedor] = useState<VendedorProfile | null>(null);
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [isViewingAsVendedor, setIsViewingAsVendedor] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
  
    // Filter states
    const [searchTerm, setSearchTerm] = useState("");
@@ -129,11 +130,12 @@
            return;
          }
  
-         setIsAdminMode(true);
-         setVendedor(targetVendedor);
-         setInitialLoading(false);
-         return;
-       }
+        setIsAdminMode(true);
+        setIsViewingAsVendedor(true);
+        setVendedor(targetVendedor);
+        setInitialLoading(false);
+        return;
+      }
  
        // Normal flow: load user's own vendedor profile
        const { data: vendedorData, error: vendedorError } = await supabase
@@ -262,11 +264,12 @@
      return filtered;
    }, [orcamentosData.orcamentos, searchTerm, filterVisto, filterEstado, filterStatus]);
  
-   return {
-     // Profile
-     vendedor,
-     isAdminMode,
-     loading: initialLoading || orcamentosData.loading,
+  return {
+    // Profile
+    vendedor,
+    isAdminMode,
+    isViewingAsVendedor,
+    loading: initialLoading || orcamentosData.loading,
  
      // Filters
      searchTerm,
