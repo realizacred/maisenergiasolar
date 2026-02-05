@@ -30,11 +30,12 @@ import { PhotoCapture } from "@/components/checklist/PhotoCapture";
    Zap,
    Wifi,
    Wrench,
-  Upload,
-  Image,
   Trash2,
+  FileCheck,
+  PenTool,
  } from "lucide-react";
  import { cn } from "@/lib/utils";
+import logoWhite from "@/assets/logo-branca.png";
  
  interface ServicoAgendado {
    id: string;
@@ -287,12 +288,12 @@ import { PhotoCapture } from "@/components/checklist/PhotoCapture";
    // Tela de início (para serviços agendados)
    if (servico.status === "agendado") {
      return (
-       <div className="fixed inset-0 z-50 bg-background">
+      <div className="fixed inset-0 z-50 bg-background overflow-auto">
          <div className="min-h-screen flex flex-col">
            {/* Header */}
-           <header className="sticky top-0 z-10 gradient-blue shadow-lg">
+          <header className="sticky top-0 z-10 bg-gradient-to-r from-orange-600 to-orange-500 shadow-lg">
              <div className="container mx-auto px-4">
-               <div className="flex items-center justify-between h-14">
+              <div className="flex items-center justify-between h-16">
                  <Button
                    variant="ghost"
                    size="sm"
@@ -302,7 +303,7 @@ import { PhotoCapture } from "@/components/checklist/PhotoCapture";
                    <ChevronLeft className="h-4 w-4" />
                    Voltar
                  </Button>
-                 <span className="text-white font-medium">Iniciar Serviço</span>
+                <img src={logoWhite} alt="Mais Energia Solar" className="h-8" />
                  <div className="w-20" />
                </div>
              </div>
@@ -310,174 +311,207 @@ import { PhotoCapture } from "@/components/checklist/PhotoCapture";
  
            {/* Content */}
            <main className="flex-1 container mx-auto px-4 py-6 max-w-md">
-             <Card className="border-0 shadow-lg">
-               <CardHeader className="text-center pb-2">
-                 <div className="mx-auto w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mb-3">
-                   <Wrench className="h-8 w-8 text-secondary" />
-                 </div>
-                 <CardTitle className="text-lg">{tipoLabels[servico.tipo]}</CardTitle>
-               </CardHeader>
-               <CardContent className="space-y-4">
-                 {/* Cliente */}
-                 {servico.cliente && (
-                   <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                     <User className="h-5 w-5 text-secondary" />
-                     <div>
-                       <p className="font-medium">{servico.cliente.nome}</p>
-                       <p className="text-sm text-muted-foreground">{servico.cliente.telefone}</p>
-                     </div>
-                   </div>
-                 )}
-                 
-                 {/* Endereço */}
-                 {(servico.endereco || servico.bairro || servico.cidade) && (
-                   <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                     <MapPin className="h-5 w-5 text-secondary mt-0.5" />
-                     <span className="text-sm">
-                       {[servico.endereco, servico.bairro, servico.cidade].filter(Boolean).join(", ")}
-                     </span>
-                   </div>
-                 )}
-                 
-                 {/* Data */}
-                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                   <Calendar className="h-5 w-5 text-secondary" />
-                   <span className="text-sm">
-                     {format(new Date(servico.data_agendada), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                     {servico.hora_inicio && ` às ${servico.hora_inicio.slice(0, 5)}`}
-                   </span>
-                 </div>
- 
-                 {/* Descrição */}
-                 {servico.descricao && (
-                   <p className="text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
-                     {servico.descricao}
-                   </p>
-                 )}
- 
-                 {/* Botão Iniciar */}
-                 <Button
-                   onClick={handleStartService}
-                   disabled={isSubmitting}
-                   className="w-full bg-success hover:bg-success/90 text-success-foreground h-14 text-lg gap-3"
-                 >
-                   {isSubmitting ? (
-                     <Loader2 className="h-5 w-5 animate-spin" />
-                   ) : (
-                     <Play className="h-5 w-5" />
-                   )}
-                   Iniciar Atendimento
-                 </Button>
-                 
-                 <p className="text-xs text-center text-muted-foreground">
-                   Data e hora serão registradas automaticamente
-                 </p>
-               </CardContent>
-             </Card>
-           </main>
-         </div>
-       </div>
-     );
-   }
- 
-   // Tela de sucesso
-   if (isSuccess) {
-     return (
-       <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
-         <motion.div
-           initial={{ opacity: 0, scale: 0.9 }}
-           animate={{ opacity: 1, scale: 1 }}
-           className="text-center"
-         >
-           <motion.div
-             initial={{ scale: 0 }}
-             animate={{ scale: 1 }}
-             transition={{ type: "spring", delay: 0.2 }}
-             className="w-24 h-24 bg-success rounded-full flex items-center justify-center mx-auto mb-6"
-           >
-             <CheckCircle2 className="h-12 w-12 text-success-foreground" />
-           </motion.div>
-           <h2 className="text-2xl font-bold text-success mb-2">Serviço Concluído!</h2>
-           <p className="text-muted-foreground">Registro salvo com sucesso</p>
-         </motion.div>
-       </div>
-     );
-   }
- 
-   // Fluxo de execução (serviço em andamento)
-   return (
-     <div className="fixed inset-0 z-50 bg-background overflow-auto">
-       {/* Header */}
-       <header className="sticky top-0 z-10 gradient-blue shadow-lg">
-         <div className="container mx-auto px-4">
-           <div className="flex items-center justify-between h-14">
-             <Button
-               variant="ghost"
-               size="sm"
-               onClick={onClose}
-               className="text-white hover:bg-white/10 gap-2"
-             >
-               <X className="h-4 w-4" />
-               Fechar
-             </Button>
-             <div className="text-center">
-               <span className="text-white font-medium text-sm">{tipoLabels[servico.tipo]}</span>
-               <p className="text-white/70 text-xs">
-                 Iniciado às {servico.data_hora_inicio 
-                   ? format(new Date(servico.data_hora_inicio), "HH:mm", { locale: ptBR })
-                   : "--:--"}
-               </p>
-             </div>
-             <Badge className="bg-warning/20 text-warning border-0">
-               <Clock className="h-3 w-3 mr-1" />
-               Em andamento
-             </Badge>
-           </div>
-         </div>
-       </header>
- 
-       <main className="container mx-auto px-4 py-6 max-w-lg pb-24">
-         {/* Step Indicator */}
-         <div className="flex items-center justify-center gap-2 mb-6">
-          {[1, 2].map((step) => (
-             <div
-               key={step}
-               className={cn(
-                 "w-10 h-10 rounded-full flex items-center justify-center font-medium transition-colors",
-                 currentStep === step
-                   ? "bg-secondary text-secondary-foreground"
-                   : currentStep > step
-                   ? "bg-success text-success-foreground"
-                   : "bg-muted text-muted-foreground"
-               )}
-             >
-               {currentStep > step ? <Check className="h-5 w-5" /> : step}
-             </div>
-           ))}
-         </div>
- 
-         <AnimatePresence mode="wait">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="border border-border/50 shadow-lg">
+                <CardHeader className="text-center pb-4 border-b">
+                  <div className="mx-auto w-16 h-16 rounded-2xl bg-orange-500/10 flex items-center justify-center mb-4">
+                    <Wrench className="h-8 w-8 text-orange-600" />
+                  </div>
+                  <CardTitle className="text-xl font-semibold">{tipoLabels[servico.tipo]}</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">Pronto para iniciar o atendimento</p>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-6">
+                  {/* Cliente */}
+                  {servico.cliente && (
+                    <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl border border-border/50">
+                      <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
+                        <User className="h-5 w-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{servico.cliente.nome}</p>
+                        <p className="text-sm text-muted-foreground">{servico.cliente.telefone}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Endereço */}
+                  {(servico.endereco || servico.bairro || servico.cidade) && (
+                    <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl border border-border/50">
+                      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <span className="text-sm text-foreground leading-relaxed">
+                        {[servico.endereco, servico.bairro, servico.cidade].filter(Boolean).join(", ")}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Data */}
+                  <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl border border-border/50">
+                    <div className="w-10 h-10 rounded-full bg-violet-500/10 flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-violet-600" />
+                    </div>
+                    <span className="text-sm text-foreground">
+                      {format(new Date(servico.data_agendada), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                      {servico.hora_inicio && ` às ${servico.hora_inicio.slice(0, 5)}`}
+                    </span>
+                  </div>
+
+                  {/* Descrição */}
+                  {servico.descricao && (
+                    <p className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-xl border border-border/50">
+                      {servico.descricao}
+                    </p>
+                  )}
+
+                  {/* Botão Iniciar */}
+                  <Button
+                    onClick={handleStartService}
+                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white h-14 text-lg gap-3 rounded-xl shadow-lg"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Play className="h-5 w-5" />
+                    )}
+                    Iniciar Atendimento
+                  </Button>
+                  
+                  <p className="text-xs text-center text-muted-foreground">
+                    Data e hora serão registradas automaticamente
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Tela de sucesso
+  if (isSuccess) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center px-6"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", delay: 0.2 }}
+            className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
+          >
+            <CheckCircle2 className="h-12 w-12 text-white" />
+          </motion.div>
+          <h2 className="text-2xl font-bold text-emerald-600 mb-2">Serviço Concluído!</h2>
+          <p className="text-muted-foreground">Registro salvo com sucesso</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Fluxo de execução (serviço em andamento)
+  return (
+    <div className="fixed inset-0 z-50 bg-background overflow-auto">
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-gradient-to-r from-orange-600 to-orange-500 shadow-lg">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="text-white hover:bg-white/10 gap-2"
+            >
+              <X className="h-4 w-4" />
+              Fechar
+            </Button>
+            <div className="text-center">
+              <span className="text-white font-medium text-sm">{tipoLabels[servico.tipo]}</span>
+              <p className="text-white/70 text-xs">
+                Iniciado às {servico.data_hora_inicio 
+                  ? format(new Date(servico.data_hora_inicio), "HH:mm", { locale: ptBR })
+                  : "--:--"}
+              </p>
+            </div>
+            <Badge className="bg-amber-500/20 text-amber-100 border border-amber-400/30">
+              <Clock className="h-3 w-3 mr-1" />
+              Em andamento
+            </Badge>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-6 max-w-lg pb-28">
+        {/* Step Indicator */}
+        <div className="flex items-center justify-center gap-3 mb-6">
+          {[
+            { step: 1, icon: ClipboardCheck, label: "Checklist" },
+            { step: 2, icon: PenTool, label: "Assinaturas" },
+          ].map(({ step, icon: StepIcon, label }) => (
+            <div key={step} className="flex items-center gap-2">
+              <div
+                className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center font-medium transition-all duration-300",
+                  currentStep === step
+                    ? "bg-orange-600 text-white shadow-lg"
+                    : currentStep > step
+                    ? "bg-emerald-600 text-white"
+                    : "bg-muted text-muted-foreground border border-border"
+                )}
+              >
+                {currentStep > step ? <Check className="h-5 w-5" /> : <StepIcon className="h-5 w-5" />}
+              </div>
+              <span className={cn(
+                "text-sm font-medium hidden sm:block",
+                currentStep >= step ? "text-foreground" : "text-muted-foreground"
+              )}>
+                {label}
+              </span>
+              {step < totalSteps && (
+                <div className={cn(
+                  "w-8 h-0.5 rounded-full hidden sm:block",
+                  currentStep > step ? "bg-emerald-600" : "bg-border"
+                )} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <AnimatePresence mode="wait">
           {/* Step 1: Checklist com Fotos */}
-           {currentStep === 1 && (
-             <motion.div
-               key="step1"
-               initial={{ opacity: 0, x: 20 }}
-               animate={{ opacity: 1, x: 0 }}
-               exit={{ opacity: 0, x: -20 }}
-             >
-               <Card>
-                 <CardHeader className="pb-3">
-                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <ClipboardCheck className="h-5 w-5 text-secondary" />
+          {currentStep === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <Card className="border border-border/50 shadow-sm">
+                <CardHeader className="pb-3 border-b bg-muted/30">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                      <ClipboardCheck className="h-4 w-4 text-orange-600" />
+                    </div>
                     Checklist do Serviço
-                   </CardTitle>
-                   <p className="text-sm text-muted-foreground">
-                    Anexe uma foto para cada item do checklist
-                   </p>
-                 </CardHeader>
-                <CardContent className="space-y-4">
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Marque cada item e anexe as fotos correspondentes
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
                   <ChecklistItemWithPhoto
                     icon={Sun}
+                    iconColor="text-amber-600"
+                    bgColor="bg-amber-500/10"
                     title="Placas instaladas no local correto"
                     description="Local com boa exposição solar"
                     item={checklistItems.placas_local_aprovado}
@@ -488,6 +522,8 @@ import { PhotoCapture } from "@/components/checklist/PhotoCapture";
                   
                   <ChecklistItemWithPhoto
                     icon={Zap}
+                    iconColor="text-blue-600"
+                    bgColor="bg-blue-500/10"
                     title="Inversor instalado corretamente"
                     description="Local seguro e protegido"
                     item={checklistItems.inversor_local_aprovado}
@@ -497,7 +533,9 @@ import { PhotoCapture } from "@/components/checklist/PhotoCapture";
                   />
                   
                   <ChecklistItemWithPhoto
-                    icon={Wrench}
+                    icon={FileCheck}
+                    iconColor="text-violet-600"
+                    bgColor="bg-violet-500/10"
                     title="Adesivo do inversor aplicado"
                     description="Identificação visível"
                     item={checklistItems.adesivo_inversor}
@@ -508,16 +546,20 @@ import { PhotoCapture } from "@/components/checklist/PhotoCapture";
                   
                   <ChecklistItemWithPhoto
                     icon={Clock}
+                    iconColor="text-emerald-600"
+                    bgColor="bg-emerald-500/10"
                     title="Plaquinha do relógio instalada"
                     description="Identificação no medidor"
                     item={checklistItems.plaquinha_relogio}
                     onPhotoUpload={(files) => handlePhotoUpload('plaquinha_relogio', files)}
                     onRemovePhoto={(index) => handleRemovePhoto('plaquinha_relogio', index)}
                     onToggleChecked={(checked) => handleToggleChecked('plaquinha_relogio', checked)}
-                   />
+                  />
                   
                   <ChecklistItemWithPhoto
                     icon={Wifi}
+                    iconColor="text-cyan-600"
+                    bgColor="bg-cyan-500/10"
                     title="Configuração WiFi do inversor"
                     description="Conectado à rede"
                     item={checklistItems.configuracao_wifi}
@@ -528,140 +570,157 @@ import { PhotoCapture } from "@/components/checklist/PhotoCapture";
 
                   {/* Observações */}
                   <div className="space-y-2 pt-4 border-t">
-                    <Label>Observações</Label>
+                    <Label className="text-sm font-medium">Observações</Label>
                     <Textarea
                       placeholder="Observações sobre o serviço realizado..."
                       value={observacoes}
                       onChange={(e) => setObservacoes(e.target.value)}
                       rows={3}
+                      className="resize-none"
                     />
                   </div>
 
                   {/* Fotos Extras */}
-                  <div className="space-y-2 pt-4 border-t">
-                    <Label className="flex items-center gap-2">
-                      <Camera className="h-4 w-4" />
-                      Fotos Extras (Opcional)
-                    </Label>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Adicione fotos adicionais que não se encaixam nas categorias acima
-                    </p>
+                  <div className="space-y-3 pt-4 border-t">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                        <Camera className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">Fotos Extras</Label>
+                        <p className="text-xs text-muted-foreground">Opcional - fotos adicionais do serviço</p>
+                      </div>
+                    </div>
                     <PhotoCapture
                       photos={fotosExtras}
                       onPhotosChange={setFotosExtras}
                       maxPhotos={10}
                     />
                   </div>
-                 </CardContent>
-               </Card>
-             </motion.div>
-           )}
- 
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
           {/* Step 2: Assinaturas */}
-           {currentStep === 2 && (
-             <motion.div
-               key="step2"
-               initial={{ opacity: 0, x: 20 }}
-               animate={{ opacity: 1, x: 0 }}
-               exit={{ opacity: 0, x: -20 }}
-               className="space-y-4"
-             >
-               <Card>
-                 <CardHeader className="pb-3">
-                   <CardTitle className="flex items-center gap-2 text-lg">
-                     <User className="h-5 w-5 text-secondary" />
-                     Assinatura do Cliente
-                   </CardTitle>
-                 </CardHeader>
-                 <CardContent>
-                   <SignaturePad
-                     ref={clientSignatureRef}
-                     label=""
-                     onSignatureChange={setClientSignature}
-                   />
-                 </CardContent>
-               </Card>
- 
-               <Card>
-                 <CardHeader className="pb-3">
-                   <CardTitle className="flex items-center gap-2 text-lg">
-                     <Wrench className="h-5 w-5 text-secondary" />
-                     Assinatura do Instalador
-                   </CardTitle>
-                 </CardHeader>
-                 <CardContent>
-                   <SignaturePad
-                     ref={installerSignatureRef}
-                     label=""
-                     onSignatureChange={setInstallerSignature}
-                   />
-                 </CardContent>
-               </Card>
-             </motion.div>
-           )}
-         </AnimatePresence>
-       </main>
- 
-       {/* Bottom Navigation */}
-       <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 safe-area-bottom">
-         <div className="container mx-auto max-w-lg flex gap-3">
-           {currentStep > 1 && (
-             <Button
-               variant="outline"
-               onClick={prevStep}
-               className="flex-1"
-             >
-               <ChevronLeft className="h-4 w-4 mr-1" />
-               Voltar
-             </Button>
-           )}
-           
-           {currentStep < totalSteps ? (
-             <Button
-               onClick={nextStep}
-               className="flex-1 bg-secondary hover:bg-secondary/90"
-             >
-               Próximo
-               <ChevronRight className="h-4 w-4 ml-1" />
-             </Button>
-           ) : (
-             <Button
-               onClick={handleFinishService}
-               disabled={isSubmitting}
-               className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
-             >
-               {isSubmitting ? (
-                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-               ) : (
-                 <CheckCircle2 className="h-4 w-4 mr-2" />
-               )}
-               Concluir Serviço
-             </Button>
-           )}
-         </div>
-       </div>
-     </div>
-   );
- }
- 
+          {currentStep === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-4"
+            >
+              <Card className="border border-border/50 shadow-sm">
+                <CardHeader className="pb-3 border-b bg-muted/30">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                      <User className="h-4 w-4 text-blue-600" />
+                    </div>
+                    Assinatura do Cliente
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Solicite a assinatura do cliente
+                  </p>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <SignaturePad
+                    ref={clientSignatureRef}
+                    label=""
+                    onSignatureChange={setClientSignature}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card className="border border-border/50 shadow-sm">
+                <CardHeader className="pb-3 border-b bg-muted/30">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                      <Wrench className="h-4 w-4 text-orange-600" />
+                    </div>
+                    Assinatura do Instalador
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Confirme com sua assinatura
+                  </p>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <SignaturePad
+                    ref={installerSignatureRef}
+                    label=""
+                    onSignatureChange={setInstallerSignature}
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t p-4 safe-area-bottom">
+        <div className="container mx-auto max-w-lg flex gap-3">
+          {currentStep > 1 && (
+            <Button
+              variant="outline"
+              onClick={prevStep}
+              className="flex-1 h-12"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Voltar
+            </Button>
+          )}
+          
+          {currentStep < totalSteps ? (
+            <Button
+              onClick={nextStep}
+              className="flex-1 h-12 bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              Próximo
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleFinishService}
+              disabled={isSubmitting}
+              className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white"
+            >
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+              )}
+              Concluir Serviço
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Componente auxiliar para item do checklist com foto
 function ChecklistItemWithPhoto({
-   icon: Icon,
-   title,
-   description,
+  icon: Icon,
+  iconColor = "text-orange-600",
+  bgColor = "bg-orange-500/10",
+  title,
+  description,
   item,
   onPhotoUpload,
   onRemovePhoto,
   onToggleChecked,
- }: {
-   icon: React.ElementType;
-   title: string;
-   description: string;
+}: {
+  icon: React.ElementType;
+  iconColor?: string;
+  bgColor?: string;
+  title: string;
+  description: string;
   item: { checked: boolean; photos: string[] };
   onPhotoUpload: (files: File[]) => void;
   onRemovePhoto: (index: number) => void;
   onToggleChecked: (checked: boolean) => void;
- }) {
+}) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -675,23 +734,27 @@ function ChecklistItemWithPhoto({
     }
   };
 
-   return (
+  return (
     <div
       className={cn(
-        "p-3 rounded-lg transition-colors",
-        item.checked && item.photos.length > 0 ? "bg-success/10 border border-success/30" : "bg-muted/50"
+        "p-4 rounded-xl transition-all duration-200 border",
+        item.checked && item.photos.length > 0 
+          ? "bg-emerald-500/5 border-emerald-500/30" 
+          : "bg-muted/30 border-border/50 hover:border-border"
       )}
     >
       <div className="flex items-start gap-3">
         <Checkbox
           checked={item.checked}
           onCheckedChange={(checked) => onToggleChecked(checked as boolean)}
-          className="mt-1"
+          className="mt-1 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <Icon className={cn("h-4 w-4", item.checked ? "text-success" : "text-muted-foreground")} />
-            <span className={cn("font-medium text-sm", item.checked && "text-success")}>{title}</span>
+            <div className={cn("w-6 h-6 rounded-md flex items-center justify-center", bgColor)}>
+              <Icon className={cn("h-3.5 w-3.5", item.checked ? "text-emerald-600" : iconColor)} />
+            </div>
+            <span className={cn("font-medium text-sm", item.checked && "text-emerald-700 dark:text-emerald-400")}>{title}</span>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
           
@@ -699,22 +762,22 @@ function ChecklistItemWithPhoto({
           {item.photos.length > 0 && (
             <div className="mt-3 grid grid-cols-3 gap-2">
               {item.photos.map((photo, index) => (
-                <div key={index} className="relative">
+                <div key={index} className="relative group">
                   <img 
                     src={photo} 
                     alt={`${title} ${index + 1}`}
-                    className="w-full h-20 object-cover rounded-lg"
+                    className="w-full h-20 object-cover rounded-lg border border-border/50"
                   />
                   <Button
                     type="button"
                     variant="destructive"
                     size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6"
+                    className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => onRemovePhoto(index)}
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
-                </div>
+                 </div>
               ))}
             </div>
           )}
@@ -734,7 +797,7 @@ function ChecklistItemWithPhoto({
               type="button"
               variant="outline"
               size="sm"
-              className="w-full gap-2"
+              className="w-full gap-2 h-9 text-xs"
               onClick={() => fileInputRef.current?.click()}
             >
               <Camera className="h-4 w-4" />
