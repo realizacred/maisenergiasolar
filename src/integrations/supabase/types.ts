@@ -924,6 +924,42 @@ export type Database = {
         }
         Relationships: []
       }
+      gamification_config: {
+        Row: {
+          achievement_points: Json
+          comissao_base_percent: number
+          comissao_bonus_meta_percent: number
+          created_at: string
+          id: string
+          meta_conversoes_mensal: number
+          meta_orcamentos_mensal: number
+          meta_valor_mensal: number
+          updated_at: string
+        }
+        Insert: {
+          achievement_points?: Json
+          comissao_base_percent?: number
+          comissao_bonus_meta_percent?: number
+          created_at?: string
+          id?: string
+          meta_conversoes_mensal?: number
+          meta_orcamentos_mensal?: number
+          meta_valor_mensal?: number
+          updated_at?: string
+        }
+        Update: {
+          achievement_points?: Json
+          comissao_base_percent?: number
+          comissao_bonus_meta_percent?: number
+          created_at?: string
+          id?: string
+          meta_conversoes_mensal?: number
+          meta_orcamentos_mensal?: number
+          meta_valor_mensal?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       instagram_config: {
         Row: {
           access_token: string | null
@@ -1603,6 +1639,141 @@ export type Database = {
         }
         Relationships: []
       }
+      vendedor_achievements: {
+        Row: {
+          achievement_type: Database["public"]["Enums"]["achievement_type"]
+          id: string
+          metadata: Json | null
+          unlocked_at: string
+          vendedor_id: string
+        }
+        Insert: {
+          achievement_type: Database["public"]["Enums"]["achievement_type"]
+          id?: string
+          metadata?: Json | null
+          unlocked_at?: string
+          vendedor_id: string
+        }
+        Update: {
+          achievement_type?: Database["public"]["Enums"]["achievement_type"]
+          id?: string
+          metadata?: Json | null
+          unlocked_at?: string
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendedor_achievements_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendedor_metas: {
+        Row: {
+          ano: number
+          comissao_percent: number | null
+          created_at: string
+          id: string
+          mes: number
+          meta_conversoes: number | null
+          meta_orcamentos: number | null
+          meta_valor: number | null
+          observacoes: string | null
+          updated_at: string
+          vendedor_id: string
+        }
+        Insert: {
+          ano: number
+          comissao_percent?: number | null
+          created_at?: string
+          id?: string
+          mes: number
+          meta_conversoes?: number | null
+          meta_orcamentos?: number | null
+          meta_valor?: number | null
+          observacoes?: string | null
+          updated_at?: string
+          vendedor_id: string
+        }
+        Update: {
+          ano?: number
+          comissao_percent?: number | null
+          created_at?: string
+          id?: string
+          mes?: number
+          meta_conversoes?: number | null
+          meta_orcamentos?: number | null
+          meta_valor?: number | null
+          observacoes?: string | null
+          updated_at?: string
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendedor_metas_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendedor_performance_mensal: {
+        Row: {
+          ano: number
+          created_at: string
+          id: string
+          mes: number
+          pontuacao_total: number
+          posicao_ranking: number | null
+          tempo_medio_resposta_horas: number | null
+          total_conversoes: number
+          total_orcamentos: number
+          updated_at: string
+          valor_total_vendas: number
+          vendedor_id: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          id?: string
+          mes: number
+          pontuacao_total?: number
+          posicao_ranking?: number | null
+          tempo_medio_resposta_horas?: number | null
+          total_conversoes?: number
+          total_orcamentos?: number
+          updated_at?: string
+          valor_total_vendas?: number
+          vendedor_id: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          id?: string
+          mes?: number
+          pontuacao_total?: number
+          posicao_ranking?: number | null
+          tempo_medio_resposta_horas?: number | null
+          total_conversoes?: number
+          total_orcamentos?: number
+          updated_at?: string
+          valor_total_vendas?: number
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendedor_performance_mensal_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendedores: {
         Row: {
           ativo: boolean
@@ -1696,6 +1867,15 @@ export type Database = {
       unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
+      achievement_type:
+        | "first_conversion"
+        | "fast_responder"
+        | "conversion_streak"
+        | "monthly_champion"
+        | "top_performer"
+        | "consistency_king"
+        | "high_volume"
+        | "perfect_month"
       app_role: "admin" | "gerente" | "vendedor" | "instalador" | "financeiro"
       atividade_tipo:
         | "ligacao"
@@ -1864,6 +2044,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      achievement_type: [
+        "first_conversion",
+        "fast_responder",
+        "conversion_streak",
+        "monthly_champion",
+        "top_performer",
+        "consistency_king",
+        "high_volume",
+        "perfect_month",
+      ],
       app_role: ["admin", "gerente", "vendedor", "instalador", "financeiro"],
       atividade_tipo: [
         "ligacao",
