@@ -1,5 +1,5 @@
  import { useEffect, useState, useCallback } from "react";
- import { useNavigate } from "react-router-dom";
+ import { useNavigate, useSearchParams } from "react-router-dom";
  import { useAuth } from "@/hooks/useAuth";
  import { supabase } from "@/integrations/supabase/client";
  import { Card, CardContent } from "@/components/ui/card";
@@ -18,13 +18,19 @@
  export default function Instalador() {
    const { user, loading: authLoading, signOut } = useAuth();
    const navigate = useNavigate();
+   const [searchParams] = useSearchParams();
+   const adminAsInstalador = searchParams.get("as"); // Admin viewing as specific installer
+   
    const [servicos, setServicos] = useState<ServicoAgendado[]>([]);
    const [loading, setLoading] = useState(true);
    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
    const [view, setView] = useState<"lista" | "calendario">("lista");
    const [hasAccess, setHasAccess] = useState(false);
-  const [accessChecked, setAccessChecked] = useState(false);
+   const [accessChecked, setAccessChecked] = useState(false);
    const [activeServico, setActiveServico] = useState<ServicoAgendado | null>(null);
+   const [isAdminMode, setIsAdminMode] = useState(false);
+   const [targetInstaladorId, setTargetInstaladorId] = useState<string | null>(null);
+   const [instaladorName, setInstaladorName] = useState<string | null>(null);
  
    useEffect(() => {
      if (!authLoading && !user) {
@@ -39,27 +45,51 @@
  
    const checkAccess = async () => {
      if (!user) return;
- 
+
      try {
        const { data: roles, error } = await supabase
          .from("user_roles")
          .select("role")
          .eq("user_id", user.id);
- 
+
        if (error) throw error;
- 
+
        const isInstalador = roles?.some(r => r.role === "instalador");
        const isAdmin = roles?.some(r => ["admin", "gerente"].includes(r.role));
- 
+
        if (!isInstalador && !isAdmin) {
         setAccessChecked(true);
          navigate("/portal", { replace: true });
          return;
        }
- 
+
+       // Admin viewing as specific installer (via ?as=user_id parameter)
+       if (isAdmin && adminAsInstalador) {
+         setIsAdminMode(true);
+         setTargetInstaladorId(adminAsInstalador);
+         
+         // Try to get instalador name from profiles
+         const { data: profile } = await supabase
+           .from("profiles")
+           .select("nome")
+           .eq("id", adminAsInstalador)
+           .single();
+         
+         if (profile?.nome) {
+           setInstaladorName(profile.nome);
+         }
+       } else if (isInstalador) {
+         // Regular instalador viewing their own portal
+         setTargetInstaladorId(user.id);
+       } else if (isAdmin && !adminAsInstalador) {
+         // Admin without ?as parameter - redirect to portal selector
+         setAccessChecked(true);
+         navigate("/portal", { replace: true });
+         return;
+       }
+
        setHasAccess(true);
       setAccessChecked(true);
-       fetchServicos();
      } catch (error) {
        console.error("Error checking access:", error);
       setAccessChecked(true);
@@ -68,8 +98,8 @@
    };
  
    const fetchServicos = useCallback(async () => {
-     if (!user) return;
- 
+     if (!targetInstaladorId) return;
+
      setLoading(true);
      try {
        const { data, error } = await supabase
@@ -92,9 +122,9 @@
            fotos_urls,
            cliente:clientes(nome, telefone)
          `)
-         .eq("instalador_id", user.id)
+         .eq("instalador_id", targetInstaladorId)
          .order("data_agendada", { ascending: true });
- 
+
        if (error) throw error;
        setServicos(data || []);
      } catch (error) {
@@ -107,7 +137,14 @@
      } finally {
        setLoading(false);
      }
-   }, [user]);
+   }, [targetInstaladorId]);
+
+   // Fetch servicos when targetInstaladorId is set
+   useEffect(() => {
+     if (targetInstaladorId && hasAccess) {
+       fetchServicos();
+     }
+   }, [targetInstaladorId, hasAccess, fetchServicos]);
  
    const updateServicoStatus = async (id: string, status: "agendado" | "em_andamento" | "concluido" | "cancelado" | "reagendado") => {
      try {
@@ -184,7 +221,11 @@
        )}
  
        <div className="min-h-screen flex flex-col bg-muted/30">
-         <InstaladorHeader userName={user?.email} onSignOut={handleSignOut} />
+         <InstaladorHeader 
+           userName={isAdminMode && instaladorName ? instaladorName : user?.email} 
+           onSignOut={handleSignOut}
+           isAdminMode={isAdminMode}
+         />
  
          <main className="flex-1 container mx-auto px-4 py-6 max-w-4xl space-y-6">
            <InstaladorStatsCards

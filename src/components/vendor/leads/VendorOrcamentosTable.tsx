@@ -62,15 +62,6 @@ export function VendorOrcamentosTable({
   const isMobile = useIsMobile();
 
   const groupedOrcamentos = useGroupedOrcamentos(orcamentos);
-  
-  // DEBUG: Log para verificar agrupamento
-  console.log('[VendorOrcamentosTable] Orcamentos recebidos:', orcamentos.length);
-  console.log('[VendorOrcamentosTable] Grupos criados:', groupedOrcamentos.map(g => ({
-    lead_id: g.lead_id,
-    nome: g.nome,
-    count: g.count,
-    orcamentos: g.allOrcamentos.map(o => o.id)
-  })));
 
   const handleWhatsappClick = (orc: OrcamentoVendedor) => {
     setSelectedOrcForWhatsapp(orc);
