@@ -24,6 +24,7 @@ import { EquipamentosManager } from "@/components/admin/EquipamentosManager";
 import { ConcessionariasManager } from "@/components/admin/ConcessionariasManager";
 import { GamificacaoConfig } from "@/components/admin/GamificacaoConfig";
  import { ComissoesManager } from "@/components/admin/ComissoesManager";
+ import { ValidacaoVendasManager } from "@/components/admin/ValidacaoVendasManager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Footer from "@/components/layout/Footer";
 
@@ -114,6 +115,17 @@ export default function Admin() {
         return <LeadsPipeline />;
       case "followup":
         return <FollowUpManager diasAlerta={3} />;
+      case "validacao":
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Validação de Vendas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ValidacaoVendasManager />
+            </CardContent>
+          </Card>
+        );
       case "clientes":
         return (
           <Card>
