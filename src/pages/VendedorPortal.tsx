@@ -27,12 +27,14 @@ import { VendorPendingDocumentation } from "@/components/vendor/VendorPendingDoc
 import { WhatsAppTemplates, FollowUpCalendar, SmartReminders } from "@/components/vendor/productivity";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
 import { VendorLeadFilters, VendorOrcamentosTable, VendorLeadViewDialog, LeadScoring } from "@/components/vendor/leads";
+ import { VendorLeaderboard, VendorAchievements, VendorGoals } from "@/components/vendor/gamification";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
 import { OfflineConversionsManager } from "@/components/leads/OfflineConversionsManager";
 import { OfflineDuplicateResolver } from "@/components/vendor/OfflineDuplicateResolver";
 import NotificationSettings from "@/components/vendor/NotificationSettings";
 import SyncStatusWidget from "@/components/vendor/SyncStatusWidget";
 import { useOrcamentosVendedor, OrcamentoVendedor } from "@/hooks/useOrcamentosVendedor";
+ import { useGamification } from "@/hooks/useGamification";
 import logo from "@/assets/logo.png";
 import type { Lead } from "@/types/lead";
 import { useEffect } from "react";
@@ -72,6 +74,16 @@ export default function VendedorPortal() {
   const [isConvertOpen, setIsConvertOpen] = useState(false);
   const [orcamentoToConvert, setOrcamentoToConvert] = useState<OrcamentoVendedor | null>(null);
 
+   // Gamification hook
+   const {
+     achievements,
+     ranking,
+     goals,
+     myRankPosition,
+     totalPoints,
+     calculateGoals,
+   } = useGamification(vendedor?.id || null);
+ 
   // Load vendedor profile
   useEffect(() => {
     if (!user) {
@@ -212,10 +224,26 @@ export default function VendedorPortal() {
   });
 
   // Convert orcamentos to leads for components that expect Lead type
-  const leadsForAlerts = useMemo(() => 
+   const leadsForAlerts = useMemo(() => 
     orcamentos.map(orcamentoToLead), 
     [orcamentos]
   );
+ 
+   // Calculate goals when data changes
+   useEffect(() => {
+     if (vendedor && stats) {
+       const startOfMonth = new Date();
+       startOfMonth.setDate(1);
+       startOfMonth.setHours(0, 0, 0, 0);
+ 
+       const monthlyOrcamentos = orcamentos.filter(
+         (o) => new Date(o.created_at) >= startOfMonth
+       ).length;
+ 
+       // For now, use 0 for conversions and value since we don't track them yet
+       calculateGoals(monthlyOrcamentos, 0, 0);
+     }
+   }, [vendedor, stats, orcamentos, calculateGoals]);
 
   const filteredOrcamentos = useMemo(() => {
     let filtered = orcamentos.filter(orc =>
@@ -292,6 +320,25 @@ export default function VendedorPortal() {
             vendedorNome={vendedor.nome}
           />
         )}
+  
+         {/* Gamification Section */}
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+           {/* Goals */}
+           <VendorGoals goals={goals} />
+ 
+           {/* Leaderboard */}
+           <VendorLeaderboard
+             ranking={ranking}
+             currentVendedorId={vendedor?.id || null}
+             myRankPosition={myRankPosition}
+           />
+ 
+           {/* Achievements */}
+           <VendorAchievements
+             achievements={achievements}
+             totalPoints={totalPoints}
+           />
+         </div>
  
         {/* Sync Status & Notifications Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
