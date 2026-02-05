@@ -39,8 +39,10 @@ import {
   Link as LinkIcon,
   DollarSign,
   Sun,
+  MessageSquare,
 } from "lucide-react";
 import { formatPhone, ESTADOS_BRASIL } from "@/lib/validations";
+import { WhatsAppSendDialog } from "./WhatsAppSendDialog";
 
 interface Cliente {
   id: string;
@@ -86,6 +88,13 @@ export function ClientesManager({ onSelectCliente }: ClientesManagerProps) {
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [saving, setSaving] = useState(false);
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [selectedClienteForWhatsApp, setSelectedClienteForWhatsApp] = useState<Cliente | null>(null);
+
+  const handleOpenWhatsApp = (cliente: Cliente) => {
+    setSelectedClienteForWhatsApp(cliente);
+    setWhatsappOpen(true);
+  };
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -647,6 +656,17 @@ export function ClientesManager({ onSelectCliente }: ClientesManagerProps) {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenWhatsApp(cliente);
+                        }}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </Button>
                       {onSelectCliente && (
                         <Button
                           size="sm"
@@ -686,6 +706,17 @@ export function ClientesManager({ onSelectCliente }: ClientesManagerProps) {
             </TableBody>
           </Table>
         </Card>
+      )}
+
+      {/* WhatsApp Dialog */}
+      {selectedClienteForWhatsApp && (
+        <WhatsAppSendDialog
+          open={whatsappOpen}
+          onOpenChange={setWhatsappOpen}
+          telefone={selectedClienteForWhatsApp.telefone}
+          nome={selectedClienteForWhatsApp.nome}
+          tipo="cliente"
+        />
       )}
     </div>
   );

@@ -1,13 +1,14 @@
- import { useState, useEffect, useMemo } from "react";
- import { supabase } from "@/integrations/supabase/client";
- import { useToast } from "@/hooks/use-toast";
- import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
- import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
- import { Badge } from "@/components/ui/badge";
- import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
- import { Loader2, LayoutGrid, BarChart3, Settings2 } from "lucide-react";
- import { subDays, isAfter } from "date-fns";
- import { PipelineFilters, KanbanCard, PipelineAutomations, EnhancedFunnel } from "./pipeline";
+import { useState, useEffect, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, LayoutGrid, BarChart3, Settings2 } from "lucide-react";
+import { subDays, isAfter } from "date-fns";
+import { PipelineFilters, KanbanCard, PipelineAutomations, EnhancedFunnel } from "./pipeline";
+import { WhatsAppSendDialog } from "./WhatsAppSendDialog";
  
  interface LeadStatus {
    id: string;
@@ -35,8 +36,10 @@
    const [statuses, setStatuses] = useState<LeadStatus[]>([]);
    const [leads, setLeads] = useState<Lead[]>([]);
    const [loading, setLoading] = useState(true);
-   const [draggedLead, setDraggedLead] = useState<Lead | null>(null);
-   const [activeTab, setActiveTab] = useState("kanban");
+  const [draggedLead, setDraggedLead] = useState<Lead | null>(null);
+  const [activeTab, setActiveTab] = useState("kanban");
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [selectedLeadForWhatsApp, setSelectedLeadForWhatsApp] = useState<Lead | null>(null);
  
    // Filter states
    const [searchTerm, setSearchTerm] = useState("");
@@ -201,31 +204,31 @@
      toast({ title: "Ver detalhes", description: `Abrindo detalhes de ${lead.nome}` });
    };
  
-   const handleQuickAction = async (lead: Lead, action: string) => {
-     switch (action) {
-       case "whatsapp":
-         const phone = lead.telefone.replace(/\D/g, "");
-         window.open(`https://wa.me/55${phone}`, "_blank");
-         break;
-       case "call":
-         window.open(`tel:${lead.telefone}`, "_self");
-         break;
-       case "markContacted":
-         const { error } = await supabase
-           .from("leads")
-           .update({ ultimo_contato: new Date().toISOString() })
-           .eq("id", lead.id);
-         if (!error) {
-           setLeads((prev) =>
-             prev.map((l) =>
-               l.id === lead.id ? { ...l, ultimo_contato: new Date().toISOString() } : l
-             )
-           );
-           toast({ title: "Contato registrado", description: "O lead foi marcado como contatado." });
-         }
-         break;
-     }
-   };
+    const handleQuickAction = async (lead: Lead, action: string) => {
+      switch (action) {
+        case "whatsapp":
+          setSelectedLeadForWhatsApp(lead);
+          setWhatsappOpen(true);
+          break;
+        case "call":
+          window.open(`tel:${lead.telefone}`, "_self");
+          break;
+        case "markContacted":
+          const { error } = await supabase
+            .from("leads")
+            .update({ ultimo_contato: new Date().toISOString() })
+            .eq("id", lead.id);
+          if (!error) {
+            setLeads((prev) =>
+              prev.map((l) =>
+                l.id === lead.id ? { ...l, ultimo_contato: new Date().toISOString() } : l
+              )
+            );
+            toast({ title: "Contato registrado", description: "O lead foi marcado como contatado." });
+          }
+          break;
+      }
+    };
  
    if (loading) {
      return (
@@ -430,7 +433,19 @@
              </Card>
            </div>
          </TabsContent>
-       </Tabs>
-     </div>
-   );
- }
+        </Tabs>
+
+        {/* WhatsApp Dialog */}
+        {selectedLeadForWhatsApp && (
+          <WhatsAppSendDialog
+            open={whatsappOpen}
+            onOpenChange={setWhatsappOpen}
+            telefone={selectedLeadForWhatsApp.telefone}
+            nome={selectedLeadForWhatsApp.nome}
+            leadId={selectedLeadForWhatsApp.id}
+            tipo="lead"
+          />
+        )}
+      </div>
+    );
+  }
