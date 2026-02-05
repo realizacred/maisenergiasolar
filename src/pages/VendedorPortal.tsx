@@ -24,6 +24,7 @@ import { FollowUpStatsCards } from "@/components/vendor/FollowUpStatsCards";
  import { VendorPersonalDashboard } from "@/components/vendor/VendorPersonalDashboard";
 import { VendorFollowUpManager } from "@/components/vendor/VendorFollowUpManager";
 import { VendorPendingDocumentation } from "@/components/vendor/VendorPendingDocumentation";
+import { WhatsAppTemplates, FollowUpCalendar, SmartReminders } from "@/components/vendor/productivity";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
 import { VendorLeadFilters, VendorOrcamentosTable, VendorLeadViewDialog } from "@/components/vendor/leads";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
@@ -298,8 +299,35 @@ export default function VendedorPortal() {
           {vendedor && <NotificationSettings vendedorNome={vendedor.nome} />}
         </div>
 
-        {/* Follow-Up Stats Cards (Urgentes, Pendentes, Em dia) */}
-        <FollowUpStatsCards leads={leadsForAlerts} />
+        {/* Productivity Tools Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Smart Reminders */}
+          {vendedor && (
+            <SmartReminders 
+              leads={leadsForAlerts} 
+              vendedorNome={vendedor.nome}
+            />
+          )}
+          
+          {/* WhatsApp Templates */}
+          {vendedor && (
+            <WhatsAppTemplates vendedorNome={vendedor.nome} />
+          )}
+          
+          {/* Follow-Up Stats Cards */}
+          <div className="space-y-4">
+            <FollowUpStatsCards leads={leadsForAlerts} />
+          </div>
+        </div>
+
+        {/* Follow-Up Calendar */}
+        <FollowUpCalendar 
+          leads={leadsForAlerts}
+          onSelectLead={(lead) => {
+            const orc = orcamentos.find(o => o.lead_id === lead.id);
+            if (orc) setSelectedOrcamento(orc);
+          }}
+        />
 
         {/* AI Assistant Alerts */}
         <LeadAlerts leads={leadsForAlerts} diasAlerta={3} />
