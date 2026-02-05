@@ -1,11 +1,16 @@
- import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
  import { motion, AnimatePresence } from "framer-motion";
  import { Button } from "@/components/ui/button";
  import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
  import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
  import { Label } from "@/components/ui/label";
  import { Checkbox } from "@/components/ui/checkbox";
  import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import { PhotoCapture } from "@/components/checklist/PhotoCapture";
  import { SignaturePad, SignaturePadRef } from "@/components/checklist/SignaturePad";
  import { supabase } from "@/integrations/supabase/client";
@@ -76,13 +81,13 @@ import logoWhite from "@/assets/logo-branca.png";
    
   // Checklist items with checkbox and multiple photos
   const [checklistItems, setChecklistItems] = useState<{
-    [key: string]: { checked: boolean; photos: string[] };
+    [key: string]: { checked: boolean; photos: string[]; extraData?: string };
   }>({
     placas_local_aprovado: { checked: false, photos: [] },
     inversor_local_aprovado: { checked: false, photos: [] },
     adesivo_inversor: { checked: false, photos: [] },
     plaquinha_relogio: { checked: false, photos: [] },
-    configuracao_wifi: { checked: false, photos: [] },
+    configuracao_wifi: { checked: false, photos: [], extraData: '' },
    });
    
    const [observacoes, setObservacoes] = useState(servico.observacoes_conclusao || "");
@@ -154,7 +159,9 @@ import logoWhite from "@/assets/logo-branca.png";
         ...prev,
         [itemKey]: { 
           ...prev[itemKey], 
-          photos: [...prev[itemKey].photos, ...uploadedUrls]
+          photos: [...prev[itemKey].photos, ...uploadedUrls],
+          // Auto-check when photo is added
+          checked: true
         }
       }));
 
@@ -191,19 +198,18 @@ import logoWhite from "@/assets/logo-branca.png";
     }));
   };
 
+  // Update extra data (like WiFi password)
+  const handleExtraDataChange = (itemKey: string, value: string) => {
+    setChecklistItems(prev => ({
+      ...prev,
+      [itemKey]: { ...prev[itemKey], extraData: value }
+    }));
+  };
+
    // Validar step antes de avançar
    const validateStep = (): boolean => {
      if (currentStep === 1) {
-      // Checklist - todos os itens devem estar marcados e ter pelo menos 1 foto
-      const allComplete = Object.values(checklistItems).every(item => item.checked && item.photos.length > 0);
-      if (!allComplete) {
-         toast({
-          title: "Complete o checklist",
-          description: "Marque todos os itens e anexe pelo menos uma foto em cada.",
-           variant: "destructive",
-         });
-         return false;
-       }
+      // Nenhum item é obrigatório por enquanto - apenas seguir em frente
        return true;
      }
      
@@ -566,6 +572,9 @@ import logoWhite from "@/assets/logo-branca.png";
                     onPhotoUpload={(files) => handlePhotoUpload('configuracao_wifi', files)}
                     onRemovePhoto={(index) => handleRemovePhoto('configuracao_wifi', index)}
                     onToggleChecked={(checked) => handleToggleChecked('configuracao_wifi', checked)}
+                    showPasswordField
+                    passwordValue={checklistItems.configuracao_wifi.extraData || ''}
+                    onPasswordChange={(value) => handleExtraDataChange('configuracao_wifi', value)}
                   />
 
                   {/* Observações */}
@@ -710,26 +719,36 @@ function ChecklistItemWithPhoto({
   onPhotoUpload,
   onRemovePhoto,
   onToggleChecked,
+  showPasswordField,
+  passwordValue,
+  onPasswordChange,
 }: {
   icon: React.ElementType;
   iconColor?: string;
   bgColor?: string;
   title: string;
   description: string;
-  item: { checked: boolean; photos: string[] };
+  item: { checked: boolean; photos: string[]; extraData?: string };
   onPhotoUpload: (files: File[]) => void;
   onRemovePhoto: (index: number) => void;
   onToggleChecked: (checked: boolean) => void;
+  showPasswordField?: boolean;
+  passwordValue?: string;
+  onPasswordChange?: (value: string) => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, isCamera = false) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       onPhotoUpload(Array.from(files));
     }
     // Reset input
-    if (fileInputRef.current) {
+    if (isCamera && cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    } else if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
@@ -766,7 +785,8 @@ function ChecklistItemWithPhoto({
                   <img 
                     src={photo} 
                     alt={`${title} ${index + 1}`}
-                    className="w-full h-20 object-cover rounded-lg border border-border/50"
+                    className="w-full h-20 object-cover rounded-lg border border-border/50 cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setPreviewPhoto(photo)}
                   />
                   <Button
                     type="button"
@@ -782,30 +802,75 @@ function ChecklistItemWithPhoto({
             </div>
           )}
           
-          {/* Add photo button */}
-          <div className="mt-2">
+          {/* Password field for WiFi */}
+          {showPasswordField && (
+            <div className="mt-3">
+              <Input
+                type="text"
+                placeholder="Senha da rede WiFi (opcional)"
+                value={passwordValue || ''}
+                onChange={(e) => onPasswordChange?.(e.target.value)}
+                className="h-9 text-sm"
+              />
+            </div>
+          )}
+          
+          {/* Add photo buttons */}
+          <div className="mt-3 flex gap-2">
+            {/* Camera input */}
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => handleFileSelect(e, true)}
+            />
+            {/* Gallery input */}
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               multiple
               className="hidden"
-              onChange={handleFileSelect}
+              onChange={(e) => handleFileSelect(e, false)}
             />
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="w-full gap-2 h-9 text-xs"
-              onClick={() => fileInputRef.current?.click()}
+              className="flex-1 gap-2 h-9 text-xs"
+              onClick={() => cameraInputRef.current?.click()}
             >
               <Camera className="h-4 w-4" />
-              {item.photos.length > 0 ? "Adicionar mais fotos" : "Anexar Foto"}
+              Tirar Foto
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-2 h-9 text-xs"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <FileCheck className="h-4 w-4" />
+              Galeria
             </Button>
           </div>
         </div>
        </div>
+      
+      {/* Photo Preview Dialog */}
+      <Dialog open={!!previewPhoto} onOpenChange={() => setPreviewPhoto(null)}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-2">
+          {previewPhoto && (
+            <img 
+              src={previewPhoto} 
+              alt="Preview" 
+              className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
    );
  }
