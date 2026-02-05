@@ -222,7 +222,7 @@ export function VendorPendingDocumentation({
                       <div className="mt-2 sm:mt-3">
                         <div className="flex items-center justify-between text-xs mb-1">
                           <span className="text-muted-foreground">Progresso</span>
-                          <span className={`font-medium ${lead.completionPercentage >= 80 ? 'text-emerald-600' : lead.completionPercentage >= 40 ? 'text-amber-600' : 'text-destructive'}`}>
+                          <span className={`font-medium ${lead.completionPercentage >= 80 ? 'text-success' : lead.completionPercentage >= 40 ? 'text-warning' : 'text-destructive'}`}>
                             {lead.completionPercentage}%
                           </span>
                         </div>
@@ -230,9 +230,9 @@ export function VendorPendingDocumentation({
                           <div 
                             className={`h-full rounded-full transition-all ${
                               lead.completionPercentage >= 80 
-                                ? 'bg-emerald-500' 
+                                ? 'bg-success' 
                                 : lead.completionPercentage >= 40 
-                                  ? 'bg-amber-500' 
+                                  ? 'bg-warning' 
                                   : 'bg-destructive'
                             }`}
                             style={{ width: `${lead.completionPercentage}%` }}

@@ -111,9 +111,9 @@ export function LeadAlerts({ leads, diasAlerta = 3 }: LeadAlertsProps) {
         };
       case 'atencao':
         return {
-          bg: 'bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800',
-          icon: 'text-amber-600',
-          badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30'
+          bg: 'bg-warning/10 border-warning/30',
+          icon: 'text-warning',
+          badge: 'bg-warning/20 text-warning'
         };
       case 'lembrete':
         return {
