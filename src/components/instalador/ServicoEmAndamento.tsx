@@ -6,7 +6,6 @@
  import { Label } from "@/components/ui/label";
  import { Checkbox } from "@/components/ui/checkbox";
  import { Badge } from "@/components/ui/badge";
- import { PhotoCapture } from "@/components/checklist/PhotoCapture";
  import { SignaturePad, SignaturePadRef } from "@/components/checklist/SignaturePad";
  import { supabase } from "@/integrations/supabase/client";
  import { toast } from "@/hooks/use-toast";
@@ -30,6 +29,9 @@
    Zap,
    Wifi,
    Wrench,
+  Upload,
+  Image,
+  Trash2,
  } from "lucide-react";
  import { cn } from "@/lib/utils";
  
@@ -67,18 +69,18 @@
  
  export function ServicoEmAndamento({ servico, onClose, onServiceUpdated }: ServicoEmAndamentoProps) {
    const [currentStep, setCurrentStep] = useState(1);
-   const [photos, setPhotos] = useState<string[]>(servico.fotos_urls || []);
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [isSuccess, setIsSuccess] = useState(false);
    
-   // Checklist items
-   const [checklistItems, setChecklistItems] = useState({
-     placas_local_aprovado: false,
-     inversor_local_aprovado: false,
-     adesivo_inversor: false,
-     plaquinha_relogio: false,
-     configuracao_wifi: false,
-     foto_servico: false,
+  // Checklist items with photos
+  const [checklistItems, setChecklistItems] = useState<{
+    [key: string]: { checked: boolean; photo: string | null };
+  }>({
+    placas_local_aprovado: { checked: false, photo: null },
+    inversor_local_aprovado: { checked: false, photo: null },
+    adesivo_inversor: { checked: false, photo: null },
+    plaquinha_relogio: { checked: false, photo: null },
+    configuracao_wifi: { checked: false, photo: null },
    });
    
    const [observacoes, setObservacoes] = useState(servico.observacoes_conclusao || "");
@@ -89,7 +91,7 @@
    const clientSignatureRef = useRef<SignaturePadRef>(null);
    const installerSignatureRef = useRef<SignaturePadRef>(null);
  
-   const totalSteps = 3;
+  const totalSteps = 2;
  
    // Iniciar serviço - registra data/hora de início
    const handleStartService = async () => {
@@ -123,44 +125,58 @@
      }
    };
  
-   // Salvar fotos durante o serviço
-   const handleSavePhotos = async (newPhotos: string[]) => {
-     setPhotos(newPhotos);
-     
-     try {
-       const { error } = await supabase
-         .from("servicos_agendados")
-         .update({ fotos_urls: newPhotos })
-         .eq("id", servico.id);
- 
-       if (error) throw error;
-     } catch (error) {
-       console.error("Error saving photos:", error);
+  // Handle photo upload for checklist item
+  const handlePhotoUpload = async (itemKey: string, file: File) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${servico.id}/${itemKey}_${Date.now()}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('checklist-assets')
+        .upload(fileName, file, { upsert: true });
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from('checklist-assets')
+        .getPublicUrl(fileName);
+
+      setChecklistItems(prev => ({
+        ...prev,
+        [itemKey]: { ...prev[itemKey], photo: urlData.publicUrl, checked: true }
+      }));
+
+      toast({
+        title: "Foto anexada",
+        description: "A foto foi salva com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      toast({
+        title: "Erro ao enviar foto",
+        description: "Tente novamente.",
+        variant: "destructive",
+      });
      }
    };
  
+  // Remove photo from checklist item
+  const handleRemovePhoto = (itemKey: string) => {
+    setChecklistItems(prev => ({
+      ...prev,
+      [itemKey]: { ...prev[itemKey], photo: null, checked: false }
+    }));
+  };
+
    // Validar step antes de avançar
    const validateStep = (): boolean => {
      if (currentStep === 1) {
-       // Fotos - pelo menos 1 foto é recomendado
-       if (photos.length === 0) {
+      // Checklist - todos os itens devem ter foto
+      const allHavePhotos = Object.values(checklistItems).every(item => item.photo !== null);
+      if (!allHavePhotos) {
          toast({
-           title: "Adicione pelo menos 1 foto",
-           description: "Registre o progresso do serviço.",
-           variant: "destructive",
-         });
-         return false;
-       }
-       return true;
-     }
-     
-     if (currentStep === 2) {
-       // Checklist - todos os itens devem ser marcados
-       const allChecked = Object.values(checklistItems).every(v => v);
-       if (!allChecked) {
-         toast({
-           title: "Complete o checklist",
-           description: "Marque todos os itens antes de continuar.",
+          title: "Complete o checklist",
+          description: "Anexe fotos em todos os itens antes de continuar.",
            variant: "destructive",
          });
          return false;
@@ -205,6 +221,11 @@
        return;
      }
  
+    // Collect all photos from checklist items
+    const allPhotos = Object.values(checklistItems)
+      .map(item => item.photo)
+      .filter((photo): photo is string => photo !== null);
+
      setIsSubmitting(true);
      try {
        const { error } = await supabase
@@ -212,7 +233,7 @@
          .update({
            status: "concluido",
            data_hora_fim: new Date().toISOString(),
-           fotos_urls: photos,
+          fotos_urls: allPhotos,
            observacoes_conclusao: observacoes,
          })
          .eq("id", servico.id);
@@ -396,7 +417,7 @@
        <main className="container mx-auto px-4 py-6 max-w-lg pb-24">
          {/* Step Indicator */}
          <div className="flex items-center justify-center gap-2 mb-6">
-           {[1, 2, 3].map((step) => (
+          {[1, 2].map((step) => (
              <div
                key={step}
                className={cn(
@@ -414,7 +435,7 @@
          </div>
  
          <AnimatePresence mode="wait">
-           {/* Step 1: Fotos */}
+          {/* Step 1: Checklist com Fotos */}
            {currentStep === 1 && (
              <motion.div
                key="step1"
@@ -425,113 +446,78 @@
                <Card>
                  <CardHeader className="pb-3">
                    <CardTitle className="flex items-center gap-2 text-lg">
-                     <Camera className="h-5 w-5 text-secondary" />
-                     Registro Fotográfico
+                    <ClipboardCheck className="h-5 w-5 text-secondary" />
+                    Checklist do Serviço
                    </CardTitle>
                    <p className="text-sm text-muted-foreground">
-                     Tire fotos do serviço. Você pode adicionar mais fotos a qualquer momento.
+                    Anexe uma foto para cada item do checklist
                    </p>
                  </CardHeader>
-                 <CardContent>
-                   <PhotoCapture
-                     photos={photos}
-                     onPhotosChange={handleSavePhotos}
-                     maxPhotos={20}
+                <CardContent className="space-y-4">
+                  <ChecklistItemWithPhoto
+                    icon={Sun}
+                    title="Placas instaladas no local correto"
+                    description="Local com boa exposição solar"
+                    item={checklistItems.placas_local_aprovado}
+                    onPhotoUpload={(file) => handlePhotoUpload('placas_local_aprovado', file)}
+                    onRemovePhoto={() => handleRemovePhoto('placas_local_aprovado')}
+                  />
+                  
+                  <ChecklistItemWithPhoto
+                    icon={Zap}
+                    title="Inversor instalado corretamente"
+                    description="Local seguro e protegido"
+                    item={checklistItems.inversor_local_aprovado}
+                    onPhotoUpload={(file) => handlePhotoUpload('inversor_local_aprovado', file)}
+                    onRemovePhoto={() => handleRemovePhoto('inversor_local_aprovado')}
+                  />
+                  
+                  <ChecklistItemWithPhoto
+                    icon={Wrench}
+                    title="Adesivo do inversor aplicado"
+                    description="Identificação visível"
+                    item={checklistItems.adesivo_inversor}
+                    onPhotoUpload={(file) => handlePhotoUpload('adesivo_inversor', file)}
+                    onRemovePhoto={() => handleRemovePhoto('adesivo_inversor')}
+                  />
+                  
+                  <ChecklistItemWithPhoto
+                    icon={Clock}
+                    title="Plaquinha do relógio instalada"
+                    description="Identificação no medidor"
+                    item={checklistItems.plaquinha_relogio}
+                    onPhotoUpload={(file) => handlePhotoUpload('plaquinha_relogio', file)}
+                    onRemovePhoto={() => handleRemovePhoto('plaquinha_relogio')}
                    />
+                  
+                  <ChecklistItemWithPhoto
+                    icon={Wifi}
+                    title="Configuração WiFi do inversor"
+                    description="Conectado à rede"
+                    item={checklistItems.configuracao_wifi}
+                    onPhotoUpload={(file) => handlePhotoUpload('configuracao_wifi', file)}
+                    onRemovePhoto={() => handleRemovePhoto('configuracao_wifi')}
+                  />
+
+                  {/* Observações */}
+                  <div className="space-y-2 pt-4 border-t">
+                    <Label>Observações</Label>
+                    <Textarea
+                      placeholder="Observações sobre o serviço realizado..."
+                      value={observacoes}
+                      onChange={(e) => setObservacoes(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
                  </CardContent>
                </Card>
              </motion.div>
            )}
  
-           {/* Step 2: Checklist */}
+          {/* Step 2: Assinaturas */}
            {currentStep === 2 && (
              <motion.div
                key="step2"
-               initial={{ opacity: 0, x: 20 }}
-               animate={{ opacity: 1, x: 0 }}
-               exit={{ opacity: 0, x: -20 }}
-             >
-               <Card>
-                 <CardHeader className="pb-3">
-                   <CardTitle className="flex items-center gap-2 text-lg">
-                     <ClipboardCheck className="h-5 w-5 text-secondary" />
-                     Checklist do Serviço
-                   </CardTitle>
-                   <p className="text-sm text-muted-foreground">
-                     Marque todos os itens concluídos
-                   </p>
-                 </CardHeader>
-                 <CardContent className="space-y-4">
-                   {/* Checklist Items */}
-                   <div className="space-y-3">
-                     <ChecklistItem
-                       icon={Sun}
-                       title="Placas instaladas no local correto"
-                       description="Local com boa exposição solar"
-                       checked={checklistItems.placas_local_aprovado}
-                       onChange={(checked) => setChecklistItems(prev => ({ ...prev, placas_local_aprovado: checked }))}
-                     />
-                     
-                     <ChecklistItem
-                       icon={Zap}
-                       title="Inversor instalado corretamente"
-                       description="Local seguro e protegido"
-                       checked={checklistItems.inversor_local_aprovado}
-                       onChange={(checked) => setChecklistItems(prev => ({ ...prev, inversor_local_aprovado: checked }))}
-                     />
-                     
-                     <ChecklistItem
-                       icon={Wrench}
-                       title="Adesivo do inversor aplicado"
-                       description="Identificação visível"
-                       checked={checklistItems.adesivo_inversor}
-                       onChange={(checked) => setChecklistItems(prev => ({ ...prev, adesivo_inversor: checked }))}
-                     />
-                     
-                     <ChecklistItem
-                       icon={Clock}
-                       title="Plaquinha do relógio instalada"
-                       description="Identificação no medidor"
-                       checked={checklistItems.plaquinha_relogio}
-                       onChange={(checked) => setChecklistItems(prev => ({ ...prev, plaquinha_relogio: checked }))}
-                     />
-                     
-                     <ChecklistItem
-                       icon={Wifi}
-                       title="Configuração WiFi do inversor"
-                       description="Conectado à rede"
-                       checked={checklistItems.configuracao_wifi}
-                       onChange={(checked) => setChecklistItems(prev => ({ ...prev, configuracao_wifi: checked }))}
-                     />
-                     
-                     <ChecklistItem
-                       icon={Camera}
-                       title="Fotos do serviço registradas"
-                       description="Documentação visual"
-                       checked={checklistItems.foto_servico}
-                       onChange={(checked) => setChecklistItems(prev => ({ ...prev, foto_servico: checked }))}
-                     />
-                   </div>
- 
-                   {/* Observações */}
-                   <div className="space-y-2 pt-4 border-t">
-                     <Label>Observações</Label>
-                     <Textarea
-                       placeholder="Observações sobre o serviço realizado..."
-                       value={observacoes}
-                       onChange={(e) => setObservacoes(e.target.value)}
-                       rows={3}
-                     />
-                   </div>
-                 </CardContent>
-               </Card>
-             </motion.div>
-           )}
- 
-           {/* Step 3: Assinaturas */}
-           {currentStep === 3 && (
-             <motion.div
-               key="step3"
                initial={{ opacity: 0, x: 20 }}
                animate={{ opacity: 1, x: 0 }}
                exit={{ opacity: 0, x: -20 }}
@@ -615,39 +601,97 @@
    );
  }
  
- // Componente auxiliar para item do checklist
- function ChecklistItem({
+// Componente auxiliar para item do checklist com foto
+function ChecklistItemWithPhoto({
    icon: Icon,
    title,
    description,
-   checked,
-   onChange,
+  item,
+  onPhotoUpload,
+  onRemovePhoto,
  }: {
    icon: React.ElementType;
    title: string;
    description: string;
-   checked: boolean;
-   onChange: (checked: boolean) => void;
+  item: { checked: boolean; photo: string | null };
+  onPhotoUpload: (file: File) => void;
+  onRemovePhoto: () => void;
  }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onPhotoUpload(file);
+    }
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
    return (
-     <label
-       className={cn(
-         "flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors",
-         checked ? "bg-success/10 border border-success/30" : "bg-muted/50"
-       )}
-     >
-       <Checkbox
-         checked={checked}
-         onCheckedChange={(c) => onChange(c as boolean)}
-         className="mt-0.5"
-       />
-       <div className="flex-1">
-         <div className="flex items-center gap-2">
-           <Icon className={cn("h-4 w-4", checked ? "text-success" : "text-muted-foreground")} />
-           <span className={cn("font-medium text-sm", checked && "text-success")}>{title}</span>
-         </div>
-         <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+    <div
+      className={cn(
+        "p-3 rounded-lg transition-colors",
+        item.photo ? "bg-success/10 border border-success/30" : "bg-muted/50"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className={cn(
+          "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
+          item.photo ? "bg-success text-success-foreground" : "bg-muted-foreground/20"
+        )}>
+          {item.photo ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4 text-muted-foreground" />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={cn("font-medium text-sm", item.photo && "text-success")}>{title}</span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+          
+          {/* Photo preview or upload button */}
+          {item.photo ? (
+            <div className="mt-3 relative">
+              <img 
+                src={item.photo} 
+                alt={title}
+                className="w-full h-32 object-cover rounded-lg"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2 h-8 w-8"
+                onClick={onRemovePhoto}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="mt-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Camera className="h-4 w-4" />
+                Anexar Foto
+              </Button>
+            </div>
+          )}
+        </div>
        </div>
-     </label>
+    </div>
    );
  }
