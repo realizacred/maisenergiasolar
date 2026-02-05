@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   MessageCircle, 
   Settings, 
@@ -16,7 +17,8 @@ import {
   AlertCircle,
   Loader2,
   Save,
-  RefreshCw
+  RefreshCw,
+  Plug
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -30,6 +32,10 @@ interface WhatsAppConfig {
   lembrete_ativo: boolean;
   mensagem_boas_vindas: string | null;
   mensagem_followup: string | null;
+  evolution_api_url: string | null;
+  evolution_api_key: string | null;
+  evolution_instance: string | null;
+  modo_envio: string;
 }
 
 interface WhatsAppMessage {
@@ -97,6 +103,10 @@ export function WhatsAppAutomationConfig() {
           lembrete_ativo: config.lembrete_ativo,
           mensagem_boas_vindas: config.mensagem_boas_vindas,
           mensagem_followup: config.mensagem_followup,
+          evolution_api_url: config.evolution_api_url,
+          evolution_api_key: config.evolution_api_key,
+          evolution_instance: config.evolution_instance,
+          modo_envio: config.modo_envio,
         })
         .eq("id", config.id);
 
@@ -156,7 +166,7 @@ export function WhatsAppAutomationConfig() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <MessageCircle className="h-5 w-5 text-green-600" />
+          <MessageCircle className="h-5 w-5 text-primary" />
           Automação WhatsApp
         </CardTitle>
         <CardDescription>
@@ -165,10 +175,14 @@ export function WhatsAppAutomationConfig() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="config" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="config" className="gap-2">
               <Settings className="h-4 w-4" />
-              Configurações
+              Geral
+            </TabsTrigger>
+            <TabsTrigger value="integracao" className="gap-2">
+              <Plug className="h-4 w-4" />
+              Integração
             </TabsTrigger>
             <TabsTrigger value="historico" className="gap-2">
               <Clock className="h-4 w-4" />
@@ -190,30 +204,6 @@ export function WhatsAppAutomationConfig() {
                   <Switch
                     checked={config.ativo}
                     onCheckedChange={(checked) => setConfig({ ...config, ativo: checked })}
-                  />
-                </div>
-
-                {/* Webhook URL */}
-                <div className="space-y-2">
-                  <Label>URL do Webhook (n8n/Zapier/Evolution API)</Label>
-                  <Input
-                    value={config.webhook_url || ""}
-                    onChange={(e) => setConfig({ ...config, webhook_url: e.target.value })}
-                    placeholder="https://seu-webhook.com/endpoint"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    URL que receberá os dados para envio via WhatsApp
-                  </p>
-                </div>
-
-                {/* API Token */}
-                <div className="space-y-2">
-                  <Label>Token de API (opcional)</Label>
-                  <Input
-                    type="password"
-                    value={config.api_token || ""}
-                    onChange={(e) => setConfig({ ...config, api_token: e.target.value })}
-                    placeholder="Token para autenticação"
                   />
                 </div>
 
@@ -284,6 +274,115 @@ export function WhatsAppAutomationConfig() {
                     <Save className="h-4 w-4" />
                   )}
                   Salvar Configurações
+                </Button>
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="integracao" className="space-y-6 mt-4">
+            {config && (
+              <>
+                {/* Modo de Envio */}
+                <div className="space-y-2">
+                  <Label className="text-base font-medium">Modo de Envio</Label>
+                  <Select
+                    value={config.modo_envio}
+                    onValueChange={(value) => setConfig({ ...config, modo_envio: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o modo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="webhook">Apenas Webhook (n8n/Zapier)</SelectItem>
+                      <SelectItem value="evolution">Apenas Evolution API</SelectItem>
+                      <SelectItem value="ambos">Ambos (Webhook + Evolution)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Escolha como as mensagens serão enviadas
+                  </p>
+                </div>
+
+                {/* Webhook Section */}
+                {(config.modo_envio === "webhook" || config.modo_envio === "ambos") && (
+                  <div className="space-y-4 p-4 rounded-lg border">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Configuração do Webhook
+                    </h4>
+                    <div className="space-y-2">
+                      <Label>URL do Webhook</Label>
+                      <Input
+                        value={config.webhook_url || ""}
+                        onChange={(e) => setConfig({ ...config, webhook_url: e.target.value })}
+                        placeholder="https://seu-n8n.com/webhook/..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Token de Autenticação (opcional)</Label>
+                      <Input
+                        type="password"
+                        value={config.api_token || ""}
+                        onChange={(e) => setConfig({ ...config, api_token: e.target.value })}
+                        placeholder="Bearer token para autenticação"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Evolution API Section */}
+                {(config.modo_envio === "evolution" || config.modo_envio === "ambos") && (
+                  <div className="space-y-4 p-4 rounded-lg border border-primary/30 bg-primary/5">
+                    <h4 className="font-medium flex items-center gap-2 text-primary">
+                      <Plug className="h-4 w-4" />
+                      Evolution API
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      Configure a integração direta com a Evolution API para envio de mensagens
+                    </p>
+                    <div className="space-y-2">
+                      <Label>URL da API</Label>
+                      <Input
+                        value={config.evolution_api_url || ""}
+                        onChange={(e) => setConfig({ ...config, evolution_api_url: e.target.value })}
+                        placeholder="https://sua-evolution.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>API Key</Label>
+                      <Input
+                        type="password"
+                        value={config.evolution_api_key || ""}
+                        onChange={(e) => setConfig({ ...config, evolution_api_key: e.target.value })}
+                        placeholder="Sua chave de API da Evolution"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Nome da Instância</Label>
+                      <Input
+                        value={config.evolution_instance || ""}
+                        onChange={(e) => setConfig({ ...config, evolution_instance: e.target.value })}
+                        placeholder="nome-da-instancia"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Nome da instância do WhatsApp configurada na Evolution API
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Save Button */}
+                <Button 
+                  className="w-full gap-2" 
+                  onClick={handleSaveConfig}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Salvar Integração
                 </Button>
               </>
             )}
