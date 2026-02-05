@@ -135,9 +135,9 @@ export default function VendedorPortal() {
             </div>
 
             {/* Productivity Tools Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
               {vendedor && (
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 flex">
                   <SmartReminders 
                     leads={leadsForAlerts} 
                     vendedorNome={vendedor.nome}
@@ -145,7 +145,7 @@ export default function VendedorPortal() {
                 </div>
               )}
               {vendedor && (
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 flex">
                   <WhatsAppTemplates vendedorNome={vendedor.nome} />
                 </div>
               )}

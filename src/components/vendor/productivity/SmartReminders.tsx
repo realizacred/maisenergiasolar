@@ -175,7 +175,7 @@
    };
  
    return (
-     <Card>
+    <Card className="flex flex-col h-full w-full">
        <CardHeader className="pb-3">
          <div className="flex items-center justify-between">
            <div className="flex items-center gap-2">
@@ -198,7 +198,7 @@
            Alertas automáticos baseados na atividade dos seus leads
          </CardDescription>
        </CardHeader>
-       <CardContent>
+      <CardContent className="flex-1 overflow-hidden">
          {!settings.enabled ? (
            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
              <BellOff className="h-12 w-12 opacity-20 mb-2" />
@@ -228,7 +228,7 @@
              )}
            </div>
          ) : (
-           <div className="space-y-3 max-h-[400px] overflow-y-auto">
+          <div className="space-y-3 h-full max-h-[400px] overflow-y-auto">
              {reminders.map((reminder) => {
                const Icon = reminder.icon;
                return (
