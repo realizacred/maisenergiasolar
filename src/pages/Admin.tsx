@@ -25,6 +25,8 @@ import { ConcessionariasManager } from "@/components/admin/ConcessionariasManage
 import { GamificacaoConfig } from "@/components/admin/GamificacaoConfig";
  import { ComissoesManager } from "@/components/admin/ComissoesManager";
  import { ValidacaoVendasManager } from "@/components/admin/ValidacaoVendasManager";
+ import { ChecklistsManager } from "@/components/admin/ChecklistsManager";
+ import { AvaliacoesManager } from "@/components/admin/AvaliacoesManager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Footer from "@/components/layout/Footer";
 
@@ -168,6 +170,28 @@ export default function Admin() {
              </CardHeader>
              <CardContent>
                <ComissoesManager />
+             </CardContent>
+           </Card>
+         );
+       case "checklists":
+         return (
+           <Card>
+             <CardHeader>
+               <CardTitle>Checklists de Instalação</CardTitle>
+             </CardHeader>
+             <CardContent>
+               <ChecklistsManager />
+             </CardContent>
+           </Card>
+         );
+       case "avaliacoes":
+         return (
+           <Card>
+             <CardHeader>
+               <CardTitle>Avaliações dos Clientes</CardTitle>
+             </CardHeader>
+             <CardContent>
+               <AvaliacoesManager />
              </CardContent>
            </Card>
          );
