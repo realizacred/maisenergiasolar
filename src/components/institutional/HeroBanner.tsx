@@ -62,11 +62,11 @@ export function HeroBanner() {
             alt={slide.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-secondary/80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-foreground/60 via-foreground/30 to-secondary/80" />
           
           <div className="absolute inset-0 flex items-center">
             <div className="container mx-auto px-4">
-              <div className="max-w-2xl ml-auto text-right text-white">
+              <div className="max-w-2xl ml-auto text-right text-primary-foreground">
                 <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold mb-1 sm:mb-2">
                   {slide.title}
                 </h1>
@@ -97,7 +97,7 @@ export function HeroBanner() {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full h-8 w-8 sm:h-10 sm:w-10"
+        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-foreground/30 hover:bg-foreground/50 text-primary-foreground rounded-full h-8 w-8 sm:h-10 sm:w-10"
         onClick={prevSlide}
       >
         <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -105,7 +105,7 @@ export function HeroBanner() {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full h-8 w-8 sm:h-10 sm:w-10"
+        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-foreground/30 hover:bg-foreground/50 text-primary-foreground rounded-full h-8 w-8 sm:h-10 sm:w-10"
         onClick={nextSlide}
       >
         <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />

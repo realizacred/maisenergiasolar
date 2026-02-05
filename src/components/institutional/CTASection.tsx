@@ -16,7 +16,7 @@ export function CTASection() {
   };
 
   return (
-    <section className="py-16 gradient-blue text-white">
+    <section className="py-16 gradient-blue text-secondary-foreground">
       <div className="container mx-auto px-4 text-center">
         <h2 className="text-2xl md:text-4xl font-bold mb-4">
           Economize até 90% na sua conta de Energia!
@@ -37,7 +37,7 @@ export function CTASection() {
             <Button 
               variant="outline"
               size="lg"
-              className="border-white text-white hover:bg-white/10 font-semibold px-8"
+              className="border-secondary-foreground text-secondary-foreground hover:bg-secondary-foreground/10 font-semibold px-8"
             >
               Simular Economia
             </Button>

@@ -77,7 +77,7 @@ export function ProjectsSection() {
           {projects.slice(0, visibleProjects).map((project) => (
             <Card
               key={project.id}
-              className="overflow-hidden bg-white text-foreground hover:shadow-xl transition-all group"
+              className="overflow-hidden bg-card text-foreground hover:shadow-xl transition-all group"
             >
               <div className="p-4 pb-2">
                 <h3 className="text-lg font-bold text-brand-blue">
@@ -104,13 +104,13 @@ export function ProjectsSection() {
                   alt={project.titulo}
                   className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                  <div className="flex items-center justify-between text-white text-xs">
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-foreground/80 to-transparent p-3">
+                  <div className="flex items-center justify-between text-primary-foreground text-xs">
                     <span className="flex items-center gap-1">
                       <Zap className="w-3 h-3" />
                       Sistema de {project.potencia}
                     </span>
-                    <Badge className="bg-brand-orange text-white text-xs">
+                    <Badge className="bg-primary text-primary-foreground text-xs">
                       {project.economia}
                     </Badge>
                   </div>
@@ -125,7 +125,7 @@ export function ProjectsSection() {
             <Button 
               onClick={loadMore}
               variant="outline"
-              className="border-white text-white hover:bg-white hover:text-secondary"
+              className="border-secondary-foreground text-secondary-foreground hover:bg-secondary-foreground hover:text-secondary"
             >
               Carregar mais
             </Button>
