@@ -1198,6 +1198,47 @@ export type Database = {
           },
         ]
       }
+      meta_notifications: {
+        Row: {
+          ano: number
+          created_at: string
+          id: string
+          lida: boolean
+          mes: number
+          percentual_atingido: number
+          tipo_meta: string
+          vendedor_id: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          id?: string
+          lida?: boolean
+          mes: number
+          percentual_atingido: number
+          tipo_meta: string
+          vendedor_id: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          id?: string
+          lida?: boolean
+          mes?: number
+          percentual_atingido?: number
+          tipo_meta?: string
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_notifications_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orcamentos: {
         Row: {
           area: string
@@ -1682,7 +1723,9 @@ export type Database = {
           meta_orcamentos: number | null
           meta_valor: number | null
           observacoes: string | null
+          progresso_notificado: Json | null
           updated_at: string
+          usa_meta_individual: boolean
           vendedor_id: string
         }
         Insert: {
@@ -1695,7 +1738,9 @@ export type Database = {
           meta_orcamentos?: number | null
           meta_valor?: number | null
           observacoes?: string | null
+          progresso_notificado?: Json | null
           updated_at?: string
+          usa_meta_individual?: boolean
           vendedor_id: string
         }
         Update: {
@@ -1708,12 +1753,76 @@ export type Database = {
           meta_orcamentos?: number | null
           meta_valor?: number | null
           observacoes?: string | null
+          progresso_notificado?: Json | null
           updated_at?: string
+          usa_meta_individual?: boolean
           vendedor_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "vendedor_metas_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendedor_metricas: {
+        Row: {
+          ano: number
+          created_at: string
+          id: string
+          leads_convertidos: number | null
+          leads_perdidos: number | null
+          leads_respondidos_24h: number | null
+          mes: number
+          taxa_resposta_rapida_percent: number | null
+          taxa_retencao_percent: number | null
+          tempo_medio_fechamento_dias: number | null
+          ticket_medio: number | null
+          total_leads_atendidos: number | null
+          updated_at: string
+          valor_total_vendas: number | null
+          vendedor_id: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          id?: string
+          leads_convertidos?: number | null
+          leads_perdidos?: number | null
+          leads_respondidos_24h?: number | null
+          mes: number
+          taxa_resposta_rapida_percent?: number | null
+          taxa_retencao_percent?: number | null
+          tempo_medio_fechamento_dias?: number | null
+          ticket_medio?: number | null
+          total_leads_atendidos?: number | null
+          updated_at?: string
+          valor_total_vendas?: number | null
+          vendedor_id: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          id?: string
+          leads_convertidos?: number | null
+          leads_perdidos?: number | null
+          leads_respondidos_24h?: number | null
+          mes?: number
+          taxa_resposta_rapida_percent?: number | null
+          taxa_retencao_percent?: number | null
+          tempo_medio_fechamento_dias?: number | null
+          ticket_medio?: number | null
+          total_leads_atendidos?: number | null
+          updated_at?: string
+          valor_total_vendas?: number | null
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendedor_metricas_vendedor_id_fkey"
             columns: ["vendedor_id"]
             isOneToOne: false
             referencedRelation: "vendedores"

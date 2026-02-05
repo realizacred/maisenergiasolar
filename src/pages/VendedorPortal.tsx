@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+ import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +30,7 @@ import { VendorPendingDocumentation } from "@/components/vendor/VendorPendingDoc
 import { WhatsAppTemplates, FollowUpCalendar, SmartReminders } from "@/components/vendor/productivity";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
 import { VendorLeadFilters, VendorOrcamentosTable, VendorLeadViewDialog, LeadScoring } from "@/components/vendor/leads";
- import { VendorAchievements, VendorGoals } from "@/components/vendor/gamification";
+ import { VendorAchievements, VendorGoals, AdvancedMetricsCard, GoalProgressNotifications } from "@/components/vendor/gamification";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
 import { OfflineConversionsManager } from "@/components/leads/OfflineConversionsManager";
 import { OfflineDuplicateResolver } from "@/components/vendor/OfflineDuplicateResolver";
@@ -38,9 +38,9 @@ import NotificationSettings from "@/components/vendor/NotificationSettings";
 import SyncStatusWidget from "@/components/vendor/SyncStatusWidget";
 import { useOrcamentosVendedor, OrcamentoVendedor } from "@/hooks/useOrcamentosVendedor";
  import { useGamification } from "@/hooks/useGamification";
+ import { useAdvancedMetrics } from "@/hooks/useAdvancedMetrics";
 import logo from "@/assets/logo.png";
 import type { Lead } from "@/types/lead";
-import { useEffect } from "react";
 
 interface VendedorProfile {
   id: string;
@@ -84,6 +84,17 @@ export default function VendedorPortal() {
      totalPoints,
      calculateGoals,
    } = useGamification(vendedor?.id || null);
+  
+   // Advanced metrics hook
+   const {
+     metrics: advancedMetrics,
+     notifications: goalNotifications,
+     loading: metricsLoading,
+     calculateMetrics,
+     fetchNotifications,
+     markNotificationAsRead,
+     checkAndCreateProgressNotifications,
+   } = useAdvancedMetrics(vendedor?.id || null, vendedor?.nome || null);
  
   // Load vendedor profile
   useEffect(() => {
@@ -245,6 +256,25 @@ export default function VendedorPortal() {
        calculateGoals(monthlyOrcamentos, 0, 0);
      }
    }, [vendedor, stats, orcamentos, calculateGoals]);
+ 
+   // Calculate advanced metrics and check notifications
+   useEffect(() => {
+     if (vendedor) {
+       calculateMetrics();
+       fetchNotifications();
+     }
+   }, [vendedor, calculateMetrics, fetchNotifications]);
+ 
+   // Create progress notifications when goals update
+   useEffect(() => {
+     if (vendedor?.id && goals.length > 0) {
+       const goalsForNotification = goals.map(g => ({
+         type: g.type,
+         percentage: g.percentage,
+       }));
+       checkAndCreateProgressNotifications(goalsForNotification, vendedor.id);
+     }
+   }, [goals, vendedor?.id, checkAndCreateProgressNotifications]);
 
   const filteredOrcamentos = useMemo(() => {
     let filtered = orcamentos.filter(orc =>
@@ -327,6 +357,14 @@ export default function VendedorPortal() {
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-4 sm:space-y-6 mt-4">
+           {/* Goal Progress Notifications */}
+           {goalNotifications.length > 0 && (
+             <GoalProgressNotifications
+               notifications={goalNotifications}
+               onDismiss={markNotificationAsRead}
+             />
+           )}
+ 
             {/* Personal Dashboard */}
             {vendedor && (
               <VendorPersonalDashboard
@@ -344,6 +382,12 @@ export default function VendedorPortal() {
                 totalPoints={totalPoints}
               />
             </div>
+ 
+           {/* Advanced Performance Metrics */}
+           <AdvancedMetricsCard 
+             metrics={advancedMetrics} 
+             loading={metricsLoading} 
+           />
 
             {/* Sync Status & Notifications Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
