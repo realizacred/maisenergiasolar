@@ -26,7 +26,7 @@ import { VendorFollowUpManager } from "@/components/vendor/VendorFollowUpManager
 import { VendorPendingDocumentation } from "@/components/vendor/VendorPendingDocumentation";
 import { WhatsAppTemplates, FollowUpCalendar, SmartReminders } from "@/components/vendor/productivity";
 import { PortalSwitcher } from "@/components/layout/PortalSwitcher";
-import { VendorLeadFilters, VendorOrcamentosTable, VendorLeadViewDialog } from "@/components/vendor/leads";
+import { VendorLeadFilters, VendorOrcamentosTable, VendorLeadViewDialog, LeadScoring } from "@/components/vendor/leads";
 import { ConvertLeadToClientDialog } from "@/components/leads/ConvertLeadToClientDialog";
 import { OfflineConversionsManager } from "@/components/leads/OfflineConversionsManager";
 import { OfflineDuplicateResolver } from "@/components/vendor/OfflineDuplicateResolver";
@@ -323,6 +323,16 @@ export default function VendedorPortal() {
         {/* Follow-Up Calendar */}
         <FollowUpCalendar 
           leads={leadsForAlerts}
+          onSelectLead={(lead) => {
+            const orc = orcamentos.find(o => o.lead_id === lead.id);
+            if (orc) setSelectedOrcamento(orc);
+          }}
+        />
+
+        {/* AI Lead Scoring */}
+        <LeadScoring
+          leads={leadsForAlerts}
+          statuses={statuses}
           onSelectLead={(lead) => {
             const orc = orcamentos.find(o => o.lead_id === lead.id);
             if (orc) setSelectedOrcamento(orc);
