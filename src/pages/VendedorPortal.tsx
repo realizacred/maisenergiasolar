@@ -145,6 +145,7 @@ export default function VendedorPortal() {
                 <div className="lg:col-span-1 flex lg:h-[560px] min-h-0 overflow-hidden">
                   <SmartReminders 
                     leads={leadsForAlerts} 
+                    orcamentos={orcamentos}
                     vendedorNome={vendedor.nome}
                   />
                 </div>
