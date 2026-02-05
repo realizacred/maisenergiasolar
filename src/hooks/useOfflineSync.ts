@@ -10,7 +10,7 @@ interface ChecklistData {
   lead_code?: string;
   placas_local_aprovado: boolean;
   inversor_local_aprovado: boolean;
-  avaliacao_atendimento: string;
+  avaliacao_atendimento?: string;
   nome_cliente: string;
   assinatura_cliente_url?: string;
   adesivo_inversor: boolean;
@@ -111,7 +111,7 @@ export function useOfflineSync() {
         lead_code: checklist.lead_code,
         placas_local_aprovado: checklist.placas_local_aprovado,
         inversor_local_aprovado: checklist.inversor_local_aprovado,
-        avaliacao_atendimento: checklist.avaliacao_atendimento,
+        avaliacao_atendimento: checklist.avaliacao_atendimento || null,
         nome_cliente: checklist.nome_cliente,
         assinatura_cliente_url: clientSignatureUrl,
         adesivo_inversor: checklist.adesivo_inversor,

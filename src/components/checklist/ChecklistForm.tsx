@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { SignaturePad, SignaturePadRef } from "./SignaturePad";
 import { PhotoCapture } from "./PhotoCapture";
@@ -40,9 +39,6 @@ const checklistSchema = z.object({
   // Área do cliente
   placas_local_aprovado: z.boolean(),
   inversor_local_aprovado: z.boolean(),
-  avaliacao_atendimento: z.enum(["otimo", "bom", "razoavel", "ruim", "muito_ruim"], {
-    required_error: "Selecione uma avaliação"
-  }),
   nome_cliente: z.string().min(2, "Nome do cliente obrigatório"),
   
   // Área do instalador
@@ -125,7 +121,6 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
         lead_code: formData.lead_code,
         placas_local_aprovado: formData.placas_local_aprovado,
         inversor_local_aprovado: formData.inversor_local_aprovado,
-        avaliacao_atendimento: formData.avaliacao_atendimento,
         nome_cliente: formData.nome_cliente,
         adesivo_inversor: formData.adesivo_inversor,
         plaquinha_relogio: formData.plaquinha_relogio,
@@ -200,9 +195,6 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
     if (!data.nome_cliente || data.nome_cliente.length < 2) {
       errors.push("Nome do cliente");
     }
-    if (!data.avaliacao_atendimento) {
-      errors.push("Avaliação do atendimento");
-    }
     
     // Save current signature state
     if (clientSignatureRef.current) {
@@ -252,14 +244,6 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
     }
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
-
-  const avaliacaoOptions = [
-    { value: "otimo", label: "Ótimo", emoji: "😄" },
-    { value: "bom", label: "Bom", emoji: "🙂" },
-    { value: "razoavel", label: "Razoável", emoji: "😐" },
-    { value: "ruim", label: "Ruim", emoji: "😕" },
-    { value: "muito_ruim", label: "Muito Ruim", emoji: "😞" },
-  ];
 
   if (isSuccess) {
     return (
@@ -486,39 +470,6 @@ export function ChecklistForm({ onSuccess }: ChecklistFormProps) {
                       </label>
                     </div>
                   </div>
-                </div>
-
-                {/* Avaliação */}
-                <div className="space-y-3">
-                  <Label>Como você avalia o nosso atendimento?</Label>
-                  <RadioGroup
-                    value={form.watch("avaliacao_atendimento")}
-                    onValueChange={(value) => 
-                      form.setValue("avaliacao_atendimento", value as any)
-                    }
-                    className="flex flex-wrap gap-2"
-                  >
-                    {avaliacaoOptions.map((option) => (
-                      <Label
-                        key={option.value}
-                        className={cn(
-                          "flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors",
-                          form.watch("avaliacao_atendimento") === option.value
-                            ? "border-primary bg-primary/10"
-                            : "border-muted hover:border-primary/50"
-                        )}
-                      >
-                        <RadioGroupItem value={option.value} className="sr-only" />
-                        <span>{option.emoji}</span>
-                        <span className="text-sm">{option.label}</span>
-                      </Label>
-                    ))}
-                  </RadioGroup>
-                  {form.formState.errors.avaliacao_atendimento && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.avaliacao_atendimento.message}
-                    </p>
-                  )}
                 </div>
 
                 {/* Declaração de aceitação */}
