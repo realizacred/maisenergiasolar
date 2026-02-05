@@ -27,6 +27,7 @@ import { GamificacaoConfig } from "@/components/admin/GamificacaoConfig";
  import { ValidacaoVendasManager } from "@/components/admin/ValidacaoVendasManager";
  import { ChecklistsManager } from "@/components/admin/ChecklistsManager";
  import { AvaliacoesManager } from "@/components/admin/AvaliacoesManager";
+ import { ServicosManager } from "@/components/admin/ServicosManager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Footer from "@/components/layout/Footer";
 
@@ -192,6 +193,17 @@ export default function Admin() {
              </CardHeader>
              <CardContent>
                <AvaliacoesManager />
+             </CardContent>
+           </Card>
+         );
+       case "servicos":
+         return (
+           <Card>
+             <CardHeader>
+               <CardTitle>Agendamento de Serviços</CardTitle>
+             </CardHeader>
+             <CardContent>
+               <ServicosManager />
              </CardContent>
            </Card>
          );
