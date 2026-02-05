@@ -38,9 +38,10 @@ export interface OrcamentoVendedor {
 interface UseOrcamentosVendedorOptions {
   vendedorNome: string | null;
   isAdminMode?: boolean;
+  filterByVendedor?: boolean; // Force filter even in admin mode (for "viewing as" feature)
 }
 
-export function useOrcamentosVendedor({ vendedorNome, isAdminMode = false }: UseOrcamentosVendedorOptions) {
+export function useOrcamentosVendedor({ vendedorNome, isAdminMode = false, filterByVendedor = false }: UseOrcamentosVendedorOptions) {
   const [orcamentos, setOrcamentos] = useState<OrcamentoVendedor[]>([]);
   const [statuses, setStatuses] = useState<LeadStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,8 +65,11 @@ export function useOrcamentosVendedor({ vendedorNome, isAdminMode = false }: Use
         `)
         .order("created_at", { ascending: false });
 
-      // Filter by vendedor unless in admin mode
-      if (!isAdminMode && vendedorNome) {
+      // Filter by vendedor unless in admin mode viewing all
+      // If filterByVendedor is true, always filter even in admin mode
+      if (filterByVendedor && vendedorNome) {
+        query = query.eq("vendedor", vendedorNome);
+      } else if (!isAdminMode && vendedorNome) {
         query = query.eq("vendedor", vendedorNome);
       }
 
@@ -127,7 +131,7 @@ export function useOrcamentosVendedor({ vendedorNome, isAdminMode = false }: Use
     } finally {
       setLoading(false);
     }
-  }, [vendedorNome, isAdminMode, toast]);
+  }, [vendedorNome, isAdminMode, filterByVendedor, toast]);
 
   const toggleVisto = useCallback(async (orcamento: OrcamentoVendedor) => {
     const newVisto = !orcamento.visto;
