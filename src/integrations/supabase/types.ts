@@ -789,6 +789,79 @@ export type Database = {
           },
         ]
       }
+      comissoes: {
+        Row: {
+          ano_referencia: number
+          cliente_id: string | null
+          created_at: string
+          descricao: string
+          id: string
+          mes_referencia: number
+          observacoes: string | null
+          percentual_comissao: number
+          projeto_id: string | null
+          status: string
+          updated_at: string
+          valor_base: number
+          valor_comissao: number
+          vendedor_id: string
+        }
+        Insert: {
+          ano_referencia: number
+          cliente_id?: string | null
+          created_at?: string
+          descricao: string
+          id?: string
+          mes_referencia: number
+          observacoes?: string | null
+          percentual_comissao?: number
+          projeto_id?: string | null
+          status?: string
+          updated_at?: string
+          valor_base?: number
+          valor_comissao?: number
+          vendedor_id: string
+        }
+        Update: {
+          ano_referencia?: number
+          cliente_id?: string | null
+          created_at?: string
+          descricao?: string
+          id?: string
+          mes_referencia?: number
+          observacoes?: string | null
+          percentual_comissao?: number
+          projeto_id?: string | null
+          status?: string
+          updated_at?: string
+          valor_base?: number
+          valor_comissao?: number
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comissoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concessionarias: {
         Row: {
           ativo: boolean
@@ -1378,6 +1451,47 @@ export type Database = {
             columns: ["recebimento_id"]
             isOneToOne: false
             referencedRelation: "recebimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pagamentos_comissao: {
+        Row: {
+          comissao_id: string
+          comprovante_url: string | null
+          created_at: string
+          data_pagamento: string
+          forma_pagamento: string
+          id: string
+          observacoes: string | null
+          valor_pago: number
+        }
+        Insert: {
+          comissao_id: string
+          comprovante_url?: string | null
+          created_at?: string
+          data_pagamento?: string
+          forma_pagamento: string
+          id?: string
+          observacoes?: string | null
+          valor_pago: number
+        }
+        Update: {
+          comissao_id?: string
+          comprovante_url?: string | null
+          created_at?: string
+          data_pagamento?: string
+          forma_pagamento?: string
+          id?: string
+          observacoes?: string | null
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_comissao_comissao_id_fkey"
+            columns: ["comissao_id"]
+            isOneToOne: false
+            referencedRelation: "comissoes"
             referencedColumns: ["id"]
           },
         ]

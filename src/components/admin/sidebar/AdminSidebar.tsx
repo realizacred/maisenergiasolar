@@ -16,6 +16,7 @@ import {
   Plug,
   Lightbulb,
   Trophy,
+   Wallet,
 } from "lucide-react";
 import {
   Sidebar,
@@ -47,6 +48,7 @@ const mainMenuItems = [
   { id: "followup", title: "Follow-up", icon: Bell },
   { id: "clientes", title: "Clientes", icon: UserCheck },
   { id: "recebimentos", title: "Recebimentos", icon: DollarSign },
+   { id: "comissoes", title: "Comissões", icon: Wallet },
   { id: "dashboard", title: "Dashboard", icon: BarChart3 },
 ];
 
