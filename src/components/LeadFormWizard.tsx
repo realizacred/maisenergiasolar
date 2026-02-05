@@ -130,7 +130,7 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
     reset: resetRateLimit 
   } = useFormRateLimit({ maxAttempts: 5, windowMs: 60000, cooldownMs: 300000 });
 
-  // Captura e valida o vendedor da URL
+  // Captura e valida o vendedor da URL usando RPC segura
   useEffect(() => {
     const validateVendedor = async () => {
       // Prioriza prop vendorCode, depois searchParams
@@ -138,19 +138,21 @@ export default function LeadFormWizard({ vendorCode }: LeadFormWizardProps = {})
       if (!codigo) return;
 
       try {
-        // Busca case-insensitive para maior flexibilidade
+        // Use secure RPC function that exposes only code and name
         const { data, error } = await supabase
-          .from("vendedores")
-          .select("codigo, nome, ativo")
-          .ilike("codigo", codigo)
-          .eq("ativo", true)
-          .single();
+          .rpc("validate_vendedor_code", { _codigo: codigo });
 
-        if (data && !error) {
-          setVendedorCodigo(data.codigo);
-          setVendedorNome(data.nome);
-          console.log("Vendedor validado:", data.nome);
-        } else if (error) {
+        if (error) {
+          console.log("Erro ao validar vendedor:", error.message);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const vendedor = data[0];
+          setVendedorCodigo(vendedor.codigo);
+          setVendedorNome(vendedor.nome);
+          console.log("Vendedor validado:", vendedor.nome);
+        } else {
           // Fallback: se não encontrou vendedor válido, não salva nada
           console.log("Vendedor não encontrado ou inativo:", codigo);
         }
