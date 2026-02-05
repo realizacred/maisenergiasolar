@@ -40,7 +40,13 @@
    Wrench,
    Clock,
    RefreshCw,
+   Eye,
+   Image,
+   Video,
+   Volume2,
+   Grid3X3,
  } from "lucide-react";
+ import { ServicoDetailDialog } from "./ServicoDetailDialog";
  
  interface Servico {
    id: string;
@@ -54,6 +60,10 @@
    descricao: string | null;
    cliente: { id: string; nome: string; telefone: string } | null;
    instalador_id: string;
+   fotos_urls: string[] | null;
+   audio_url: string | null;
+   video_url: string | null;
+   layout_modulos: unknown | null;
  }
  
  interface Cliente {
@@ -92,6 +102,7 @@
    const [loading, setLoading] = useState(true);
    const [dialogOpen, setDialogOpen] = useState(false);
    const [saving, setSaving] = useState(false);
+   const [selectedServicoId, setSelectedServicoId] = useState<string | null>(null);
  
    const [formData, setFormData] = useState({
      cliente_id: "",
@@ -127,7 +138,11 @@
              cidade,
              descricao,
              instalador_id,
-             cliente:clientes(id, nome, telefone)
+             cliente:clientes(id, nome, telefone),
+             fotos_urls,
+             audio_url,
+             video_url,
+             layout_modulos
            `)
            .order("data_agendada", { ascending: false }),
          supabase
@@ -423,6 +438,8 @@
                  <TableHead>Instalador</TableHead>
                  <TableHead>Local</TableHead>
                  <TableHead>Status</TableHead>
+                     <TableHead>Mídia</TableHead>
+                     <TableHead></TableHead>
                </TableRow>
              </TableHeader>
              <TableBody>
@@ -478,6 +495,40 @@
                          {statusConfig[servico.status]?.label || servico.status}
                        </Badge>
                      </TableCell>
+                     <TableCell>
+                       <div className="flex items-center gap-1">
+                         {servico.fotos_urls && servico.fotos_urls.length > 0 && (
+                           <div className="flex items-center gap-0.5 text-muted-foreground" title={`${servico.fotos_urls.length} fotos`}>
+                             <Image className="h-3.5 w-3.5" />
+                             <span className="text-xs">{servico.fotos_urls.length}</span>
+                           </div>
+                         )}
+                         {servico.video_url && (
+                           <span title="Vídeo">
+                             <Video className="h-3.5 w-3.5 text-muted-foreground" />
+                           </span>
+                         )}
+                         {servico.audio_url && (
+                           <span title="Áudio">
+                             <Volume2 className="h-3.5 w-3.5 text-muted-foreground" />
+                           </span>
+                         )}
+                         {servico.layout_modulos && (
+                           <span title="Layout">
+                             <Grid3X3 className="h-3.5 w-3.5 text-muted-foreground" />
+                           </span>
+                         )}
+                       </div>
+                     </TableCell>
+                     <TableCell>
+                       <Button
+                         variant="ghost"
+                         size="icon"
+                         onClick={() => setSelectedServicoId(servico.id)}
+                       >
+                         <Eye className="h-4 w-4" />
+                       </Button>
+                     </TableCell>
                    </TableRow>
                  ))
                )}
@@ -485,6 +536,12 @@
            </Table>
          </CardContent>
        </Card>
+
+       <ServicoDetailDialog
+         servicoId={selectedServicoId}
+         isOpen={!!selectedServicoId}
+         onClose={() => setSelectedServicoId(null)}
+       />
      </div>
    );
  }
