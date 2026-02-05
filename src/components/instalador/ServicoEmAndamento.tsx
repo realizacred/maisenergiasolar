@@ -48,7 +48,7 @@ import { PhotoCapture } from "@/components/checklist/PhotoCapture";
 import logoWhite from "@/assets/logo-branca.png";
 import logoBlue from "@/assets/logo.png";
  import { VideoCapture } from "./VideoCapture";
- import { ModuleLayoutCanvas } from "./ModuleLayoutCanvas";
+  import { SolarLayoutEditor, type LayoutData } from "@/components/solar-editor";
  
  interface ServicoAgendado {
    id: string;
@@ -73,12 +73,6 @@ import logoBlue from "@/assets/logo.png";
    servico: ServicoAgendado;
    onClose: () => void;
    onServiceUpdated: () => void;
- }
- 
- interface LayoutData {
-   backgroundImage: string | null;
-   modules: { id: string; x: number; y: number; rotation: number; width: number; height: number }[];
-   totalModules: number;
  }
  
  const tipoLabels: Record<string, string> = {
@@ -111,8 +105,9 @@ import logoBlue from "@/assets/logo.png";
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
    const [videoUrl, setVideoUrl] = useState<string | null>(null);
-   const [layoutData, setLayoutData] = useState<LayoutData | null>(null);
-   const [isLayoutOpen, setIsLayoutOpen] = useState(false);
+   const [savedLayoutId, setSavedLayoutId] = useState<string | null>(null);
+   const [layoutModuleCount, setLayoutModuleCount] = useState(0);
+   const [isLayoutEditorOpen, setIsLayoutEditorOpen] = useState(false);
    
    // Signatures
    const [installerSignature, setInstallerSignature] = useState<string | null>(null);
@@ -349,7 +344,7 @@ import logoBlue from "@/assets/logo.png";
            observacoes_conclusao: observacoes,
          audio_url: audioUrl,
          video_url: videoUrl,
-         layout_modulos: layoutData ? JSON.parse(JSON.stringify(layoutData)) : null,
+          layout_id: savedLayoutId,
          })
          .eq("id", servico.id);
  
@@ -745,19 +740,19 @@ import logoBlue from "@/assets/logo.png";
                      </div>
                    </div>
                    
-                   {layoutData && layoutData.totalModules > 0 ? (
+                   {savedLayoutId && layoutModuleCount > 0 ? (
                      <div className="p-3 bg-success/5 rounded-lg border border-success/20 flex items-center justify-between">
                        <div className="flex items-center gap-2">
                          <CheckCircle2 className="h-4 w-4 text-success" />
                          <span className="text-sm font-medium text-success">
-                           {layoutData.totalModules} módulos posicionados
+                           {layoutModuleCount} módulos posicionados
                          </span>
                        </div>
                        <Button
                          type="button"
                          variant="outline"
                          size="sm"
-                         onClick={() => setIsLayoutOpen(true)}
+                          onClick={() => setIsLayoutEditorOpen(true)}
                        >
                          Editar
                        </Button>
@@ -767,7 +762,7 @@ import logoBlue from "@/assets/logo.png";
                        type="button"
                        variant="outline"
                        className="w-full gap-2 h-10"
-                       onClick={() => setIsLayoutOpen(true)}
+                        onClick={() => setIsLayoutEditorOpen(true)}
                      >
                        <Grid3X3 className="h-4 w-4" />
                        Desenhar Layout
@@ -887,13 +882,18 @@ import logoBlue from "@/assets/logo.png";
         </div>
       </div>
 
-       {/* Modal de Layout */}
-       <ModuleLayoutCanvas
-         layout={layoutData}
-         onLayoutChange={setLayoutData}
-         isOpen={isLayoutOpen}
-         onClose={() => setIsLayoutOpen(false)}
-       />
+      {/* Editor de Layout Solar Profissional */}
+      <SolarLayoutEditor
+        isOpen={isLayoutEditorOpen}
+        onClose={() => setIsLayoutEditorOpen(false)}
+        layoutId={savedLayoutId || undefined}
+        servicoId={servico.id}
+        layoutName={`Layout - ${servico.cliente?.nome || servico.tipo}`}
+        onSave={(layoutId, layoutData) => {
+          setSavedLayoutId(layoutId);
+          setLayoutModuleCount(layoutData.modules.length);
+        }}
+      />
     </div>
   );
 }
