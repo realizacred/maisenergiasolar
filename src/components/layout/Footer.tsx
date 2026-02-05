@@ -1,7 +1,8 @@
+import { forwardRef } from "react";
 import { Phone } from "lucide-react";
 import logoBranca from "@/assets/logo-branca.png";
 
-export default function Footer() {
+const Footer = forwardRef<HTMLElement>(function Footer(props, ref) {
   return (
     <footer className="py-8 bg-secondary text-secondary-foreground">
       <div className="container mx-auto px-4">
@@ -28,4 +29,6 @@ export default function Footer() {
       </div>
     </footer>
   );
-}
+});
+
+export default Footer;

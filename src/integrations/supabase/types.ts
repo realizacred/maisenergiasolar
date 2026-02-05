@@ -2593,7 +2593,7 @@ export type Database = {
           enviado_por: string | null
           erro_detalhes: string | null
           id: string
-          lead_id: string
+          lead_id: string | null
           mensagem: string
           orcamento_id: string | null
           status: string
@@ -2605,7 +2605,7 @@ export type Database = {
           enviado_por?: string | null
           erro_detalhes?: string | null
           id?: string
-          lead_id: string
+          lead_id?: string | null
           mensagem: string
           orcamento_id?: string | null
           status?: string
@@ -2617,7 +2617,7 @@ export type Database = {
           enviado_por?: string | null
           erro_detalhes?: string | null
           id?: string
-          lead_id?: string
+          lead_id?: string | null
           mensagem?: string
           orcamento_id?: string | null
           status?: string
