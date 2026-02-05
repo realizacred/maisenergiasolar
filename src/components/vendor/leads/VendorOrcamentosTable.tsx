@@ -137,7 +137,14 @@ export function VendorOrcamentosTable({
                   onView={() => onView(orc)}
                   onStatusChange={(newStatusId) => onStatusChange(orc.id, newStatusId)}
                   onDelete={onDelete ? () => handleDeleteClick(orc) : undefined}
-                  onConvert={onConvert ? () => onConvert(orc) : undefined}
+                  onConvert={onConvert ? () => {
+                    // Se houver múltiplos orçamentos, abrir histórico para escolher
+                    if (group.count > 1) {
+                      handleOpenHistory(group);
+                    } else {
+                      onConvert(orc);
+                    }
+                  } : undefined}
                 />
               </div>
             );
@@ -337,12 +344,21 @@ export function VendorOrcamentosTable({
                                 variant="ghost"
                                 size="icon"
                                 className="text-primary hover:text-primary hover:bg-primary/10"
-                                onClick={() => onConvert(orc)}
+                                onClick={() => {
+                                  // Se houver múltiplos orçamentos, abrir histórico para escolher
+                                  if (hasHistory) {
+                                    handleOpenHistory(group);
+                                  } else {
+                                    onConvert(orc);
+                                  }
+                                }}
                               >
                                 <ShoppingCart className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Converter em Venda</TooltipContent>
+                            <TooltipContent>
+                              {hasHistory ? "Escolher orçamento para converter" : "Converter em Venda"}
+                            </TooltipContent>
                           </Tooltip>
                         )}
                         {isConverted && (
