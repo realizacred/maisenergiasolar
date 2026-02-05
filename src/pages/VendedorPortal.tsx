@@ -1,6 +1,7 @@
- import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
- import { Loader2, LayoutDashboard, FileText } from "lucide-react";
+import { Loader2, LayoutDashboard, FileText } from "lucide-react";
 import { LeadAlerts } from "@/components/vendor/LeadAlerts";
 import { FollowUpStatsCards } from "@/components/vendor/FollowUpStatsCards";
  import { VendorPersonalDashboard } from "@/components/vendor/VendorPersonalDashboard";
@@ -65,6 +66,8 @@ export default function VendedorPortal() {
      leadsForAlerts,
    } = useVendedorPortal();
 
+  const [activeTab, setActiveTab] = useState("dashboard");
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -84,7 +87,7 @@ export default function VendedorPortal() {
        />
 
       <main className="container mx-auto px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        <Tabs defaultValue="dashboard" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="dashboard" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
