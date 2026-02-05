@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { differenceInDays, differenceInHours, parseISO, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ScheduleWhatsAppDialog } from "@/components/vendor/ScheduleWhatsAppDialog";
+import { ScheduleWhatsAppDialog, type OrcamentoContext } from "@/components/vendor/ScheduleWhatsAppDialog";
 import type { Lead } from "@/types/lead";
 import type { OrcamentoVendedor } from "@/hooks/useOrcamentosVendedor";
 import { toast } from "@/hooks/use-toast";
@@ -66,6 +66,7 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
 
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedOrcamentoContext, setSelectedOrcamentoContext] = useState<OrcamentoContext | null>(null);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -185,8 +186,19 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
     toast({ title: "Lembretes restaurados" });
   };
 
-  const openWhatsApp = (lead: Lead) => {
+  const openWhatsApp = (lead: Lead, orcamento?: OrcamentoVendedor) => {
     setSelectedLead(lead);
+    if (orcamento) {
+      setSelectedOrcamentoContext({
+        orc_code: orcamento.orc_code,
+        cidade: orcamento.cidade,
+        estado: orcamento.estado,
+        media_consumo: orcamento.media_consumo,
+        created_at: orcamento.created_at,
+      });
+    } else {
+      setSelectedOrcamentoContext(null);
+    }
     setWhatsappOpen(true);
   };
 
@@ -323,35 +335,56 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
                         <div className="mt-3 space-y-2 p-2 rounded-md bg-background/50">
                           <p className="text-xs font-medium flex items-center gap-1">
                             <History className="h-3 w-3" />
-                            Histórico de Orçamentos
+                            Histórico de Orçamentos (clique para enviar)
                           </p>
-                          {clientGroup.orcamentos.map((orc, idx) => (
-                            <div
-                              key={orc.id}
-                              className={`text-xs p-2 rounded border ${
-                                idx === clientGroup.orcamentos.length - 1
-                                  ? "border-primary/30 bg-primary/5"
-                                  : "border-muted"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 justify-between">
-                                <Badge variant="outline" className="text-[10px] h-4">
-                                  {orc.orc_code || "-"}
-                                </Badge>
-                                <span className="opacity-60">
-                                  {format(new Date(orc.created_at), "dd/MM/yy", { locale: ptBR })}
-                                </span>
+                          {clientGroup.orcamentos.map((orc, idx) => {
+                            const isLatest = idx === 0;
+                            const isFirst = idx === clientGroup.orcamentos.length - 1;
+                            
+                            return (
+                              <div
+                                key={orc.id}
+                                className={`text-xs p-2 rounded border cursor-pointer transition-colors hover:bg-accent/50 ${
+                                  isLatest
+                                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 ring-1 ring-emerald-500/20"
+                                    : isFirst
+                                    ? "border-primary/30 bg-primary/5"
+                                    : "border-muted"
+                                }`}
+                                onClick={() => openWhatsApp(clientGroup.lead, orc)}
+                              >
+                                <div className="flex items-center gap-2 justify-between">
+                                  <div className="flex items-center gap-1.5">
+                                    <Badge 
+                                      variant={isLatest ? "default" : "outline"} 
+                                      className={`text-[10px] h-4 ${isLatest ? "bg-emerald-600" : ""}`}
+                                    >
+                                      {orc.orc_code || "-"}
+                                    </Badge>
+                                    {isLatest && (
+                                      <Badge variant="secondary" className="text-[10px] h-4 bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                                        Mais Recente
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="opacity-60">
+                                      {format(new Date(orc.created_at), "dd/MM/yy", { locale: ptBR })}
+                                    </span>
+                                    <MessageCircle className="h-3 w-3 text-emerald-600" />
+                                  </div>
+                                </div>
+                                <p className="mt-1 opacity-70">
+                                  {orc.cidade}, {orc.estado} • {orc.media_consumo} kWh
+                                </p>
+                                {isFirst && clientGroup.count > 1 && (
+                                  <Badge variant="outline" className="text-[10px] h-4 mt-1">
+                                    Primeiro Orçamento
+                                  </Badge>
+                                )}
                               </div>
-                              <p className="mt-1 opacity-70">
-                                {orc.cidade}, {orc.estado} • {orc.media_consumo} kWh
-                              </p>
-                              {idx === clientGroup.orcamentos.length - 1 && (
-                                <Badge variant="secondary" className="text-[10px] h-4 mt-1">
-                                  Primeiro Orçamento
-                                </Badge>
-                              )}
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -368,7 +401,7 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
                     <Button
                       size="sm"
                       className="h-8 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700"
-                      onClick={() => openWhatsApp(clientGroup.lead)}
+                      onClick={() => openWhatsApp(clientGroup.lead, clientGroup.latestOrcamento || undefined)}
                     >
                       <MessageCircle className="h-3 w-3" />
                       WhatsApp
@@ -402,6 +435,7 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
         open={whatsappOpen}
         onOpenChange={setWhatsappOpen}
         vendedorNome={vendedorNome}
+        orcamentoContext={selectedOrcamentoContext}
       />
     </Card>
   );
