@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, Eye, Trash2, ShoppingCart, UserCheck, MessageSquare } from "lucide-react";
+import { Phone, Eye, Trash2, ShoppingCart, UserCheck, MessageSquare, History } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -27,9 +27,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { OrcamentoStatusSelector } from "@/components/vendor/OrcamentoStatusSelector";
 import { VendorOrcamentoCard } from "./VendorOrcamentoCard";
+import { OrcamentoHistoryDialog } from "@/components/admin/leads/OrcamentoHistoryDialog";
+import { useGroupedOrcamentos, type GroupedOrcamento } from "@/hooks/useGroupedOrcamentos";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { LeadStatus } from "@/types/lead";
 import type { OrcamentoVendedor } from "@/hooks/useOrcamentosVendedor";
+import type { OrcamentoDisplayItem } from "@/types/orcamento";
 
 interface VendorOrcamentosTableProps {
   orcamentos: OrcamentoVendedor[];
@@ -54,7 +57,11 @@ export function VendorOrcamentosTable({
   const [orcamentoToDelete, setOrcamentoToDelete] = useState<OrcamentoVendedor | null>(null);
   const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
   const [selectedOrcForWhatsapp, setSelectedOrcForWhatsapp] = useState<OrcamentoVendedor | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<GroupedOrcamento | null>(null);
   const isMobile = useIsMobile();
+
+  const groupedOrcamentos = useGroupedOrcamentos(orcamentos);
 
   const handleWhatsappClick = (orc: OrcamentoVendedor) => {
     setSelectedOrcForWhatsapp(orc);
@@ -74,9 +81,23 @@ export function VendorOrcamentosTable({
     setOrcamentoToDelete(null);
   };
 
+  const handleOpenHistory = (group: GroupedOrcamento) => {
+    setSelectedGroup(group);
+    setHistoryOpen(true);
+  };
+
+  const handleWhatsAppFromHistory = (telefone: string, nome: string, leadId: string) => {
+    setHistoryOpen(false);
+    const orc = orcamentos.find((o) => o.lead_id === leadId);
+    if (orc) {
+      setSelectedOrcForWhatsapp(orc);
+      setWhatsappDialogOpen(true);
+    }
+  };
+
   const getConvertedStatus = () => statuses.find(s => s.nome === "Convertido");
 
-  if (orcamentos.length === 0) {
+  if (groupedOrcamentos.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         Nenhum orçamento encontrado
@@ -91,21 +112,34 @@ export function VendorOrcamentosTable({
     return (
       <>
         <div className="space-y-3">
-          {orcamentos.map((orc) => {
+          {groupedOrcamentos.map((group) => {
+            const orc = group.latestOrcamento as OrcamentoVendedor;
             const isConverted = convertidoStatus && orc.status_id === convertidoStatus.id;
             
             return (
-              <VendorOrcamentoCard
-                key={orc.id}
-                orcamento={orc}
-                statuses={statuses}
-                isConverted={!!isConverted}
-                onToggleVisto={() => onToggleVisto(orc)}
-                onView={() => onView(orc)}
-                onStatusChange={(newStatusId) => onStatusChange(orc.id, newStatusId)}
-                onDelete={onDelete ? () => handleDeleteClick(orc) : undefined}
-                onConvert={onConvert ? () => onConvert(orc) : undefined}
-              />
+              <div key={group.lead_id}>
+                {group.count > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mb-1 h-6 px-2 gap-1 text-xs text-muted-foreground"
+                    onClick={() => handleOpenHistory(group)}
+                  >
+                    <History className="h-3 w-3" />
+                    {group.count} orçamentos
+                  </Button>
+                )}
+                <VendorOrcamentoCard
+                  orcamento={orc}
+                  statuses={statuses}
+                  isConverted={!!isConverted}
+                  onToggleVisto={() => onToggleVisto(orc)}
+                  onView={() => onView(orc)}
+                  onStatusChange={(newStatusId) => onStatusChange(orc.id, newStatusId)}
+                  onDelete={onDelete ? () => handleDeleteClick(orc) : undefined}
+                  onConvert={onConvert ? () => onConvert(orc) : undefined}
+                />
+              </div>
             );
           })}
         </div>
@@ -130,6 +164,15 @@ export function VendorOrcamentosTable({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <OrcamentoHistoryDialog
+          group={selectedGroup}
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
+          statuses={statuses}
+          onViewOrcamento={(orc) => onView(orc as OrcamentoVendedor)}
+          onWhatsApp={handleWhatsAppFromHistory}
+        />
       </>
     );
   }
@@ -154,13 +197,15 @@ export function VendorOrcamentosTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orcamentos.map((orc) => {
+            {groupedOrcamentos.map((group) => {
+              const orc = group.latestOrcamento as OrcamentoVendedor;
               const convertidoStatus = getConvertedStatus();
               const isConverted = convertidoStatus && orc.status_id === convertidoStatus.id;
+              const hasHistory = group.count > 1;
               
               return (
                 <TableRow
-                  key={orc.id}
+                  key={group.lead_id}
                   className={`${orc.visto ? "bg-green-50/50 dark:bg-green-950/20" : ""} ${isConverted ? "bg-primary/5" : ""}`}
                 >
                   <TableCell>
@@ -171,9 +216,32 @@ export function VendorOrcamentosTable({
                     />
                   </TableCell>
                   <TableCell>
-                    <Badge variant="default" className="font-mono text-xs">
-                      {orc.orc_code || "-"}
-                    </Badge>
+                    <div className="flex items-center gap-1">
+                      <Badge variant="default" className="font-mono text-xs">
+                        {orc.orc_code || "-"}
+                      </Badge>
+                      {hasHistory && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-muted-foreground hover:text-primary"
+                                onClick={() => handleOpenHistory(group)}
+                              >
+                                <Badge variant="secondary" className="h-5 min-w-5 p-0 flex items-center justify-center text-xs">
+                                  +{group.count - 1}
+                                </Badge>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Ver {group.count} orçamentos deste cliente
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="font-mono text-xs">
@@ -187,6 +255,17 @@ export function VendorOrcamentosTable({
                         <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
                           Novo
                         </Badge>
+                      )}
+                      {hasHistory && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 gap-1 text-xs text-muted-foreground hover:text-primary"
+                          onClick={() => handleOpenHistory(group)}
+                        >
+                          <History className="h-3 w-3" />
+                          Histórico
+                        </Button>
                       )}
                     </div>
                   </TableCell>
@@ -329,6 +408,15 @@ export function VendorOrcamentosTable({
         } : null}
         open={whatsappDialogOpen}
         onOpenChange={setWhatsappDialogOpen}
+      />
+
+      <OrcamentoHistoryDialog
+        group={selectedGroup}
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        statuses={statuses}
+        onViewOrcamento={(orc) => onView(orc as OrcamentoVendedor)}
+        onWhatsApp={handleWhatsAppFromHistory}
       />
     </>
   );
