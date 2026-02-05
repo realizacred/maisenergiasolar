@@ -2356,6 +2356,13 @@ export type Database = {
       }
       unaccent: { Args: { "": string }; Returns: string }
       update_parcelas_atrasadas: { Args: never; Returns: undefined }
+      validate_vendedor_code: {
+        Args: { _codigo: string }
+        Returns: {
+          codigo: string
+          nome: string
+        }[]
+      }
     }
     Enums: {
       achievement_type:
