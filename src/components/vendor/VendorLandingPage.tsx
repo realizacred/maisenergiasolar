@@ -5,6 +5,7 @@ import Header from "@/components/layout/Header";
 import LeadFormWizard from "@/components/LeadFormWizard";
 import { OfflineStatusBar } from "./OfflineStatusBar";
 import { OfflineDuplicateResolver } from "./OfflineDuplicateResolver";
+import { InstallAppBanner } from "./InstallAppBanner";
 
 export function VendorLandingPage() {
   const [searchParams] = useSearchParams();
@@ -34,6 +35,7 @@ export function VendorLandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col">
       <Header />
+      <InstallAppBanner vendedorNome={vendedorNome} />
       <OfflineStatusBar vendedorNome={vendedorNome} />
 
       {/* Form Section */}
