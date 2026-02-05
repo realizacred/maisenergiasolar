@@ -7,7 +7,7 @@ import { OfflineStatusBar } from "@/components/vendor/OfflineStatusBar";
 import { OfflineDuplicateResolver } from "@/components/vendor/OfflineDuplicateResolver";
 import { InstallAppBanner } from "@/components/vendor/InstallAppBanner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type ValidationState = "loading" | "valid" | "invalid";
@@ -74,9 +74,23 @@ export default function VendorPage() {
               <h1 className="text-2xl font-bold text-foreground mb-2">
                 Link Inválido
               </h1>
-              <p className="text-muted-foreground mb-6">
+              <p className="text-muted-foreground mb-4">
                 O código de vendedor "{codigo}" não foi encontrado ou não está mais ativo.
               </p>
+              <div className="bg-muted/50 rounded-lg p-4 mb-6 text-sm">
+                <p className="text-muted-foreground mb-2">
+                  Se você acredita que isso é um erro, entre em contato:
+                </p>
+                <a 
+                  href="https://wa.me/5532998437675?text=Olá! Estou tentando acessar o link de vendedor com código: ${codigo}, mas aparece como inválido."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+                >
+                  <Phone className="w-4 h-4" />
+                  (32) 99843-7675
+                </a>
+              </div>
               <Button 
                 onClick={() => navigate("/")} 
                 className="w-full"
