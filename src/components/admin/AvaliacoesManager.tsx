@@ -4,26 +4,26 @@
  import { Progress } from "@/components/ui/progress";
  import { Badge } from "@/components/ui/badge";
  import { 
- Table, 
- TableBody, 
- TableCell, 
- TableHead, 
- TableHeader, 
- TableRow 
+   Table, 
+   TableBody, 
+   TableCell, 
+   TableHead, 
+   TableHeader, 
+   TableRow 
  } from "@/components/ui/table";
  import { toast } from "@/hooks/use-toast";
  import { format } from "date-fns";
  import { ptBR } from "date-fns/locale";
  import {
- Star,
- Loader2,
- TrendingUp,
- TrendingDown,
- BarChart3,
- ThumbsUp,
- ThumbsDown,
- Meh,
+   Loader2,
+   TrendingUp,
+   TrendingDown,
+   BarChart3,
+   ThumbsUp,
+   Meh,
+   Sparkles,
  } from "lucide-react";
+ import { StarRatingDisplay } from "@/components/ui/star-rating";
  
  interface Avaliacao {
  id: string;
@@ -35,17 +35,16 @@
  }
  
  const avaliacaoConfig: Record<string, { 
- label: string; 
- color: string; 
- emoji: string;
- score: number;
- bgClass: string;
+   label: string; 
+   color: string; 
+   score: number;
+   bgClass: string;
  }> = {
- otimo: { label: "Ótimo", color: "text-green-600", emoji: "😄", score: 5, bgClass: "bg-green-500" },
- bom: { label: "Bom", color: "text-blue-600", emoji: "🙂", score: 4, bgClass: "bg-blue-500" },
- razoavel: { label: "Razoável", color: "text-yellow-600", emoji: "😐", score: 3, bgClass: "bg-yellow-500" },
- ruim: { label: "Ruim", color: "text-orange-600", emoji: "😕", score: 2, bgClass: "bg-orange-500" },
- muito_ruim: { label: "Muito Ruim", color: "text-red-600", emoji: "😞", score: 1, bgClass: "bg-red-500" },
+   otimo: { label: "Excelente", color: "text-success", score: 5, bgClass: "bg-success" },
+   bom: { label: "Bom", color: "text-secondary", score: 4, bgClass: "bg-secondary" },
+   razoavel: { label: "Regular", color: "text-warning", score: 3, bgClass: "bg-warning" },
+   ruim: { label: "Ruim", color: "text-primary", score: 2, bgClass: "bg-primary" },
+   muito_ruim: { label: "Muito Ruim", color: "text-destructive", score: 1, bgClass: "bg-destructive" },
  };
  
  export function AvaliacoesManager() {
@@ -119,7 +118,7 @@
    <div className="space-y-6">
      {/* KPIs principais */}
      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-       <Card>
+        <Card className="border-l-4 border-l-warning">
          <CardContent className="pt-6">
            <div className="flex items-center justify-between">
              <div>
@@ -129,25 +128,25 @@
                  <span className="text-muted-foreground">/5</span>
                </div>
              </div>
-             <div className="p-3 bg-primary/10 rounded-full">
-               <Star className="h-6 w-6 text-primary" />
-             </div>
+              <div className="p-3 bg-warning/10 rounded-full">
+                <Sparkles className="h-6 w-6 text-warning" />
+              </div>
            </div>
            <div className="mt-3">
-             <Progress value={media * 20} className="h-2" />
+              <StarRatingDisplay value={media} size="sm" />
            </div>
          </CardContent>
        </Card>
  
-       <Card>
+        <Card className="border-l-4 border-l-success">
          <CardContent className="pt-6">
            <div className="flex items-center justify-between">
              <div>
                <p className="text-sm text-muted-foreground">Satisfação Positiva</p>
-               <p className="text-3xl font-bold text-green-600">{percentualPositivo}%</p>
+                <p className="text-3xl font-bold text-success">{percentualPositivo}%</p>
              </div>
-             <div className="p-3 bg-green-500/10 rounded-full">
-               <ThumbsUp className="h-6 w-6 text-green-600" />
+              <div className="p-3 bg-success/10 rounded-full">
+                <ThumbsUp className="h-6 w-6 text-success" />
              </div>
            </div>
            <p className="text-xs text-muted-foreground mt-2">
@@ -156,22 +155,22 @@
          </CardContent>
        </Card>
  
-       <Card>
+        <Card className="border-l-4 border-l-info">
          <CardContent className="pt-6">
            <div className="flex items-center justify-between">
              <div>
                <p className="text-sm text-muted-foreground">NPS Score</p>
-               <p className={`text-3xl font-bold ${nps >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-3xl font-bold ${nps >= 0 ? 'text-success' : 'text-destructive'}`}>
                  {nps > 0 && '+'}{nps}
                </p>
              </div>
-             <div className={`p-3 rounded-full ${nps >= 50 ? 'bg-green-500/10' : nps >= 0 ? 'bg-yellow-500/10' : 'bg-red-500/10'}`}>
+              <div className={`p-3 rounded-full ${nps >= 50 ? 'bg-success/10' : nps >= 0 ? 'bg-warning/10' : 'bg-destructive/10'}`}>
                {nps >= 50 ? (
-                 <TrendingUp className="h-6 w-6 text-green-600" />
+                  <TrendingUp className="h-6 w-6 text-success" />
                ) : nps >= 0 ? (
-                 <Meh className="h-6 w-6 text-yellow-600" />
+                  <Meh className="h-6 w-6 text-warning" />
                ) : (
-                 <TrendingDown className="h-6 w-6 text-red-600" />
+                  <TrendingDown className="h-6 w-6 text-destructive" />
                )}
              </div>
            </div>
@@ -181,15 +180,15 @@
          </CardContent>
        </Card>
  
-       <Card>
+        <Card className="border-l-4 border-l-secondary">
          <CardContent className="pt-6">
            <div className="flex items-center justify-between">
              <div>
                <p className="text-sm text-muted-foreground">Total de Avaliações</p>
                <p className="text-3xl font-bold">{stats.total}</p>
              </div>
-             <div className="p-3 bg-violet-500/10 rounded-full">
-               <BarChart3 className="h-6 w-6 text-violet-600" />
+              <div className="p-3 bg-secondary/10 rounded-full">
+                <BarChart3 className="h-6 w-6 text-secondary" />
              </div>
            </div>
            <p className="text-xs text-muted-foreground mt-2">
@@ -214,12 +213,12 @@
              const percent = stats.total > 0 ? (count / stats.total) * 100 : 0;
              return (
                <div key={key} className="flex items-center gap-4">
-                 <div className="w-24 flex items-center gap-2">
-                   <span className="text-xl">{config.emoji}</span>
+                  <div className="w-28 flex items-center gap-2">
+                    <StarRatingDisplay value={config.score} size="sm" />
                    <span className={`text-sm font-medium ${config.color}`}>
-                     {config.label}
                    </span>
                  </div>
+                  <span className="w-20 text-sm font-medium">{config.label}</span>
                  <div className="flex-1">
                    <div className="h-6 bg-muted rounded-full overflow-hidden">
                      <div
@@ -245,14 +244,14 @@
      <Card>
        <CardHeader>
          <CardTitle className="flex items-center gap-2 text-lg">
-           <Star className="h-5 w-5" />
+            <Sparkles className="h-5 w-5 text-warning" />
            Avaliações Recentes
          </CardTitle>
        </CardHeader>
        <CardContent>
          {avaliacoes.length === 0 ? (
            <div className="text-center py-12 text-muted-foreground">
-             <Star className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <Sparkles className="h-12 w-12 mx-auto mb-3 opacity-50" />
              <p>Nenhuma avaliação registrada</p>
            </div>
          ) : (
@@ -282,9 +281,12 @@
                        {avaliacao.endereco}
                      </TableCell>
                      <TableCell>
-                       <Badge className={`${config?.bgClass} text-white`}>
-                         {config?.emoji} {config?.label}
-                       </Badge>
+                        <div className="flex items-center gap-2">
+                          <StarRatingDisplay value={config?.score || 0} size="sm" />
+                          <Badge className={`${config?.bgClass} text-white`}>
+                            {config?.label}
+                          </Badge>
+                        </div>
                      </TableCell>
                    </TableRow>
                  );
