@@ -38,6 +38,12 @@ interface Vendedor {
   codigo: string;
 }
 
+interface Instalador {
+  id: string;
+  nome: string;
+  user_id: string;
+}
+
 export function PortalSwitcher() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -50,7 +56,9 @@ export function PortalSwitcher() {
   });
   const [loading, setLoading] = useState(true);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+  const [instaladores, setInstaladores] = useState<Instalador[]>([]);
   const [showVendedorDialog, setShowVendedorDialog] = useState(false);
+  const [showInstaladorDialog, setShowInstaladorDialog] = useState(false);
 
   const currentPortal = location.pathname.startsWith("/vendedor") 
     ? "vendedor" 
@@ -87,14 +95,29 @@ export function PortalSwitcher() {
         hasVendedorRecord = !!vendedorData;
       }
 
-      // If admin, load all vendedores for selection
+      // If admin, load all vendedores and instaladores for selection
       if (isAdmin) {
-        const { data: vendedoresData } = await supabase
-          .from("vendedores")
-          .select("id, nome, codigo")
-          .eq("ativo", true)
-          .order("nome");
-        setVendedores(vendedoresData || []);
+        const [vendedoresRes, instaladoresRes] = await Promise.all([
+          supabase
+            .from("vendedores")
+            .select("id, nome, codigo")
+            .eq("ativo", true)
+            .order("nome"),
+          supabase
+            .from("profiles")
+            .select("id, nome, user_id")
+            .eq("ativo", true)
+            .in("user_id", 
+              (await supabase
+                .from("user_roles")
+                .select("user_id")
+                .eq("role", "instalador")
+              ).data?.map(r => r.user_id) || []
+            )
+            .order("nome")
+        ]);
+        setVendedores(vendedoresRes.data || []);
+        setInstaladores(instaladoresRes.data || []);
       }
 
       setAccess({
@@ -115,7 +138,21 @@ export function PortalSwitcher() {
   };
 
   const handleSwitchToInstalador = () => {
-    navigate("/instalador");
+    // If admin and multiple installers, show selection
+    if (access.admin && !access.instalador && instaladores.length > 1) {
+      setShowInstaladorDialog(true);
+    } else if (access.admin && instaladores.length === 1) {
+      // Only one installer, go directly
+      navigate(`/instalador?as=${instaladores[0].user_id}`);
+    } else {
+      // User is an instalador, go to their portal
+      navigate("/instalador");
+    }
+  };
+
+  const handleSelectInstalador = (userId: string) => {
+    setShowInstaladorDialog(false);
+    navigate(`/instalador?as=${userId}`);
   };
 
   const handleSwitchToVendedor = () => {
@@ -205,16 +242,42 @@ export function PortalSwitcher() {
           
           {/* Portal do Instalador */}
           {(access.admin || access.instalador) && (
-            <DropdownMenuItem 
-              onClick={handleSwitchToInstalador}
-              className={currentPortal === "instalador" ? "bg-primary/10" : ""}
-            >
-              <Wrench className="mr-2 h-4 w-4" />
-              <span>Portal do Instalador</span>
-              {currentPortal === "instalador" && (
-                <span className="ml-auto text-xs text-muted-foreground">Atual</span>
-              )}
-            </DropdownMenuItem>
+            access.admin && instaladores.length > 1 ? (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className={currentPortal === "instalador" ? "bg-primary/10" : ""}>
+                  <Wrench className="mr-2 h-4 w-4" />
+                  <span>Portal do Instalador</span>
+                  {currentPortal === "instalador" && (
+                    <span className="ml-auto text-xs text-muted-foreground">Atual</span>
+                  )}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-56">
+                  <DropdownMenuLabel className="text-xs">Selecionar Instalador</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <ScrollArea className="h-[200px]">
+                    {instaladores.map((i) => (
+                      <DropdownMenuItem 
+                        key={i.id}
+                        onClick={() => handleSelectInstalador(i.user_id)}
+                      >
+                        <span className="truncate">{i.nome}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </ScrollArea>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            ) : (
+              <DropdownMenuItem 
+                onClick={handleSwitchToInstalador}
+                className={currentPortal === "instalador" ? "bg-primary/10" : ""}
+              >
+                <Wrench className="mr-2 h-4 w-4" />
+                <span>Portal do Instalador</span>
+                {currentPortal === "instalador" && (
+                  <span className="ml-auto text-xs text-muted-foreground">Atual</span>
+                )}
+              </DropdownMenuItem>
+            )
           )}
 
           {/* Painel Admin */}
@@ -260,6 +323,32 @@ export function PortalSwitcher() {
                 >
                   <span className="truncate">{v.nome}</span>
                   <span className="text-xs text-muted-foreground">{v.codigo}</span>
+                </Button>
+              ))}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog for instalador selection (fallback for mobile) */}
+      <Dialog open={showInstaladorDialog} onOpenChange={setShowInstaladorDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Selecionar Instalador</DialogTitle>
+            <DialogDescription>
+              Escolha qual instalador você deseja visualizar
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[300px]">
+            <div className="space-y-1">
+              {instaladores.map((i) => (
+                <Button
+                  key={i.id}
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => handleSelectInstalador(i.user_id)}
+                >
+                  <span className="truncate">{i.nome}</span>
                 </Button>
               ))}
             </div>
