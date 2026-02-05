@@ -25,6 +25,8 @@ import {
   Star,
   CalendarClock,
   Wrench,
+  AlertTriangle,
+  MessageCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -53,6 +55,7 @@ interface AdminSidebarProps {
 // Seção Financeira (destaque)
 const financeMenuItems = [
   { id: "recebimentos", title: "Recebimentos", icon: DollarSign },
+  { id: "inadimplencia", title: "Inadimplência", icon: AlertTriangle },
   { id: "comissoes", title: "Comissões", icon: Wallet },
   { id: "clientes", title: "Clientes", icon: UserCheck },
 ];
@@ -88,6 +91,7 @@ const configMenuItems = [
   { id: "config", title: "Calculadora", icon: Calculator },
   { id: "financiamento", title: "Bancos", icon: Building2 },
   { id: "instagram", title: "Instagram", icon: Instagram },
+  { id: "whatsapp", title: "WhatsApp", icon: MessageCircle },
   { id: "webhooks", title: "Webhooks", icon: Webhook },
 ];
 
