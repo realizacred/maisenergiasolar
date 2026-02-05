@@ -9,11 +9,11 @@
  import logoImg from "@/assets/logo.png";
  
  const avaliacaoOptions = [
-   { value: "otimo", label: "Ótimo", emoji: "😄", color: "bg-green-500 hover:bg-green-600" },
-   { value: "bom", label: "Bom", emoji: "🙂", color: "bg-blue-500 hover:bg-blue-600" },
-   { value: "razoavel", label: "Razoável", emoji: "😐", color: "bg-yellow-500 hover:bg-yellow-600" },
-   { value: "ruim", label: "Ruim", emoji: "😕", color: "bg-orange-500 hover:bg-orange-600" },
-   { value: "muito_ruim", label: "Muito Ruim", emoji: "😞", color: "bg-red-500 hover:bg-red-600" },
+  { value: "otimo", label: "Ótimo", emoji: "😄", color: "bg-success hover:bg-success/90" },
+  { value: "bom", label: "Bom", emoji: "🙂", color: "bg-secondary hover:bg-secondary/90" },
+  { value: "razoavel", label: "Razoável", emoji: "😐", color: "bg-warning hover:bg-warning/90" },
+  { value: "ruim", label: "Ruim", emoji: "😕", color: "bg-primary hover:bg-primary/90" },
+  { value: "muito_ruim", label: "Muito Ruim", emoji: "😞", color: "bg-destructive hover:bg-destructive/90" },
  ];
  
  export default function Avaliacao() {
@@ -72,11 +72,11 @@
  
    if (submitted) {
      return (
-       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 flex items-center justify-center p-4">
+      <div className="min-h-screen gradient-mesh flex items-center justify-center p-4">
          <Card className="w-full max-w-md text-center">
            <CardContent className="pt-8 pb-8">
-             <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-               <CheckCircle2 className="h-10 w-10 text-green-600" />
+            <div className="w-20 h-20 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="h-10 w-10 text-success" />
              </div>
              <h2 className="text-2xl font-bold text-foreground mb-2">
                Obrigado pela sua avaliação!
@@ -95,7 +95,7 @@
    }
  
    return (
-     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10">
+    <div className="min-h-screen gradient-mesh">
        {/* Header simples */}
        <header className="bg-primary text-primary-foreground py-4 shadow-lg">
          <div className="container mx-auto px-4 flex items-center justify-center">

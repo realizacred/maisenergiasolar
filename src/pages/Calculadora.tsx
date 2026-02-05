@@ -112,7 +112,7 @@ export default function Calculadora() {
   };
 
   return (
-    <div className="min-h-screen gradient-solar-soft flex flex-col">
+    <div className="min-h-screen gradient-mesh flex flex-col">
       <Header showCalculadora={false}>
         <Link to="/">
           <Button variant="default" size="sm" className="gap-2">
@@ -303,9 +303,9 @@ export default function Calculadora() {
               </Card>
 
               {/* CO2 */}
-              <Card className="shadow border-l-4 border-l-green-500">
+            <Card className="shadow border-l-4 border-l-success">
                 <CardContent className="pt-4">
-                  <div className="flex items-center gap-2 text-green-600 mb-1">
+                <div className="flex items-center gap-2 text-success mb-1">
                     <Leaf className="w-4 h-4" />
                     <span className="text-xs font-medium">Redução de CO₂</span>
                   </div>
