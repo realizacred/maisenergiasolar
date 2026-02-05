@@ -237,8 +237,32 @@ export function useOrcamentosVendedor({ vendedorNome, isAdminMode = false, filte
         },
         (payload) => {
           console.log('Realtime update received:', payload.eventType);
-          // Refetch all data to ensure consistency with joins
-          fetchOrcamentos();
+          
+          // For INSERT/DELETE, refetch to get lead info via join
+          if (payload.eventType === 'INSERT' || payload.eventType === 'DELETE') {
+            fetchOrcamentos();
+            return;
+          }
+          
+          // For UPDATE, apply changes locally without refetch (optimistic updates already done)
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            const updated = payload.new as any;
+            setOrcamentos((prev) => 
+              prev.map((o) => 
+                o.id === updated.id 
+                  ? { 
+                      ...o, 
+                      visto: updated.visto,
+                      visto_admin: updated.visto_admin,
+                      status_id: updated.status_id,
+                      ultimo_contato: updated.ultimo_contato,
+                      proxima_acao: updated.proxima_acao,
+                      data_proxima_acao: updated.data_proxima_acao,
+                    } 
+                  : o
+              )
+            );
+          }
         }
       )
       .subscribe();
