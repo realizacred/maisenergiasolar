@@ -21,6 +21,8 @@ import {
   TrendingUp,
   Settings,
   Coins,
+   ClipboardList,
+   Star,
 } from "lucide-react";
 import {
   Sidebar,
@@ -60,6 +62,12 @@ const salesMenuItems = [
   { id: "followup", title: "Follow-up", icon: Bell },
   { id: "validacao", title: "Validar Vendas", icon: ClipboardCheck },
 ];
+ 
+ // Seção de Operações
+ const operationsMenuItems = [
+   { id: "checklists", title: "Checklists", icon: ClipboardList },
+   { id: "avaliacoes", title: "Avaliações", icon: Star },
+ ];
 
 // Seção de Análises
 const analyticsMenuItems = [
@@ -206,6 +214,38 @@ export function AdminSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
 
+         {/* Seção de Operações */}
+         <SidebarGroup>
+           <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400 px-3 py-2 flex items-center gap-1.5">
+             <ClipboardList className="h-3 w-3" />
+             Operações
+           </SidebarGroupLabel>
+           <SidebarGroupContent>
+             <SidebarMenu>
+               {operationsMenuItems.map((item, index) => (
+                 <SidebarMenuItem key={item.id}>
+                   <SidebarMenuButton
+                     onClick={() => onTabChange(item.id)}
+                     isActive={activeTab === item.id}
+                     tooltip={item.title}
+                     className={`
+                       transition-all duration-200 rounded-lg mx-2
+                       ${activeTab === item.id 
+                         ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 font-medium shadow-xs" 
+                         : "hover:bg-orange-500/5"
+                       }
+                     `}
+                     style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + salesMenuItems.length + index) * 50}ms` }}
+                   >
+                     <item.icon className="h-4 w-4" />
+                     <span>{item.title}</span>
+                   </SidebarMenuButton>
+                 </SidebarMenuItem>
+               ))}
+             </SidebarMenu>
+           </SidebarGroupContent>
+         </SidebarGroup>
+ 
         {/* Configurações */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 px-3 py-2 flex items-center gap-1.5">
@@ -227,7 +267,7 @@ export function AdminSidebar({
                         : "hover:bg-amber-500/5"
                       }
                     `}
-                    style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + salesMenuItems.length + index) * 50}ms` }}
+                     style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + salesMenuItems.length + operationsMenuItems.length + index) * 50}ms` }}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
