@@ -198,7 +198,7 @@ export function VendorOrcamentosTable({
               <TableHead>Nome</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Localização</TableHead>
-              <TableHead>Consumo</TableHead>
+              <TableHead>Consumo / Geração</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Data</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -256,11 +256,11 @@ export function VendorOrcamentosTable({
                       {orc.lead_code || "-"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-medium">
+                  <TableCell>
                     <div className="flex items-center gap-2">
-                      {orc.nome}
+                      <span className="font-semibold text-foreground">{orc.nome}</span>
                       {!orc.visto && (
-                        <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
+                        <Badge variant="default" className="bg-primary text-primary-foreground text-xs">
                           Novo
                         </Badge>
                       )}
@@ -290,13 +290,20 @@ export function VendorOrcamentosTable({
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant="secondary"
-                      className="bg-secondary/10 text-secondary-foreground"
+                      variant="outline"
+                      className="border-primary/40 bg-primary/5 text-primary font-medium"
                     >
                       {orc.cidade}, {orc.estado}
                     </Badge>
                   </TableCell>
-                  <TableCell>{orc.media_consumo} kWh</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm font-medium">{orc.media_consumo} kWh</span>
+                      <span className="text-xs text-muted-foreground">
+                        Geração: {orc.consumo_previsto} kWh
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <OrcamentoStatusSelector
                       orcamentoId={orc.id}
@@ -344,21 +351,12 @@ export function VendorOrcamentosTable({
                                 variant="ghost"
                                 size="icon"
                                 className="text-primary hover:text-primary hover:bg-primary/10"
-                                onClick={() => {
-                                  // Se houver múltiplos orçamentos, abrir histórico para escolher
-                                  if (hasHistory) {
-                                    handleOpenHistory(group);
-                                  } else {
-                                    onConvert(orc);
-                                  }
-                                }}
+                                onClick={() => onConvert(orc)}
                               >
                                 <ShoppingCart className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>
-                              {hasHistory ? "Escolher orçamento para converter" : "Converter em Venda"}
-                            </TooltipContent>
+                            <TooltipContent>Converter em Venda</TooltipContent>
                           </Tooltip>
                         )}
                         {isConverted && (
