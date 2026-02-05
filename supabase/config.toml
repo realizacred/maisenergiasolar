@@ -21,5 +21,8 @@ verify_jwt = false
 [functions.test-evolution-connection]
 verify_jwt = false
 
+[functions.send-whatsapp-message]
+verify_jwt = false
+
 [functions.list-users-emails]
 verify_jwt = false
