@@ -220,8 +220,6 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
         return "bg-destructive/10 border-destructive/30 text-destructive";
       case "scheduled":
         return "bg-primary/10 border-primary/30 text-primary";
-      case "opportunity":
-        return "bg-emerald-100 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400";
       case "stale":
         return "bg-amber-100 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400";
     }
@@ -275,8 +273,8 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
           </div>
         ) : reminders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-            <CheckCircle2 className="h-12 w-12 text-emerald-500 opacity-50 mb-2" />
-            <p className="text-sm font-medium text-emerald-600">Tudo em dia! 🎉</p>
+            <CheckCircle2 className="h-12 w-12 text-success opacity-50 mb-2" />
+            <p className="text-sm font-medium text-success">Tudo em dia! 🎉</p>
             <p className="text-xs mt-1">Nenhum lembrete pendente no momento</p>
             {dismissedReminders.size > 0 && (
               <Button 
@@ -346,7 +344,7 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
                                 key={orc.id}
                                 className={`text-xs p-2 rounded border cursor-pointer transition-colors hover:bg-accent/50 ${
                                   isLatest
-                                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 ring-1 ring-emerald-500/20"
+                                    ? "border-success bg-success/10 ring-1 ring-success/20"
                                     : isFirst
                                     ? "border-primary/30 bg-primary/5"
                                     : "border-muted"
@@ -357,12 +355,12 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
                                   <div className="flex items-center gap-1.5">
                                     <Badge 
                                       variant={isLatest ? "default" : "outline"} 
-                                      className={`text-[10px] h-4 ${isLatest ? "bg-emerald-600" : ""}`}
+                                      className={`text-[10px] h-4 ${isLatest ? "bg-success text-success-foreground" : ""}`}
                                     >
                                       {orc.orc_code || "-"}
                                     </Badge>
                                     {isLatest && (
-                                      <Badge variant="secondary" className="text-[10px] h-4 bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                                      <Badge variant="secondary" className="text-[10px] h-4 bg-success/20 text-success">
                                         Mais Recente
                                       </Badge>
                                     )}
@@ -371,7 +369,7 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
                                     <span className="opacity-60">
                                       {format(new Date(orc.created_at), "dd/MM/yy", { locale: ptBR })}
                                     </span>
-                                    <MessageCircle className="h-3 w-3 text-emerald-600" />
+                                    <MessageCircle className="h-3 w-3 text-success" />
                                   </div>
                                 </div>
                                 <p className="mt-1 opacity-70">
@@ -400,7 +398,7 @@ export function SmartReminders({ leads, orcamentos = [], vendedorNome, onContact
                     </Button>
                     <Button
                       size="sm"
-                      className="h-8 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700"
+                      className="h-8 gap-1 text-xs bg-success hover:bg-success/90 text-success-foreground"
                       onClick={() => openWhatsApp(clientGroup.lead, clientGroup.latestOrcamento || undefined)}
                     >
                       <MessageCircle className="h-3 w-3" />

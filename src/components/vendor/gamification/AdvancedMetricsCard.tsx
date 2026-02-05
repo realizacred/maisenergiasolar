@@ -36,46 +36,46 @@
  
    if (!metrics) return null;
  
-   const metricItems = [
-     {
-       label: "Tempo Médio de Fechamento",
-       value: `${metrics.tempo_medio_fechamento_dias} dias`,
-       icon: Timer,
-       description: "Dias entre captação e conversão",
-       color: metrics.tempo_medio_fechamento_dias <= 7 ? "text-green-600" : "text-yellow-600",
-       bgColor: metrics.tempo_medio_fechamento_dias <= 7 ? "bg-green-50" : "bg-yellow-50",
-     },
-     {
-       label: "Taxa de Resposta Rápida",
-       value: `${metrics.taxa_resposta_rapida_percent}%`,
-       icon: Zap,
-       description: "Leads contatados em < 24h",
-       color: metrics.taxa_resposta_rapida_percent >= 80 ? "text-green-600" : "text-orange-600",
-       bgColor: metrics.taxa_resposta_rapida_percent >= 80 ? "bg-green-50" : "bg-orange-50",
-       progress: metrics.taxa_resposta_rapida_percent,
-     },
-     {
-       label: "Ticket Médio",
-       value: new Intl.NumberFormat("pt-BR", {
-         style: "currency",
-         currency: "BRL",
-         maximumFractionDigits: 0,
-       }).format(metrics.ticket_medio),
-       icon: DollarSign,
-       description: "Valor médio por conversão",
-       color: "text-blue-600",
-       bgColor: "bg-blue-50",
-     },
-     {
-       label: "Taxa de Retenção",
-       value: `${metrics.taxa_retencao_percent}%`,
-       icon: Shield,
-       description: "Leads não perdidos",
-       color: metrics.taxa_retencao_percent >= 70 ? "text-green-600" : "text-red-600",
-       bgColor: metrics.taxa_retencao_percent >= 70 ? "bg-green-50" : "bg-red-50",
-       progress: metrics.taxa_retencao_percent,
-     },
-   ];
+    const metricItems = [
+      {
+        label: "Tempo Médio de Fechamento",
+        value: `${metrics.tempo_medio_fechamento_dias} dias`,
+        icon: Timer,
+        description: "Dias entre captação e conversão",
+        color: metrics.tempo_medio_fechamento_dias <= 7 ? "text-success" : "text-warning",
+        bgColor: metrics.tempo_medio_fechamento_dias <= 7 ? "bg-success/10" : "bg-warning/10",
+      },
+      {
+        label: "Taxa de Resposta Rápida",
+        value: `${metrics.taxa_resposta_rapida_percent}%`,
+        icon: Zap,
+        description: "Leads contatados em < 24h",
+        color: metrics.taxa_resposta_rapida_percent >= 80 ? "text-success" : "text-primary",
+        bgColor: metrics.taxa_resposta_rapida_percent >= 80 ? "bg-success/10" : "bg-primary/10",
+        progress: metrics.taxa_resposta_rapida_percent,
+      },
+      {
+        label: "Ticket Médio",
+        value: new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+          maximumFractionDigits: 0,
+        }).format(metrics.ticket_medio),
+        icon: DollarSign,
+        description: "Valor médio por conversão",
+        color: "text-secondary",
+        bgColor: "bg-secondary/10",
+      },
+      {
+        label: "Taxa de Retenção",
+        value: `${metrics.taxa_retencao_percent}%`,
+        icon: Shield,
+        description: "Leads não perdidos",
+        color: metrics.taxa_retencao_percent >= 70 ? "text-success" : "text-destructive",
+        bgColor: metrics.taxa_retencao_percent >= 70 ? "bg-success/10" : "bg-destructive/10",
+        progress: metrics.taxa_retencao_percent,
+      },
+    ];
  
    return (
      <Card>
@@ -115,19 +115,19 @@
              <p className="text-lg font-bold text-foreground">{metrics.total_leads_atendidos}</p>
              <p className="text-xs text-muted-foreground">Leads atendidos</p>
            </div>
-           <div>
-             <p className="text-lg font-bold text-green-600">{metrics.leads_respondidos_24h}</p>
-             <p className="text-xs text-muted-foreground">Resp. em 24h</p>
-           </div>
-           <div>
-             <p className="text-lg font-bold text-blue-600">{metrics.leads_convertidos}</p>
-             <p className="text-xs text-muted-foreground">Convertidos</p>
-           </div>
-           <div>
-             <p className="text-lg font-bold text-red-600">{metrics.leads_perdidos}</p>
-             <p className="text-xs text-muted-foreground">Perdidos</p>
-           </div>
-         </div>
+            <div>
+              <p className="text-lg font-bold text-success">{metrics.leads_respondidos_24h}</p>
+              <p className="text-xs text-muted-foreground">Resp. em 24h</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-secondary">{metrics.leads_convertidos}</p>
+              <p className="text-xs text-muted-foreground">Convertidos</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-destructive">{metrics.leads_perdidos}</p>
+              <p className="text-xs text-muted-foreground">Perdidos</p>
+            </div>
+          </div>
        </CardContent>
      </Card>
    );

@@ -60,14 +60,14 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
       );
     } else if (daysSinceContact >= diasAlerta) {
       return (
-        <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-600 bg-yellow-50">
+        <Badge variant="outline" className="gap-1 border-warning text-warning bg-warning/10">
           <Clock className="w-3 h-3" />
           {daysSinceContact} dias
         </Badge>
       );
     } else {
       return (
-        <Badge variant="outline" className="gap-1 border-green-500 text-green-600 bg-green-50">
+        <Badge variant="outline" className="gap-1 border-success text-success bg-success/10">
           <CheckCircle className="w-3 h-3" />
           Em dia
         </Badge>
@@ -92,10 +92,10 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
             </div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-yellow-500">
+        <Card className="border-l-4 border-l-warning">
           <CardContent className="flex items-center gap-3 p-3 sm:pt-6">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-yellow-100 flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
             </div>
             <div className="min-w-0">
               <p className="text-xl sm:text-2xl font-bold text-foreground">{pendingLeads.length}</p>
@@ -103,10 +103,10 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
             </div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-green-500">
+        <Card className="border-l-4 border-l-success">
           <CardContent className="flex items-center gap-3 p-3 sm:pt-6">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-success/10 flex items-center justify-center shrink-0">
+              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-success" />
             </div>
             <div className="min-w-0">
               <p className="text-xl sm:text-2xl font-bold text-foreground">{upToDateLeads.length}</p>
@@ -219,11 +219,11 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
 
       {/* Pending Leads */}
       {pendingLeads.length > 0 && (
-        <Card className="border-yellow-500/50">
+        <Card className="border-warning/50">
           <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6">
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
-              <CardTitle className="text-sm sm:text-base text-yellow-700">Leads Pendentes</CardTitle>
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
+              <CardTitle className="text-sm sm:text-base text-warning">Leads Pendentes</CardTitle>
             </div>
             <CardDescription className="text-xs sm:text-sm">
               Entre {diasAlerta} e {diasAlerta * 2} dias sem contato.
@@ -233,7 +233,7 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
             {isMobile ? (
               <div className="space-y-2">
                 {pendingLeads.map((lead) => (
-                  <div key={lead.id} className="p-3 rounded-lg bg-yellow-50/50 border border-yellow-200 dark:bg-yellow-950/20">
+                  <div key={lead.id} className="p-3 rounded-lg bg-warning/5 border border-warning/30">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="min-w-0">
                         <p className="font-medium text-sm truncate">{lead.nome}</p>
@@ -273,7 +273,7 @@ export function VendorFollowUpManager({ leads, diasAlerta = 3, onViewLead }: Ven
                   </thead>
                   <tbody>
                     {pendingLeads.map((lead) => (
-                      <tr key={lead.id} className="bg-yellow-50/50 border-t">
+                      <tr key={lead.id} className="bg-warning/5 border-t">
                         <td className="p-3">
                           <div>
                             <p className="font-medium">{lead.nome}</p>

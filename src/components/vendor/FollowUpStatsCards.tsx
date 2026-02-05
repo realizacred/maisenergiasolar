@@ -55,10 +55,10 @@ export function FollowUpStatsCards({ leads }: FollowUpStatsCardsProps) {
       </Card>
 
       {/* Pendentes (3+ dias) */}
-      <Card className="border-amber-400/30 bg-amber-50 dark:bg-amber-950/20">
+      <Card className="border-warning/30 bg-warning/5">
         <CardContent className="flex items-center gap-3 p-3 sm:p-4">
-          <div className="rounded-full border-2 border-amber-500 p-1.5 sm:p-2 shrink-0">
-            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+          <div className="rounded-full border-2 border-warning p-1.5 sm:p-2 shrink-0">
+            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-warning" />
           </div>
           <div className="min-w-0">
             <p className="text-xl sm:text-2xl font-bold">{stats.pendentes}</p>
@@ -68,10 +68,10 @@ export function FollowUpStatsCards({ leads }: FollowUpStatsCardsProps) {
       </Card>
 
       {/* Em dia */}
-      <Card className="border-emerald-400/30 bg-emerald-50 dark:bg-emerald-950/20">
+      <Card className="border-success/30 bg-success/5">
         <CardContent className="flex items-center gap-3 p-3 sm:p-4">
-          <div className="rounded-full border-2 border-emerald-500 p-1.5 sm:p-2 shrink-0">
-            <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
+          <div className="rounded-full border-2 border-success p-1.5 sm:p-2 shrink-0">
+            <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-success" />
           </div>
           <div className="min-w-0">
             <p className="text-xl sm:text-2xl font-bold">{stats.emDia}</p>

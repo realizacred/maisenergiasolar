@@ -11,11 +11,11 @@
    onDismiss: (id: string) => void;
  }
  
- const THRESHOLD_LABELS: Record<number, { label: string; color: string; icon: typeof Trophy }> = {
-   50: { label: "Metade do caminho!", color: "bg-blue-100 text-blue-700 border-blue-200", icon: Target },
-   80: { label: "Quase lá!", color: "bg-orange-100 text-orange-700 border-orange-200", icon: Target },
-   100: { label: "Meta atingida!", color: "bg-green-100 text-green-700 border-green-200", icon: Trophy },
- };
+const THRESHOLD_LABELS: Record<number, { label: string; color: string; icon: typeof Trophy }> = {
+  50: { label: "Metade do caminho!", color: "bg-secondary/10 text-secondary border-secondary/30", icon: Target },
+  80: { label: "Quase lá!", color: "bg-primary/10 text-primary border-primary/30", icon: Target },
+  100: { label: "Meta atingida!", color: "bg-success/10 text-success border-success/30", icon: Trophy },
+};
  
  const META_LABELS: Record<string, string> = {
    orcamentos: "Orçamentos",

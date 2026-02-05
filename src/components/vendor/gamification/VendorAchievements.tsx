@@ -17,18 +17,18 @@
    return (
      <Card>
        <CardHeader className="pb-3">
-         <div className="flex items-center justify-between">
-           <CardTitle className="text-lg flex items-center gap-2">
-             <Sparkles className="h-5 w-5 text-purple-500" />
-             Conquistas
-           </CardTitle>
-           <div className="flex items-center gap-2">
-             <Badge variant="secondary">
-               {unlockedCount}/{achievements.length}
-             </Badge>
-             <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-               {totalPoints} pts
-             </Badge>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Conquistas
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">
+                {unlockedCount}/{achievements.length}
+              </Badge>
+              <Badge className="bg-primary text-primary-foreground">
+                {totalPoints} pts
+              </Badge>
            </div>
          </div>
        </CardHeader>
@@ -37,11 +37,11 @@
            {achievements.map((achievement) => (
              <div
                key={achievement.id}
-               className={`relative p-3 rounded-lg border text-center transition-all ${
-                 achievement.unlocked
-                   ? "bg-gradient-to-b from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-700"
-                   : "bg-muted/30 border-dashed opacity-60"
-               }`}
+                className={`relative p-3 rounded-lg border text-center transition-all ${
+                  achievement.unlocked
+                    ? "bg-gradient-to-b from-primary/10 to-primary/20 border-primary/30"
+                    : "bg-muted/30 border-dashed opacity-60"
+                }`}
              >
                {!achievement.unlocked && (
                  <div className="absolute top-1 right-1">
@@ -61,11 +61,11 @@
                <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
                  {achievement.description}
                </p>
-               {achievement.unlocked && (
-                 <Badge
-                   variant="secondary"
-                   className="mt-1 text-[10px] bg-purple-100 dark:bg-purple-900/30"
-                 >
+                {achievement.unlocked && (
+                  <Badge
+                    variant="secondary"
+                    className="mt-1 text-[10px] bg-primary/20"
+                  >
                    +{achievement.points} pts
                  </Badge>
                )}

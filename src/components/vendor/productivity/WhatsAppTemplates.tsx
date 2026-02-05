@@ -44,11 +44,11 @@ const CATEGORIA_LABELS: Record<Template["categoria"], string> = {
 };
 
 const CATEGORIA_COLORS: Record<Template["categoria"], string> = {
-  primeiro_contato: "bg-blue-100 text-blue-700 border-blue-200",
-  follow_up: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  proposta: "bg-purple-100 text-purple-700 border-purple-200",
-  fechamento: "bg-green-100 text-green-700 border-green-200",
-  pos_venda: "bg-orange-100 text-orange-700 border-orange-200",
+  primeiro_contato: "bg-secondary/10 text-secondary border-secondary/30",
+  follow_up: "bg-warning/10 text-warning border-warning/30",
+  proposta: "bg-primary/10 text-primary border-primary/30",
+  fechamento: "bg-success/10 text-success border-success/30",
+  pos_venda: "bg-info/10 text-info border-info/30",
 };
 
 const DEFAULT_TEMPLATES: Template[] = [
@@ -270,8 +270,8 @@ export function WhatsAppTemplates({ vendedorNome = "Vendedor", onSendToLead }: W
       <Card className="flex flex-col h-full w-full min-h-0 overflow-hidden">
        <CardHeader className="pb-3">
          <div className="flex items-center justify-between">
-           <div className="flex items-center gap-2">
-             <MessageCircle className="h-5 w-5 text-green-600" />
+            <div className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-success" />
              <CardTitle className="text-base">Templates WhatsApp</CardTitle>
            </div>
            <Button size="sm" onClick={startCreate} className="gap-1">
@@ -366,10 +366,10 @@ export function WhatsAppTemplates({ vendedorNome = "Vendedor", onSendToLead }: W
                            >
                              <Copy className="h-4 w-4" />
                            </Button>
-                           <Button
-                             size="icon"
-                             variant="ghost"
-                             className="h-8 w-8 text-green-600"
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-success"
                              onClick={() => openPreview(template)}
                            >
                              <Send className="h-4 w-4" />
