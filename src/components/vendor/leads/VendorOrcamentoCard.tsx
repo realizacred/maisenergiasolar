@@ -95,13 +95,16 @@ export function VendorOrcamentoCard({
             <Phone className="w-3.5 h-3.5" />
             <span className="truncate">{orcamento.telefone}</span>
           </a>
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <MapPin className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{orcamento.cidade}, {orcamento.estado}</span>
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 shrink-0 text-primary" />
+            <span className="truncate font-medium text-primary">{orcamento.cidade}, {orcamento.estado}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Zap className="w-3.5 h-3.5" />
-            <span>{orcamento.media_consumo} kWh</span>
+          <div className="flex flex-col gap-0.5 text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5" />
+              <span>{orcamento.media_consumo} kWh</span>
+            </div>
+            <span className="text-xs ml-5">Geração: {orcamento.consumo_previsto} kWh</span>
           </div>
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Calendar className="w-3.5 h-3.5" />
