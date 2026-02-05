@@ -1,47 +1,50 @@
- import { useState, useEffect } from "react";
- import { supabase } from "@/integrations/supabase/client";
- import { toast } from "@/hooks/use-toast";
- import { Button } from "@/components/ui/button";
- import { Input } from "@/components/ui/input";
- import { Label } from "@/components/ui/label";
- import { Textarea } from "@/components/ui/textarea";
- import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
- import {
-   Table,
-   TableBody,
-   TableCell,
-   TableHead,
-   TableHeader,
-   TableRow,
- } from "@/components/ui/table";
- import {
-   Dialog,
-   DialogContent,
-   DialogHeader,
-   DialogTitle,
-   DialogTrigger,
- } from "@/components/ui/dialog";
- import {
-   Select,
-   SelectContent,
-   SelectItem,
-   SelectTrigger,
-   SelectValue,
- } from "@/components/ui/select";
- import { Badge } from "@/components/ui/badge";
- import {
-   Plus,
-   Loader2,
-   Trash2,
-   DollarSign,
-   Eye,
-   TrendingUp,
-   Users,
-   Calendar,
- } from "lucide-react";
- import { format } from "date-fns";
- import { ptBR } from "date-fns/locale";
- import { PagamentosComissaoDialog } from "./PagamentosComissaoDialog";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Plus,
+  Loader2,
+  Trash2,
+  DollarSign,
+  Eye,
+  TrendingUp,
+  Users,
+  Calendar,
+  CreditCard,
+} from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { PagamentosComissaoDialog } from "./PagamentosComissaoDialog";
+import { BulkPaymentDialog } from "./comissoes/BulkPaymentDialog";
  
  interface Vendedor {
    id: string;
@@ -83,21 +86,23 @@
    { value: 12, label: "Dezembro" },
  ];
  
- export function ComissoesManager() {
-   const [comissoes, setComissoes] = useState<Comissao[]>([]);
-   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
-   const [loading, setLoading] = useState(true);
-   const [saving, setSaving] = useState(false);
-   const [dialogOpen, setDialogOpen] = useState(false);
-   const [selectedComissao, setSelectedComissao] = useState<Comissao | null>(null);
-   const [pagamentosDialogOpen, setPagamentosDialogOpen] = useState(false);
- 
-   // Filters
-   const currentDate = new Date();
-   const [filterMes, setFilterMes] = useState(currentDate.getMonth() + 1);
-   const [filterAno, setFilterAno] = useState(currentDate.getFullYear());
-   const [filterVendedor, setFilterVendedor] = useState<string>("all");
-   const [filterStatus, setFilterStatus] = useState<string>("all");
+export function ComissoesManager() {
+  const [comissoes, setComissoes] = useState<Comissao[]>([]);
+  const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedComissao, setSelectedComissao] = useState<Comissao | null>(null);
+  const [pagamentosDialogOpen, setPagamentosDialogOpen] = useState(false);
+  const [bulkPaymentOpen, setBulkPaymentOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Filters
+  const currentDate = new Date();
+  const [filterMes, setFilterMes] = useState(currentDate.getMonth() + 1);
+  const [filterAno, setFilterAno] = useState(currentDate.getFullYear());
+  const [filterVendedor, setFilterVendedor] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
  
    const [formData, setFormData] = useState({
      vendedor_id: "",
@@ -236,14 +241,41 @@
      return <Badge variant={config.variant}>{config.label}</Badge>;
    };
  
-   const calcularValorPago = (comissao: Comissao) => {
-     return comissao.pagamentos_comissao?.reduce((acc, p) => acc + p.valor_pago, 0) || 0;
-   };
- 
-   // Stats
-   const totalComissoes = comissoes.reduce((acc, c) => acc + c.valor_comissao, 0);
-   const totalPago = comissoes.reduce((acc, c) => acc + calcularValorPago(c), 0);
-   const totalPendente = totalComissoes - totalPago;
+  const calcularValorPago = (comissao: Comissao) => {
+    return comissao.pagamentos_comissao?.reduce((acc, p) => acc + p.valor_pago, 0) || 0;
+  };
+
+  const calcularSaldoRestante = (comissao: Comissao) => {
+    const pago = calcularValorPago(comissao);
+    return Math.max(0, comissao.valor_comissao - pago);
+  };
+
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (selectedIds.size === comissoes.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(comissoes.map(c => c.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const selectedComissoes = comissoes.filter(c => selectedIds.has(c.id));
+  const selectedTotalAReceber = selectedComissoes.reduce((acc, c) => acc + calcularSaldoRestante(c), 0);
+
+  // Stats
+  const totalComissoes = comissoes.reduce((acc, c) => acc + c.valor_comissao, 0);
+  const totalPago = comissoes.reduce((acc, c) => acc + calcularValorPago(c), 0);
+  const totalPendente = comissoes.reduce((acc, c) => acc + calcularSaldoRestante(c), 0);
  
    const anos = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - i);
  
@@ -318,16 +350,27 @@
  
        {/* Filters and Actions */}
        <Card>
-         <CardHeader className="pb-4">
-           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-             <CardTitle>Comissões</CardTitle>
-             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-               <DialogTrigger asChild>
-                 <Button className="gap-2">
-                   <Plus className="h-4 w-4" />
-                   Nova Comissão
-                 </Button>
-               </DialogTrigger>
+        <CardHeader className="pb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <CardTitle>Comissões</CardTitle>
+            <div className="flex items-center gap-2">
+              {selectedIds.size > 0 && (
+                <Button 
+                  variant="secondary" 
+                  className="gap-2"
+                  onClick={() => setBulkPaymentOpen(true)}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  Pagar {selectedIds.size} selecionadas ({formatCurrency(selectedTotalAReceber)})
+                </Button>
+              )}
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Nova Comissão
+                  </Button>
+                </DialogTrigger>
                <DialogContent>
                  <DialogHeader>
                    <DialogTitle>Registrar Comissão</DialogTitle>
@@ -464,9 +507,10 @@
                    </div>
                  </form>
                </DialogContent>
-             </Dialog>
-           </div>
-         </CardHeader>
+              </Dialog>
+            </div>
+          </div>
+        </CardHeader>
          <CardContent>
            {/* Filters */}
            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -542,91 +586,114 @@
                <p>Nenhuma comissão encontrada para o período selecionado</p>
              </div>
            ) : (
-             <Table>
-               <TableHeader>
-                 <TableRow>
-                   <TableHead>Vendedor</TableHead>
-                   <TableHead>Descrição</TableHead>
-                   <TableHead className="text-right">Valor Base</TableHead>
-                   <TableHead className="text-center">%</TableHead>
-                   <TableHead className="text-right">Comissão</TableHead>
-                   <TableHead className="text-right">Pago</TableHead>
-                   <TableHead className="text-center">Status</TableHead>
-                   <TableHead className="w-24"></TableHead>
-                 </TableRow>
-               </TableHeader>
-               <TableBody>
-                 {comissoes.map((comissao) => {
-                   const valorPago = calcularValorPago(comissao);
-                   return (
-                     <TableRow key={comissao.id}>
-                       <TableCell className="font-medium">
-                         {comissao.vendedores?.nome}
-                       </TableCell>
-                       <TableCell>
-                         <div>
-                           <p className="truncate max-w-48">{comissao.descricao}</p>
-                           {comissao.projetos?.codigo && (
-                             <p className="text-xs text-muted-foreground">
-                               {comissao.projetos.codigo}
-                             </p>
-                           )}
-                         </div>
-                       </TableCell>
-                       <TableCell className="text-right">
-                         {formatCurrency(comissao.valor_base)}
-                       </TableCell>
-                       <TableCell className="text-center">
-                         {comissao.percentual_comissao}%
-                       </TableCell>
-                       <TableCell className="text-right font-medium">
-                         {formatCurrency(comissao.valor_comissao)}
-                       </TableCell>
-                       <TableCell className="text-right text-green-600">
-                         {formatCurrency(valorPago)}
-                       </TableCell>
-                       <TableCell className="text-center">
-                         {getStatusBadge(comissao.status)}
-                       </TableCell>
-                       <TableCell>
-                         <div className="flex items-center gap-1">
-                           <Button
-                             size="sm"
-                             variant="ghost"
-                             onClick={() => {
-                               setSelectedComissao(comissao);
-                               setPagamentosDialogOpen(true);
-                             }}
-                           >
-                             <Eye className="h-4 w-4" />
-                           </Button>
-                           <Button
-                             size="sm"
-                             variant="ghost"
-                             onClick={() => handleDelete(comissao.id)}
-                           >
-                             <Trash2 className="h-4 w-4 text-destructive" />
-                           </Button>
-                         </div>
-                       </TableCell>
-                     </TableRow>
-                   );
-                 })}
-               </TableBody>
-             </Table>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedIds.size === comissoes.length && comissoes.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
+                  <TableHead>Vendedor</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="text-right">Comissão</TableHead>
+                  <TableHead className="text-right">Pago</TableHead>
+                  <TableHead className="text-right">A Receber</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="w-24"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {comissoes.map((comissao) => {
+                  const valorPago = calcularValorPago(comissao);
+                  const saldoRestante = calcularSaldoRestante(comissao);
+                  return (
+                    <TableRow key={comissao.id} className={selectedIds.has(comissao.id) ? "bg-muted/50" : ""}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(comissao.id)}
+                          onCheckedChange={() => toggleSelect(comissao.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {comissao.vendedores?.nome}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="truncate max-w-48">{comissao.descricao}</p>
+                          {comissao.projetos?.codigo && (
+                            <p className="text-xs text-muted-foreground">
+                              {comissao.projetos.codigo}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(comissao.valor_comissao)}
+                      </TableCell>
+                      <TableCell className="text-right text-green-600">
+                        {formatCurrency(valorPago)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-orange-600">
+                        {saldoRestante > 0 ? formatCurrency(saldoRestante) : "-"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {getStatusBadge(comissao.status)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setSelectedComissao(comissao);
+                              setPagamentosDialogOpen(true);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(comissao.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
            )}
          </CardContent>
        </Card>
  
-       {/* Pagamentos Dialog */}
-       {selectedComissao && (
-         <PagamentosComissaoDialog
-           open={pagamentosDialogOpen}
-           onOpenChange={setPagamentosDialogOpen}
-           comissao={selectedComissao}
-           onUpdate={fetchData}
-         />
-       )}
+      {/* Pagamentos Dialog */}
+      {selectedComissao && (
+        <PagamentosComissaoDialog
+          open={pagamentosDialogOpen}
+          onOpenChange={setPagamentosDialogOpen}
+          comissao={selectedComissao}
+          onUpdate={fetchData}
+        />
+      )}
+
+      {/* Bulk Payment Dialog */}
+      <BulkPaymentDialog
+        open={bulkPaymentOpen}
+        onOpenChange={(open) => {
+          setBulkPaymentOpen(open);
+          if (!open) setSelectedIds(new Set());
+        }}
+        comissoes={selectedComissoes}
+        onUpdate={() => {
+          fetchData();
+          setSelectedIds(new Set());
+        }}
+      />
      </div>
    );
  }
