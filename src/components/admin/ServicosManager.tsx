@@ -47,6 +47,7 @@
    Grid3X3,
  } from "lucide-react";
  import { ServicoDetailDialog } from "./ServicoDetailDialog";
+import { SolarLayoutEditor } from "@/components/solar-editor";
  
  interface Servico {
    id: string;
@@ -103,6 +104,8 @@
    const [dialogOpen, setDialogOpen] = useState(false);
    const [saving, setSaving] = useState(false);
    const [selectedServicoId, setSelectedServicoId] = useState<string | null>(null);
+  const [layoutEditorOpen, setLayoutEditorOpen] = useState(false);
+  const [selectedServiceForLayout, setSelectedServiceForLayout] = useState<Servico | null>(null);
  
    const [formData, setFormData] = useState({
      cliente_id: "",
@@ -253,6 +256,11 @@
      return instaladores.find(i => i.id === id)?.nome || "—";
    };
  
+  const handleOpenLayoutEditor = (servico: Servico) => {
+    setSelectedServiceForLayout(servico);
+    setLayoutEditorOpen(true);
+  };
+
    if (loading) {
      return (
        <div className="flex justify-center py-12">
@@ -521,13 +529,24 @@
                        </div>
                      </TableCell>
                      <TableCell>
-                       <Button
-                         variant="ghost"
-                         size="icon"
-                         onClick={() => setSelectedServicoId(servico.id)}
-                       >
-                         <Eye className="h-4 w-4" />
-                       </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedServicoId(servico.id)}
+                        title="Ver detalhes"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleOpenLayoutEditor(servico)}
+                        title="Editor de Layout Solar"
+                      >
+                        <Grid3X3 className="h-4 w-4" />
+                      </Button>
+                    </div>
                      </TableCell>
                    </TableRow>
                  ))
@@ -542,6 +561,20 @@
          isOpen={!!selectedServicoId}
          onClose={() => setSelectedServicoId(null)}
        />
+
+      {selectedServiceForLayout && (
+        <SolarLayoutEditor
+          isOpen={layoutEditorOpen}
+          onClose={() => {
+            setLayoutEditorOpen(false);
+            setSelectedServiceForLayout(null);
+          }}
+          servicoId={selectedServiceForLayout.id}
+          clienteId={selectedServiceForLayout.cliente?.id}
+          layoutName={`Layout - ${selectedServiceForLayout.cliente?.nome || 'Serviço'}`}
+          onSave={() => fetchData()}
+        />
+      )}
      </div>
    );
  }

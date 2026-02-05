@@ -1102,6 +1102,79 @@ export type Database = {
         }
         Relationships: []
       }
+      layouts_solares: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          layout_data: Json
+          nome: string
+          potencia_estimada_kwp: number | null
+          projeto_id: string | null
+          servico_id: string | null
+          thumbnail_url: string | null
+          tipo_telhado: string | null
+          total_modulos: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          layout_data?: Json
+          nome?: string
+          potencia_estimada_kwp?: number | null
+          projeto_id?: string | null
+          servico_id?: string | null
+          thumbnail_url?: string | null
+          tipo_telhado?: string | null
+          total_modulos?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          layout_data?: Json
+          nome?: string
+          potencia_estimada_kwp?: number | null
+          projeto_id?: string | null
+          servico_id?: string | null
+          thumbnail_url?: string | null
+          tipo_telhado?: string | null
+          total_modulos?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "layouts_solares_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "layouts_solares_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "layouts_solares_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "servicos_agendados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_atividades: {
         Row: {
           concluido: boolean | null
