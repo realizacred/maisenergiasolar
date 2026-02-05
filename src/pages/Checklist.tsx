@@ -207,7 +207,7 @@ export default function Checklist() {
                 Histórico
               </h1>
               <p className="text-muted-foreground text-sm mt-1">
-                Seus últimos checklists
+                Seus últimos registros de serviço
               </p>
             </div>
 
