@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 const PORTAL_PREFERENCE_KEY = "preferred_portal";
+const ALLOWED_ROLES = ["admin", "gerente", "financeiro", "vendedor", "instalador"];
 
 export default function Auth() {
   const { user, loading } = useAuth();
@@ -50,6 +51,7 @@ export default function Auth() {
 
           const isVendedor = roles?.some(r => r.role === "vendedor");
           const isAdmin = roles?.some(r => r.role === "admin" || r.role === "gerente" || r.role === "financeiro");
+          const isInstalador = roles?.some(r => r.role === "instalador");
 
           let hasVendedorRecord = false;
           if (isVendedor) {
@@ -72,7 +74,10 @@ export default function Auth() {
             return;
           }
 
-          if (isVendedor && !isAdmin && hasVendedorRecord) {
+          // Instalador-only users go directly to installer portal
+          if (isInstalador && !isAdmin && !isVendedor) {
+            navigate("/instalador", { replace: true });
+          } else if (isVendedor && !isAdmin && hasVendedorRecord) {
             navigate("/vendedor", { replace: true });
           } else {
             navigate("/admin", { replace: true });

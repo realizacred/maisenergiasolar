@@ -17,13 +17,14 @@ interface PortalAccess {
   vendedor: boolean;
   admin: boolean;
   vendedorRecord: boolean;
+  instalador: boolean;
 }
 
 export default function PortalSelector() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [access, setAccess] = useState<PortalAccess>({ vendedor: false, admin: false, vendedorRecord: false });
+  const [access, setAccess] = useState<PortalAccess>({ vendedor: false, admin: false, vendedorRecord: false, instalador: false });
   const [rememberChoice, setRememberChoice] = useState(false);
 
   useEffect(() => {
@@ -52,6 +53,7 @@ export default function PortalSelector() {
 
       const isVendedor = roles?.some(r => r.role === "vendedor");
       const isAdmin = roles?.some(r => r.role === "admin" || r.role === "gerente" || r.role === "financeiro");
+      const isInstalador = roles?.some(r => r.role === "instalador");
 
       // Check if user has vendedor record
       let hasVendedorRecord = false;
@@ -68,6 +70,7 @@ export default function PortalSelector() {
         vendedor: isVendedor || false,
         admin: isAdmin || false,
         vendedorRecord: hasVendedorRecord,
+        instalador: isInstalador || false,
       });
 
       // If only one option available, redirect directly
@@ -79,13 +82,17 @@ export default function PortalSelector() {
           navigate("/admin", { replace: true });
           return;
         }
+      } else if (isInstalador && !isVendedor) {
+        // Instalador-only users go directly to installer portal
+        navigate("/instalador", { replace: true });
+        return;
       } else if (isVendedor && hasVendedorRecord) {
         // Vendedor-only users go directly to vendor portal
         navigate("/vendedor", { replace: true });
         return;
       } else {
-        // No valid role, redirect to admin (will show access denied)
-        navigate("/admin", { replace: true });
+        // No valid role, redirect to auth
+        navigate("/auth", { replace: true });
         return;
       }
 
