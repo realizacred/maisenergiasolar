@@ -231,6 +231,20 @@ export default function Admin() {
         return <WhatsAppAutomationConfig />;
       case "webhooks":
         return <WebhookManager />;
+      case "n8n":
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>n8n - Automações</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Integração com n8n em desenvolvimento.</p>
+                <p className="text-sm mt-2">Configure workflows de automação via MCP.</p>
+              </div>
+            </CardContent>
+          </Card>
+        );
       case "inadimplencia":
         return <InadimplenciaDashboard />;
       default:

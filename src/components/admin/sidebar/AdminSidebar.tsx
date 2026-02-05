@@ -27,6 +27,8 @@ import {
   Wrench,
   AlertTriangle,
   MessageCircle,
+  Cable,
+  Workflow,
 } from "lucide-react";
 import {
   Sidebar,
@@ -81,11 +83,12 @@ const analyticsMenuItems = [
   { id: "dashboard", title: "Dashboard", icon: BarChart3 },
 ];
 
-// Integrações (nova seção)
-const integrationsMenuItems = [
-  { id: "instagram", title: "Instagram", icon: Instagram },
-  { id: "whatsapp", title: "WhatsApp", icon: MessageCircle },
-  { id: "webhooks", title: "Webhooks", icon: Webhook },
+// APIs e Automações (seção dedicada)
+const apiMenuItems = [
+  { id: "whatsapp", title: "WhatsApp API", icon: MessageCircle, description: "Evolution API" },
+  { id: "instagram", title: "Instagram API", icon: Instagram, description: "Meta Graph API" },
+  { id: "webhooks", title: "Webhooks", icon: Webhook, description: "Entrada/Saída" },
+  { id: "n8n", title: "n8n", icon: Workflow, description: "Automações" },
 ];
 
 // Configurações
@@ -258,36 +261,39 @@ export function AdminSidebar({
            </SidebarGroupContent>
          </SidebarGroup>
 
-        {/* Integrações */}
+        {/* APIs */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400 px-3 py-2 flex items-center gap-1.5">
-            <Webhook className="h-3 w-3" />
-            Integrações
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 px-3 py-2 flex items-center gap-1.5">
+            <Cable className="h-3 w-3" />
+            APIs
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {integrationsMenuItems.map((item, index) => (
+            <SidebarMenu className="space-y-0.5">
+              {apiMenuItems.map((item, index) => (
                 <div key={item.id}>
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => onTabChange(item.id)}
                       isActive={activeTab === item.id}
-                      tooltip={item.title}
+                      tooltip={`${item.title} - ${item.description}`}
                       className={`
-                        transition-all duration-200 rounded-lg mx-2
+                        transition-all duration-200 rounded-lg mx-2 py-2.5
                         ${activeTab === item.id 
-                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 font-medium shadow-xs" 
-                          : "hover:bg-purple-500/5"
+                          ? "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-medium shadow-xs" 
+                          : "hover:bg-cyan-500/5"
                         }
                       `}
                       style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + salesMenuItems.length + operationsMenuItems.length + index) * 50}ms` }}
                     >
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm">{item.title}</span>
+                        <span className="text-[10px] opacity-60">{item.description}</span>
+                      </div>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  {index < integrationsMenuItems.length - 1 && (
-                    <div className="mx-4 my-1 border-b border-border/30" />
+                  {index < apiMenuItems.length - 1 && (
+                    <div className="mx-4 my-1.5 border-b border-border/40" />
                   )}
                 </div>
               ))}
@@ -316,7 +322,7 @@ export function AdminSidebar({
                         : "hover:bg-amber-500/5"
                       }
                     `}
-                    style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + salesMenuItems.length + operationsMenuItems.length + integrationsMenuItems.length + index) * 50}ms` }}
+                    style={{ animationDelay: `${(analyticsMenuItems.length + financeMenuItems.length + salesMenuItems.length + operationsMenuItems.length + apiMenuItems.length + index) * 50}ms` }}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
