@@ -1,4 +1,5 @@
-import { Phone, Eye, Trash2, ShoppingCart, UserCheck } from "lucide-react";
+import { useState } from "react";
+import { Phone, Eye, Trash2, ShoppingCart, UserCheck, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { WhatsAppSendDialog } from "@/components/admin/WhatsAppSendDialog";
 import type { OrcamentoDisplayItem } from "@/types/orcamento";
 import type { LeadStatus } from "@/types/lead";
 
@@ -33,6 +35,14 @@ export function OrcamentosTable({
   onDelete, 
   onConvert 
 }: OrcamentosTableProps) {
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [selectedOrcamento, setSelectedOrcamento] = useState<OrcamentoDisplayItem | null>(null);
+
+  const handleOpenWhatsApp = (orc: OrcamentoDisplayItem) => {
+    setSelectedOrcamento(orc);
+    setWhatsappOpen(true);
+  };
+
   if (orcamentos.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -133,6 +143,19 @@ export function OrcamentosTable({
                         </TooltipTrigger>
                         <TooltipContent>Ver detalhes</TooltipContent>
                       </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                            onClick={() => handleOpenWhatsApp(orc)}
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Enviar WhatsApp</TooltipContent>
+                      </Tooltip>
                       {onConvert && !isConverted && (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -151,7 +174,7 @@ export function OrcamentosTable({
                       {isConverted && (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="inline-flex items-center justify-center h-8 w-8 text-green-600">
+                            <span className="inline-flex items-center justify-center h-8 w-8 text-emerald-600">
                               <UserCheck className="w-4 h-4" />
                             </span>
                           </TooltipTrigger>
@@ -179,6 +202,18 @@ export function OrcamentosTable({
           })}
         </TableBody>
       </Table>
+
+      {/* WhatsApp Dialog */}
+      {selectedOrcamento && (
+        <WhatsAppSendDialog
+          open={whatsappOpen}
+          onOpenChange={setWhatsappOpen}
+          telefone={selectedOrcamento.telefone}
+          nome={selectedOrcamento.nome}
+          leadId={selectedOrcamento.lead_id}
+          tipo="lead"
+        />
+      )}
     </div>
   );
 }
