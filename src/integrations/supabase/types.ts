@@ -1729,8 +1729,11 @@ export type Database = {
           created_at: string
           created_by: string | null
           data_agendada: string
+          data_hora_fim: string | null
+          data_hora_inicio: string | null
           descricao: string | null
           endereco: string | null
+          fotos_urls: string[] | null
           hora_fim: string | null
           hora_inicio: string | null
           id: string
@@ -1751,8 +1754,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_agendada: string
+          data_hora_fim?: string | null
+          data_hora_inicio?: string | null
           descricao?: string | null
           endereco?: string | null
+          fotos_urls?: string[] | null
           hora_fim?: string | null
           hora_inicio?: string | null
           id?: string
@@ -1773,8 +1779,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           data_agendada?: string
+          data_hora_fim?: string | null
+          data_hora_inicio?: string | null
           descricao?: string | null
           endereco?: string | null
+          fotos_urls?: string[] | null
           hora_fim?: string | null
           hora_inicio?: string | null
           id?: string
