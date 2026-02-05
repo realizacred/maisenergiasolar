@@ -49,11 +49,11 @@
  };
  
  const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-   agendado: { label: "Agendado", color: "bg-blue-500", icon: CalendarDays },
-   em_andamento: { label: "Em Andamento", color: "bg-amber-500", icon: Play },
-   concluido: { label: "Concluído", color: "bg-green-500", icon: CheckCircle2 },
-   cancelado: { label: "Cancelado", color: "bg-red-500", icon: AlertCircle },
-   reagendado: { label: "Reagendado", color: "bg-purple-500", icon: CalendarDays },
+  agendado: { label: "Agendado", color: "bg-info", icon: CalendarDays },
+  em_andamento: { label: "Em Andamento", color: "bg-warning", icon: Play },
+  concluido: { label: "Concluído", color: "bg-success", icon: CheckCircle2 },
+  cancelado: { label: "Cancelado", color: "bg-destructive", icon: AlertCircle },
+  reagendado: { label: "Reagendado", color: "bg-secondary", icon: CalendarDays },
  };
  
  export default function Instalador() {
