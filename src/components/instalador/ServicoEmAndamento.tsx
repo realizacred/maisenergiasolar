@@ -313,64 +313,109 @@ import logoBlue from "@/assets/logo.png";
    const prevStep = () => {
      setCurrentStep(prev => Math.max(prev - 1, 1));
    };
- 
-   // Concluir serviço
-   const handleFinishService = async () => {
-     // Validar assinaturas
-     const installerSig = installerSignature || installerSignatureRef.current?.getSignatureDataUrl();
-     
-     if (!installerSig) {
-       toast({
-         title: "Assinatura do instalador obrigatória",
-         description: "Por favor, assine para concluir.",
-         variant: "destructive",
-       });
-       return;
-     }
- 
-    // Collect all photos from checklist items
-    const allPhotos = Object.values(checklistItems)
-      .flatMap(item => item.photos)
-      .concat(fotosExtras);
 
-     setIsSubmitting(true);
-     try {
-       const { error } = await supabase
-         .from("servicos_agendados")
-         .update({
-           status: "concluido",
-           data_hora_fim: new Date().toISOString(),
-          fotos_urls: allPhotos,
-           observacoes_conclusao: observacoes,
-         audio_url: audioUrl,
-         video_url: videoUrl,
-          layout_id: savedLayoutId,
-         })
-         .eq("id", servico.id);
- 
-       if (error) throw error;
- 
-       setIsSuccess(true);
-       toast({
-         title: "Serviço concluído!",
-         description: `Finalizado às ${format(new Date(), "HH:mm", { locale: ptBR })}`,
-       });
-       
-       setTimeout(() => {
-         onServiceUpdated();
-         onClose();
-       }, 2000);
-     } catch (error) {
-       console.error("Error finishing service:", error);
-       toast({
-         title: "Erro ao concluir",
-         description: "Tente novamente.",
-         variant: "destructive",
-       });
-     } finally {
-       setIsSubmitting(false);
-     }
-   };
+    // Validar campos antes de concluir
+    const validateBeforeFinish = (): { valid: boolean; errors: string[] } => {
+      const errors: string[] = [];
+      
+      // Validar assinatura do instalador
+      const installerSig = installerSignature || installerSignatureRef.current?.getSignatureDataUrl();
+      if (!installerSig) {
+        errors.push("Assinatura do instalador obrigatória");
+      }
+      
+      // Validar se pelo menos um item do checklist foi marcado ou tem foto
+      const hasAnyChecklistProgress = Object.values(checklistItems).some(
+        item => item.checked || item.photos.length > 0
+      );
+      
+      if (!hasAnyChecklistProgress && fotosExtras.length === 0) {
+        errors.push("Adicione pelo menos uma foto ou marque um item do checklist");
+      }
+      
+      return { valid: errors.length === 0, errors };
+    };
+
+    // Concluir serviço
+    const handleFinishService = async () => {
+      // Validar campos
+      const validation = validateBeforeFinish();
+      
+      if (!validation.valid) {
+        toast({
+          title: "Campos obrigatórios não preenchidos",
+          description: (
+            <ul className="mt-2 list-disc list-inside space-y-1">
+              {validation.errors.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          ),
+          variant: "destructive",
+          duration: 6000,
+        });
+        return;
+      }
+  
+      // Collect all photos from checklist items
+      const allPhotos = Object.values(checklistItems)
+        .flatMap(item => item.photos)
+        .concat(fotosExtras);
+
+      setIsSubmitting(true);
+      try {
+        const { error } = await supabase
+          .from("servicos_agendados")
+          .update({
+            status: "concluido",
+            data_hora_fim: new Date().toISOString(),
+            fotos_urls: allPhotos,
+            observacoes_conclusao: observacoes,
+            audio_url: audioUrl,
+            video_url: videoUrl,
+            layout_id: savedLayoutId,
+          })
+          .eq("id", servico.id);
+  
+        if (error) {
+          // Mapear erros específicos do Supabase
+          let errorMessage = "Não foi possível concluir o serviço.";
+          
+          if (error.message.includes("violates row-level security")) {
+            errorMessage = "Você não tem permissão para atualizar este serviço.";
+          } else if (error.message.includes("network")) {
+            errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+          } else if (error.code === "PGRST116") {
+            errorMessage = "Serviço não encontrado ou já foi atualizado.";
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          
+          throw new Error(errorMessage);
+        }
+  
+        setIsSuccess(true);
+        toast({
+          title: "Serviço concluído!",
+          description: `Finalizado às ${format(new Date(), "HH:mm", { locale: ptBR })}`,
+        });
+        
+        setTimeout(() => {
+          onServiceUpdated();
+          onClose();
+        }, 2000);
+      } catch (error: any) {
+        console.error("Error finishing service:", error);
+        toast({
+          title: "Erro ao concluir serviço",
+          description: error.message || "Ocorreu um erro inesperado. Tente novamente.",
+          variant: "destructive",
+          duration: 6000,
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
  
    // Tela de início (para serviços agendados)
    if (servico.status === "agendado") {
