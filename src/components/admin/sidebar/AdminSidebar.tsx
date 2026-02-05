@@ -17,6 +17,7 @@ import {
   Lightbulb,
   Trophy,
    Wallet,
+   ClipboardCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -46,6 +47,7 @@ const mainMenuItems = [
   { id: "leads", title: "Leads", icon: Users },
   { id: "pipeline", title: "Pipeline", icon: Kanban },
   { id: "followup", title: "Follow-up", icon: Bell },
+  { id: "validacao", title: "Validar Vendas", icon: ClipboardCheck },
   { id: "clientes", title: "Clientes", icon: UserCheck },
   { id: "recebimentos", title: "Recebimentos", icon: DollarSign },
    { id: "comissoes", title: "Comissões", icon: Wallet },

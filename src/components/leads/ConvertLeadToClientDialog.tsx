@@ -568,11 +568,11 @@ export function ConvertLeadToClientDialog({
 
       if (clienteError) throw clienteError;
 
-      // Update lead status to "Convertido"
+      // Update lead status to "Aguardando Validação" (admin needs to approve)
       const { data: convertidoStatus } = await supabase
         .from("lead_status")
         .select("id")
-        .eq("nome", "Convertido")
+        .eq("nome", "Aguardando Validação")
         .single();
 
       if (convertidoStatus) {
@@ -592,49 +592,15 @@ export function ConvertLeadToClientDialog({
         ]);
       }
 
-      // Create commission automatically if we have a simulation with value
-      const selectedSimulacao = simulacoes.find(s => s.id === data.simulacao_aceita_id);
-      if (selectedSimulacao?.investimento_estimado && lead.vendedor) {
-        try {
-          // Get vendedor_id from vendedor name
-          const { data: vendedorData } = await supabase
-            .from("vendedores")
-            .select("id")
-            .eq("nome", lead.vendedor)
-            .eq("ativo", true)
-            .single();
-
-          if (vendedorData) {
-            const currentDate = new Date();
-            const valorBase = selectedSimulacao.investimento_estimado;
-            const percentualComissao = 2.0; // Default percentage
-            const valorComissao = (valorBase * percentualComissao) / 100;
-
-            await supabase.from("comissoes").insert({
-              vendedor_id: vendedorData.id,
-              cliente_id: cliente.id,
-              descricao: `Venda - ${data.nome} (${selectedSimulacao.potencia_recomendada_kwp || 0}kWp)`,
-              valor_base: valorBase,
-              percentual_comissao: percentualComissao,
-              valor_comissao: valorComissao,
-              mes_referencia: currentDate.getMonth() + 1,
-              ano_referencia: currentDate.getFullYear(),
-              status: "pendente",
-            });
-          }
-        } catch (comissaoError) {
-          console.warn("Não foi possível criar comissão automaticamente:", comissaoError);
-          // Don't fail the conversion if commission creation fails
-        }
-      }
+      // Commission will be created when admin validates the sale
 
       // Clear saved partial conversion data since conversion is complete
       const storageKey = `lead_conversion_${lead.id}`;
       localStorage.removeItem(storageKey);
 
       toast({
-        title: "Lead convertido!",
-        description: `${data.nome} foi cadastrado como cliente com sucesso.`,
+        title: "Venda enviada para validação!",
+        description: `${data.nome} foi cadastrado. Aguardando aprovação do administrador para gerar comissão.`,
       });
 
       onOpenChange(false);

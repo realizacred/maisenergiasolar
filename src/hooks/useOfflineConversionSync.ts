@@ -100,11 +100,11 @@ export function useOfflineConversionSync() {
 
       if (clienteError) throw clienteError;
 
-      // Update lead status to "Convertido"
+      // Update lead status to "Aguardando Validação" (admin needs to approve)
       const { data: convertidoStatus } = await supabase
         .from("lead_status")
         .select("id")
-        .eq("nome", "Convertido")
+        .eq("nome", "Aguardando Validação")
         .single();
 
       if (convertidoStatus) {
