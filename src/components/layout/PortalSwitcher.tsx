@@ -130,8 +130,8 @@ export function PortalSwitcher() {
 
   const handleSelectVendedor = (codigo: string) => {
     setShowVendedorDialog(false);
-    // Navigate to vendor page with admin mode
-    navigate(`/v/${codigo}`);
+    // Navigate to vendor portal with admin mode (viewing as specific vendor)
+    navigate(`/vendedor?as=${codigo}`);
   };
 
   const handleResetPreference = () => {
