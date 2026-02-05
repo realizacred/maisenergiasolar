@@ -76,19 +76,53 @@ export function ScheduleWhatsAppDialog({
     setMessage(processTemplate(templateMessage));
   };
 
-  // Send immediately via WhatsApp Web
-  const handleSendNow = () => {
+  // Send immediately via API (same as admin)
+  const handleSendNow = async () => {
     if (!lead || !message) return;
 
-    const phone = lead.telefone.replace(/\D/g, "");
-    const formattedPhone = phone.startsWith("55") ? phone : `55${phone}`;
-    const encodedMessage = encodeURIComponent(message);
-    
-    // Open WhatsApp
-    window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, "_blank");
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-whatsapp-message", {
+        body: {
+          telefone: lead.telefone,
+          mensagem: message.trim(),
+          lead_id: lead.id || null,
+          tipo: "manual",
+        },
+      });
 
-    // Log the message
-    logMessage("manual");
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: "Mensagem enviada!",
+          description: `Mensagem enviada para ${lead.nome}`,
+        });
+
+        // Update ultimo_contato
+        if (lead.id) {
+          await supabase
+            .from("leads")
+            .update({ ultimo_contato: new Date().toISOString() })
+            .eq("id", lead.id);
+        }
+
+        setMessage("");
+        onOpenChange(false);
+        onSuccess?.();
+      } else {
+        throw new Error(data?.error || "Falha ao enviar mensagem");
+      }
+    } catch (error: any) {
+      console.error("Error sending WhatsApp:", error);
+      toast({
+        title: "Erro ao enviar",
+        description: error?.message || "Não foi possível enviar a mensagem",
+        variant: "destructive",
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   // Schedule for later
@@ -137,37 +171,6 @@ export function ScheduleWhatsAppDialog({
       });
     } finally {
       setScheduling(false);
-    }
-  };
-
-  // Log sent message
-  const logMessage = async (tipo: string) => {
-    if (!lead) return;
-
-    try {
-      await supabase.from("whatsapp_messages").insert({
-        lead_id: lead.id,
-        tipo,
-        mensagem: message,
-        telefone: lead.telefone,
-        status: "enviado",
-      });
-
-      // Update ultimo_contato
-      await supabase
-        .from("leads")
-        .update({ ultimo_contato: new Date().toISOString() })
-        .eq("id", lead.id);
-
-      toast({
-        title: "Mensagem enviada!",
-        description: "O WhatsApp foi aberto com a mensagem.",
-      });
-
-      onOpenChange(false);
-      onSuccess?.();
-    } catch (error) {
-      console.error("Error logging message:", error);
     }
   };
 
@@ -277,10 +280,14 @@ export function ScheduleWhatsAppDialog({
           ) : (
             <Button 
               onClick={handleSendNow} 
-              disabled={!message}
+              disabled={!message || sending}
               className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
             >
-              <Send className="h-4 w-4 mr-2" />
+              {sending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4 mr-2" />
+              )}
               Enviar Agora
             </Button>
           )}
