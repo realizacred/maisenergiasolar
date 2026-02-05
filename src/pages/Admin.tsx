@@ -23,12 +23,14 @@ import { UsuariosManager } from "@/components/admin/UsuariosManager";
 import { EquipamentosManager } from "@/components/admin/EquipamentosManager";
 import { ConcessionariasManager } from "@/components/admin/ConcessionariasManager";
 import { GamificacaoConfig } from "@/components/admin/GamificacaoConfig";
- import { ComissoesManager } from "@/components/admin/ComissoesManager";
- import { ValidacaoVendasManager } from "@/components/admin/ValidacaoVendasManager";
- import { ChecklistsManager } from "@/components/admin/ChecklistsManager";
- import { AvaliacoesManager } from "@/components/admin/AvaliacoesManager";
- import { ServicosManager } from "@/components/admin/ServicosManager";
+import { ComissoesManager } from "@/components/admin/ComissoesManager";
+import { ValidacaoVendasManager } from "@/components/admin/ValidacaoVendasManager";
+import { ChecklistsManager } from "@/components/admin/ChecklistsManager";
+import { AvaliacoesManager } from "@/components/admin/AvaliacoesManager";
+import { ServicosManager } from "@/components/admin/ServicosManager";
 import { InstaladorManager } from "@/components/admin/InstaladorManager";
+import { InadimplenciaDashboard } from "@/components/admin/InadimplenciaDashboard";
+import { WhatsAppAutomationConfig } from "@/components/admin/WhatsAppAutomationConfig";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Footer from "@/components/layout/Footer";
 
@@ -225,8 +227,12 @@ export default function Admin() {
         return <FinanciamentoConfig />;
       case "instagram":
         return <InstagramConfig />;
+      case "whatsapp":
+        return <WhatsAppAutomationConfig />;
       case "webhooks":
         return <WebhookManager />;
+      case "inadimplencia":
+        return <InadimplenciaDashboard />;
       default:
         return <LeadsView />;
     }

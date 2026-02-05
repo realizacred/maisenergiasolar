@@ -2429,6 +2429,156 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_automation_config: {
+        Row: {
+          api_token: string | null
+          ativo: boolean
+          created_at: string
+          id: string
+          lembrete_ativo: boolean
+          lembrete_dias: number
+          mensagem_boas_vindas: string | null
+          mensagem_followup: string | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          api_token?: string | null
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          lembrete_ativo?: boolean
+          lembrete_dias?: number
+          mensagem_boas_vindas?: string | null
+          mensagem_followup?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          api_token?: string | null
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          lembrete_ativo?: boolean
+          lembrete_dias?: number
+          mensagem_boas_vindas?: string | null
+          mensagem_followup?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          created_at: string
+          enviado_por: string | null
+          erro_detalhes: string | null
+          id: string
+          lead_id: string
+          mensagem: string
+          orcamento_id: string | null
+          status: string
+          telefone: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          enviado_por?: string | null
+          erro_detalhes?: string | null
+          id?: string
+          lead_id: string
+          mensagem: string
+          orcamento_id?: string | null
+          status?: string
+          telefone: string
+          tipo?: string
+        }
+        Update: {
+          created_at?: string
+          enviado_por?: string | null
+          erro_detalhes?: string | null
+          id?: string
+          lead_id?: string
+          mensagem?: string
+          orcamento_id?: string | null
+          status?: string
+          telefone?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_reminders: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_agendada: string
+          id: string
+          lead_id: string
+          mensagem: string | null
+          orcamento_id: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          vendedor_nome: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_agendada: string
+          id?: string
+          lead_id: string
+          mensagem?: string | null
+          orcamento_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          vendedor_nome?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_agendada?: string
+          id?: string
+          lead_id?: string
+          mensagem?: string | null
+          orcamento_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          vendedor_nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_reminders_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_reminders_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
