@@ -12,8 +12,10 @@ import {
   Database,
   CheckSquare,
   Square,
+  Code,
 } from "lucide-react";
 import { format } from "date-fns";
+import { TableSQLDialog } from "./TableSQLDialog";
 
 const ALL_TABLES = [
   { name: "audit_logs", label: "Audit Logs", category: "Sistema" },
@@ -105,6 +107,8 @@ function downloadCSV(csvContent: string, filename: string) {
 export function DatabaseExportManager() {
   const [selected, setSelected] = useState<Set<TableName>>(new Set());
   const [exporting, setExporting] = useState<TableName | "all" | null>(null);
+  const [sqlDialog, setSqlDialog] = useState<{ name: TableName; label: string } | null>(null);
+  const [exportingAllSql, setExportingAllSql] = useState(false);
 
   const categories = Array.from(new Set(ALL_TABLES.map((t) => t.category)));
 
@@ -211,6 +215,34 @@ export function DatabaseExportManager() {
     setExporting(null);
   };
 
+  const exportAllSQL = async () => {
+    const tablesToExport = selected.size > 0 ? Array.from(selected) : ALL_TABLES.map(t => t.name);
+    setExportingAllSql(true);
+    try {
+      const ddlParts: string[] = [];
+      for (const tableName of tablesToExport) {
+        const { data, error } = await supabase.rpc("get_table_ddl", { _table_name: tableName });
+        if (error) {
+          ddlParts.push(`-- Erro ao obter DDL de ${tableName}: ${error.message}\n`);
+        } else {
+          ddlParts.push(`-- ==========================================\n-- Table: ${tableName}\n-- ==========================================\n${data}\n`);
+        }
+      }
+      const fullSql = ddlParts.join("\n");
+      const blob = new Blob([fullSql], { type: "text/sql;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `schema_completo_${format(new Date(), "yyyy-MM-dd_HHmm")}.sql`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      toast({ title: "SQL exportado!", description: `${tablesToExport.length} tabelas incluídas.` });
+    } catch (error: any) {
+      toast({ title: "Erro ao exportar SQL", description: error.message, variant: "destructive" });
+    } finally {
+      setExportingAllSql(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Actions */}
@@ -234,7 +266,23 @@ export function DatabaseExportManager() {
           ) : (
             <Download className="h-4 w-4" />
           )}
-          Exportar Selecionadas ({selected.size})
+          Exportar CSV ({selected.size})
+        </Button>
+
+        <Button
+          variant="outline"
+          onClick={exportAllSQL}
+          disabled={exportingAllSql}
+          className="gap-2"
+        >
+          {exportingAllSql ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Code className="h-4 w-4" />
+          )}
+          {selected.size > 0
+            ? `Exportar SQL (${selected.size})`
+            : "Exportar SQL (Todas)"}
         </Button>
 
         {selected.size > 0 && (
@@ -296,20 +344,32 @@ export function DatabaseExportManager() {
                         </p>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      onClick={() => exportSingleTable(table.name)}
-                      disabled={exporting !== null}
-                      title={`Exportar ${table.label}`}
-                    >
-                      {exporting === table.name ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <FileSpreadsheet className="h-4 w-4" />
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setSqlDialog({ name: table.name, label: table.label })}
+                        disabled={exporting !== null}
+                        title={`Ver SQL de ${table.label}`}
+                      >
+                        <Code className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => exportSingleTable(table.name)}
+                        disabled={exporting !== null}
+                        title={`Exportar CSV de ${table.label}`}
+                      >
+                        {exporting === table.name ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <FileSpreadsheet className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -317,6 +377,16 @@ export function DatabaseExportManager() {
           </Card>
         );
       })}
+
+      {/* SQL Dialog */}
+      {sqlDialog && (
+        <TableSQLDialog
+          tableName={sqlDialog.name}
+          tableLabel={sqlDialog.label}
+          open={!!sqlDialog}
+          onOpenChange={(open) => { if (!open) setSqlDialog(null); }}
+        />
+      )}
     </div>
   );
 }
