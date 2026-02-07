@@ -92,6 +92,12 @@ export default {
           "Roboto",
           "sans-serif",
         ],
+        display: [
+          "Plus Jakarta Sans",
+          "Inter",
+          "system-ui",
+          "sans-serif",
+        ],
         mono: ["JetBrains Mono", "Fira Code", "Consolas", "monospace"],
       },
       fontSize: {
