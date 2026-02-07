@@ -23,14 +23,15 @@ const MOBILE_TITLES: Record<string, string> = {
 
 export function WizardProgress({ steps, currentStep }: WizardProgressProps) {
   return (
-    <div className="w-full overflow-visible">
-      <div className="flex items-center justify-between relative px-0">
+    <div className="w-full">
+      <div className="grid grid-cols-4 relative">
         {/* Progress line behind */}
-        <div className="absolute top-[18px] sm:top-5 left-0 right-0 h-0.5 bg-border mx-6 sm:mx-10" />
+        <div className="absolute top-[18px] sm:top-5 left-[12.5%] right-[12.5%] h-0.5 bg-border" />
         <motion.div
-          className="absolute top-[18px] sm:top-5 left-0 h-0.5 bg-gradient-to-r from-primary to-secondary mx-6 sm:mx-10"
-          initial={{ width: "0%" }}
-          animate={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+          className="absolute top-[18px] sm:top-5 left-[12.5%] h-0.5 bg-gradient-to-r from-primary to-secondary origin-left"
+          style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 75}%` }}
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
         />
 
@@ -41,7 +42,7 @@ export function WizardProgress({ steps, currentStep }: WizardProgressProps) {
           const mobileTitle = MOBILE_TITLES[step.title] || step.title;
 
           return (
-            <div key={step.id} className="flex flex-col items-center relative z-10 flex-1 min-w-0">
+            <div key={step.id} className="flex flex-col items-center relative z-10">
               <motion.div
                 className={`
                   w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-300
@@ -61,12 +62,12 @@ export function WizardProgress({ steps, currentStep }: WizardProgressProps) {
                   <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 )}
               </motion.div>
-              <p className={`text-[10px] sm:text-xs mt-1.5 sm:mt-2 font-medium text-center leading-tight truncate w-full px-0.5 ${
+              <span className={`text-[10px] sm:text-xs mt-1.5 sm:mt-2 font-medium text-center leading-tight whitespace-nowrap ${
                 isActive ? "text-primary" : isCompleted ? "text-foreground" : "text-muted-foreground"
               }`}>
                 <span className="sm:hidden">{mobileTitle}</span>
                 <span className="hidden sm:inline">{step.title}</span>
-              </p>
+              </span>
             </div>
           );
         })}
