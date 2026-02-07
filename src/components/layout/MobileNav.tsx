@@ -4,6 +4,7 @@ import { Menu, Calculator, LogIn, Phone, Home, LogOut, LayoutDashboard } from "l
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
+import logo from "@/assets/logo.png";
 
 interface MobileNavProps {
   showCalculadora?: boolean;
@@ -65,9 +66,10 @@ export function MobileNav({ showCalculadora = true, showAdmin = true }: MobileNa
         <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center gap-1 p-4 border-b">
-            <span className="text-lg font-black text-primary">MAIS</span>
-            <span className="text-lg font-bold text-foreground">ENERGIA SOLAR</span>
+          <div className="flex items-center justify-between p-4 border-b">
+            <Link to="/" onClick={() => setOpen(false)}>
+              <img src={logo} alt="Mais Energia Solar" className="h-8" />
+            </Link>
           </div>
 
           {/* Navigation Links */}

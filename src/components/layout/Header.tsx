@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "./MobileNav";
+import logo from "@/assets/logo.png";
 
 interface HeaderProps {
   showCalculadora?: boolean;
@@ -52,10 +53,13 @@ export default function Header({
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link
           to="/"
-          className="flex items-center gap-1 transition-all duration-200 hover:opacity-80"
+          className="flex items-center gap-2 transition-all duration-200 hover:opacity-80 group"
         >
-          <span className="text-xl font-black text-primary tracking-tight">MAIS</span>
-          <span className="text-xl font-bold text-foreground tracking-tight">ENERGIA SOLAR</span>
+          <img
+            src={logo}
+            alt="Mais Energia Solar"
+            className="h-8 sm:h-10 md:h-11 w-auto"
+          />
         </Link>
 
         {/* Desktop Navigation */}
