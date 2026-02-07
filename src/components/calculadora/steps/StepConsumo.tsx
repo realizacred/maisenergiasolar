@@ -28,17 +28,17 @@ export function StepConsumo({ form, calculations, onNext, onBack }: StepConsumoP
   const consumo = watch("consumo_mensal") || 350;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
       <motion.div
-        className="text-center"
+        className="text-center px-2"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground leading-tight">
           Qual seu <span className="text-primary">consumo mensal</span>?
         </h2>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-2 text-sm sm:text-base">
           Ajuste o slider para o consumo da sua conta de luz (em kWh)
         </p>
       </motion.div>
@@ -51,16 +51,16 @@ export function StepConsumo({ form, calculations, onNext, onBack }: StepConsumoP
         transition={{ delay: 0.1 }}
       >
         <div className="inline-flex items-baseline gap-2">
-          <span className="text-6xl md:text-7xl font-bold text-foreground tabular-nums">
+          <span className="text-5xl sm:text-6xl md:text-7xl font-bold text-foreground tabular-nums">
             {consumo}
           </span>
-          <span className="text-2xl text-muted-foreground font-medium">kWh</span>
+          <span className="text-xl sm:text-2xl text-muted-foreground font-medium">kWh</span>
         </div>
       </motion.div>
 
       {/* Slider */}
       <motion.div
-        className="max-w-lg mx-auto px-4"
+        className="max-w-lg mx-auto px-2 sm:px-4"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
@@ -75,7 +75,7 @@ export function StepConsumo({ form, calculations, onNext, onBack }: StepConsumoP
         />
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>100 kWh</span>
-          <span className="text-primary font-medium">
+          <span className="text-primary font-medium hidden sm:inline">
             <Zap className="w-3 h-3 inline mr-0.5" />
             Residencial médio: ~300 kWh
           </span>
@@ -85,33 +85,33 @@ export function StepConsumo({ form, calculations, onNext, onBack }: StepConsumoP
 
       {/* Results Preview */}
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto"
+        className="grid grid-cols-2 gap-3 max-w-lg mx-auto px-1"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <div className="p-5 rounded-2xl bg-destructive/5 border border-destructive/10">
-          <p className="text-sm text-muted-foreground mb-1">Sua conta atual</p>
-          <p className="text-2xl font-bold text-destructive">
+        <div className="p-4 sm:p-5 rounded-2xl bg-destructive/5 border border-destructive/10">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-1">Sua conta atual</p>
+          <p className="text-xl sm:text-2xl font-bold text-destructive">
             {formatCurrency(calculations.contaAtual)}
-            <span className="text-xs font-normal text-muted-foreground">/mês</span>
+            <span className="text-[10px] sm:text-xs font-normal text-muted-foreground">/mês</span>
           </p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10">
-          <div className="flex items-center gap-1.5 text-primary mb-1">
-            <TrendingDown className="w-4 h-4" />
-            <span className="text-sm font-medium">Economia estimada</span>
+        <div className="p-4 sm:p-5 rounded-2xl bg-primary/5 border border-primary/10">
+          <div className="flex items-center gap-1 sm:gap-1.5 text-primary mb-1">
+            <TrendingDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm font-medium">Economia</span>
           </div>
-          <p className="text-2xl font-bold text-primary">
+          <p className="text-xl sm:text-2xl font-bold text-primary">
             {formatCurrency(calculations.economiaMensal)}
-            <span className="text-xs font-normal text-muted-foreground">/mês</span>
+            <span className="text-[10px] sm:text-xs font-normal text-muted-foreground">/mês</span>
           </p>
         </div>
       </motion.div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between max-w-lg mx-auto pt-2">
+      <div className="flex items-center justify-between max-w-lg mx-auto pt-2 px-1">
         <Button type="button" variant="ghost" size="lg" onClick={onBack} className="gap-2">
           <ChevronLeft className="w-4 h-4" />
           Voltar

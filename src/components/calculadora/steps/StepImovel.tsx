@@ -34,22 +34,22 @@ export function StepImovel({ form, onNext, onBack }: StepImovelProps) {
   const rede = watch("rede_atendimento");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
       <motion.div
-        className="text-center"
+        className="text-center px-2"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground leading-tight">
           Sobre seu <span className="text-primary">imóvel</span>
         </h2>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-2 text-sm sm:text-base">
           Essas informações nos ajudam a estimar o melhor sistema para você
         </p>
       </motion.div>
 
-      <div className="max-w-md mx-auto space-y-4">
+      <div className="max-w-md mx-auto space-y-4 px-1">
         {/* Area: Urbana/Rural toggle */}
         <motion.div custom={0} variants={fieldVariants} initial="hidden" animate="visible">
           <label className="text-sm font-medium text-foreground mb-2 block">Tipo de Área</label>
@@ -62,14 +62,14 @@ export function StepImovel({ form, onNext, onBack }: StepImovelProps) {
                 key={opt.value}
                 type="button"
                 onClick={() => setValue("area", opt.value, { shouldValidate: true })}
-                className={`p-4 rounded-xl border-2 transition-all text-left ${
+                className={`p-3 sm:p-4 rounded-xl border-2 transition-all text-left ${
                   area === opt.value
                     ? "border-primary bg-primary/5 shadow-[var(--shadow-primary)]"
                     : "border-border hover:border-primary/30 bg-card"
                 }`}
               >
                 <opt.icon className={`w-5 h-5 mb-1 ${area === opt.value ? "text-primary" : "text-muted-foreground"}`} />
-                <p className="font-medium text-foreground">{opt.label}</p>
+                <p className="font-medium text-sm text-foreground">{opt.label}</p>
                 <p className="text-xs text-muted-foreground">{opt.desc}</p>
               </button>
             ))}
@@ -80,7 +80,7 @@ export function StepImovel({ form, onNext, onBack }: StepImovelProps) {
         </motion.div>
 
         {/* Estado + Cidade */}
-        <motion.div custom={1} variants={fieldVariants} initial="hidden" animate="visible" className="grid grid-cols-2 gap-3">
+        <motion.div custom={1} variants={fieldVariants} initial="hidden" animate="visible" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <FloatingSelect
               label="Estado"
@@ -127,7 +127,7 @@ export function StepImovel({ form, onNext, onBack }: StepImovelProps) {
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between max-w-md mx-auto pt-2">
+      <div className="flex items-center justify-between max-w-md mx-auto pt-2 px-1">
         <Button type="button" variant="ghost" size="lg" onClick={onBack} className="gap-2">
           <ChevronLeft className="w-4 h-4" />
           Voltar

@@ -308,7 +308,7 @@ export function CalculadoraWizard() {
       <WizardProgress steps={STEPS} currentStep={step} />
 
       {/* Step Content */}
-      <div className="mt-8 min-h-[420px] relative">
+      <div className="mt-6 sm:mt-8 min-h-[380px] sm:min-h-[420px] relative">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}

@@ -14,7 +14,23 @@ export interface FloatingInputProps
 const FloatingInput = React.forwardRef<HTMLInputElement, FloatingInputProps>(
   ({ className, label, icon, error, success, type, ...props }, ref) => {
     const [isFocused, setIsFocused] = React.useState(false);
-    const hasValue = props.value !== undefined && props.value !== "";
+    const [hasContent, setHasContent] = React.useState(false);
+    const internalRef = React.useRef<HTMLInputElement | null>(null);
+
+    // Merge refs
+    const mergedRef = React.useCallback(
+      (node: HTMLInputElement | null) => {
+        internalRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLInputElement | null>).current = node;
+        // Check initial value
+        if (node) setHasContent(node.value.length > 0);
+      },
+      [ref]
+    );
+
+    // Also check controlled value
+    const isFloating = isFocused || hasContent || (props.value !== undefined && props.value !== "");
 
     return (
       <div className="relative">
@@ -47,36 +63,36 @@ const FloatingInput = React.forwardRef<HTMLInputElement, FloatingInputProps>(
               success && "border-green-500 bg-green-500/5",
               className
             )}
-            ref={ref}
+            ref={mergedRef}
             onFocus={(e) => {
               setIsFocused(true);
               props.onFocus?.(e);
             }}
             onBlur={(e) => {
               setIsFocused(false);
+              setHasContent(e.target.value.length > 0);
               props.onBlur?.(e);
+            }}
+            onChange={(e) => {
+              setHasContent(e.target.value.length > 0);
+              props.onChange?.(e);
             }}
             {...props}
           />
-          <motion.label
+          <label
             className={cn(
               "absolute left-4 pointer-events-none transition-all duration-200 origin-left",
               icon && "left-11",
-              isFocused || hasValue
-                ? "top-2 text-xs font-medium"
-                : "top-1/2 -translate-y-1/2 text-base",
+              isFloating
+                ? "top-2 text-xs font-medium scale-[0.85]"
+                : "top-1/2 -translate-y-1/2 text-base scale-100",
               isFocused ? "text-primary" : "text-muted-foreground",
               error && "text-destructive",
               success && "text-green-500"
             )}
-            animate={{
-              y: isFocused || hasValue ? 0 : "-50%",
-              scale: isFocused || hasValue ? 0.85 : 1,
-            }}
-            transition={{ duration: 0.2 }}
           >
             {label}
-          </motion.label>
+          </label>
         </div>
         {error && (
           <motion.p
