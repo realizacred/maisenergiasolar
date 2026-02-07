@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { UseFormReturn } from "react-hook-form";
-import { User, Phone, ChevronRight, Sparkles } from "lucide-react";
+import { User, Phone, ChevronRight, Sparkles, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FloatingInput } from "@/components/ui/floating-input";
 import { formatPhone } from "@/lib/validations";
@@ -31,10 +31,10 @@ export function StepContato({ form, onNext }: StepContatoProps) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
       <motion.div
-        className="text-center"
+        className="text-center px-2"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
@@ -42,17 +42,17 @@ export function StepContato({ form, onNext }: StepContatoProps) {
           <Sparkles className="w-4 h-4" />
           Simulação Gratuita
         </div>
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground leading-tight">
           Descubra quanto você pode
           <span className="text-primary"> economizar</span>
         </h2>
-        <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+        <p className="text-muted-foreground mt-2 text-sm sm:text-base max-w-md mx-auto">
           Preencha seus dados para receber uma simulação personalizada de energia solar
         </p>
       </motion.div>
 
       {/* Form */}
-      <div className="max-w-md mx-auto space-y-5">
+      <div className="max-w-md mx-auto space-y-4 sm:space-y-5 px-1">
         <motion.div custom={0} variants={fieldVariants} initial="hidden" animate="visible">
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
@@ -106,6 +106,13 @@ export function StepContato({ form, onNext }: StepContatoProps) {
             Simular Minha Economia
             <ChevronRight className="w-5 h-5" />
           </Button>
+        </motion.div>
+
+        <motion.div custom={3} variants={fieldVariants} initial="hidden" animate="visible">
+          <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Seus dados estão seguros e não serão compartilhados
+          </p>
         </motion.div>
       </div>
     </div>

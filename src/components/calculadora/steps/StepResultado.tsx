@@ -2,14 +2,12 @@ import { motion } from "framer-motion";
 import { UseFormReturn } from "react-hook-form";
 import {
   Sun,
-  TrendingDown,
   DollarSign,
   Calendar,
   Leaf,
   ChevronLeft,
   Loader2,
   Send,
-  Zap,
   Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,18 +51,18 @@ export function StepResultado({ form, calculations, isSubmitting, onSubmit, onBa
   const nome = form.watch("nome")?.split(" ")[0] || "";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
       <motion.div
-        className="text-center"
+        className="text-center px-2"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground leading-tight">
           {nome ? `${nome}, ` : ""}aqui está sua
           <span className="text-primary"> economia</span>! 🎉
         </h2>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-2 text-sm sm:text-base">
           Veja o quanto você pode economizar com energia solar
         </p>
       </motion.div>
@@ -75,24 +73,24 @@ export function StepResultado({ form, calculations, isSubmitting, onSubmit, onBa
         variants={cardVariants}
         initial="hidden"
         animate="visible"
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary p-6 text-primary-foreground shadow-[var(--shadow-primary)]"
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary p-5 sm:p-6 text-primary-foreground shadow-[var(--shadow-primary)]"
       >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-16 sm:w-24 h-16 sm:h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
         <div className="relative">
-          <div className="flex items-center gap-2 text-white/80 text-sm mb-1">
+          <div className="flex items-center gap-2 text-white/80 text-xs sm:text-sm mb-1">
             <Trophy className="w-4 h-4" />
             Economia Mensal Estimada
           </div>
-          <p className="text-5xl md:text-6xl font-bold">
+          <p className="text-4xl sm:text-5xl md:text-6xl font-bold">
             {formatCurrency(calculations.economiaMensal)}
           </p>
-          <div className="flex items-center gap-3 mt-3 text-white/90">
-            <span className="text-lg font-semibold">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-3 text-white/90">
+            <span className="text-base sm:text-lg font-semibold">
               {formatCurrency(calculations.economiaAnual)}/ano
             </span>
-            <span className="text-sm bg-white/20 px-2 py-0.5 rounded-full">
+            <span className="text-xs sm:text-sm bg-white/20 px-2 py-0.5 rounded-full w-fit">
               {formatCurrency(calculations.economia25anos)} em 25 anos
             </span>
           </div>
@@ -100,32 +98,32 @@ export function StepResultado({ form, calculations, isSubmitting, onSubmit, onBa
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
         {[
           {
             icon: Sun,
-            label: "Potência do Sistema",
+            label: "Potência",
             value: `${calculations.kWp.toFixed(1)} kWp`,
             color: "text-secondary",
             borderColor: "border-l-secondary",
           },
           {
             icon: Calendar,
-            label: "Retorno do Investimento",
+            label: "Retorno",
             value: `${calculations.payback.toFixed(1)} anos`,
             color: "text-primary",
             borderColor: "border-l-primary",
           },
           {
             icon: DollarSign,
-            label: "Investimento Estimado",
+            label: "Investimento",
             value: formatCurrency(calculations.investimento),
             color: "text-secondary",
             borderColor: "border-l-secondary",
           },
           {
             icon: Leaf,
-            label: "Redução de CO₂",
+            label: "Redução CO₂",
             value: `${(calculations.co2Anual / 1000).toFixed(1)} ton/ano`,
             color: "text-success",
             borderColor: "border-l-success",
@@ -137,13 +135,13 @@ export function StepResultado({ form, calculations, isSubmitting, onSubmit, onBa
             variants={cardVariants}
             initial="hidden"
             animate="visible"
-            className={`p-4 rounded-xl bg-card border border-border ${stat.borderColor} border-l-4 shadow-[var(--shadow-sm)]`}
+            className={`p-3 sm:p-4 rounded-xl bg-card border border-border ${stat.borderColor} border-l-4 shadow-[var(--shadow-sm)]`}
           >
-            <div className={`flex items-center gap-1.5 ${stat.color} mb-1`}>
-              <stat.icon className="w-4 h-4" />
-              <span className="text-xs font-medium">{stat.label}</span>
+            <div className={`flex items-center gap-1 ${stat.color} mb-1`}>
+              <stat.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="text-[10px] sm:text-xs font-medium">{stat.label}</span>
             </div>
-            <p className="text-xl font-bold text-foreground">{stat.value}</p>
+            <p className="text-base sm:text-xl font-bold text-foreground">{stat.value}</p>
           </motion.div>
         ))}
       </div>
@@ -174,7 +172,7 @@ export function StepResultado({ form, calculations, isSubmitting, onSubmit, onBa
           size="lg"
           onClick={onSubmit}
           disabled={isSubmitting}
-          className="w-full h-16 text-lg rounded-2xl gap-3 bg-gradient-to-r from-primary via-primary to-secondary hover:opacity-90 shadow-[var(--shadow-primary)] transition-all"
+          className="w-full h-14 sm:h-16 text-base sm:text-lg rounded-2xl gap-3 bg-gradient-to-r from-primary via-primary to-secondary hover:opacity-90 shadow-[var(--shadow-primary)] transition-all"
         >
           {isSubmitting ? (
             <>
@@ -202,7 +200,7 @@ export function StepResultado({ form, calculations, isSubmitting, onSubmit, onBa
       </div>
 
       {/* Disclaimer */}
-      <p className="text-xs text-center text-muted-foreground">
+      <p className="text-[10px] sm:text-xs text-center text-muted-foreground">
         * Valores estimados com base em médias do mercado. O orçamento final pode variar.
       </p>
     </div>

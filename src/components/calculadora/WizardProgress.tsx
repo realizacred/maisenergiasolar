@@ -16,11 +16,11 @@ interface WizardProgressProps {
 
 export function WizardProgress({ steps, currentStep }: WizardProgressProps) {
   return (
-    <div className="flex items-center justify-between relative">
+    <div className="flex items-center justify-between relative px-2 sm:px-0">
       {/* Progress line behind */}
-      <div className="absolute top-5 left-0 right-0 h-0.5 bg-border mx-10 hidden sm:block" />
+      <div className="absolute top-5 left-0 right-0 h-0.5 bg-border mx-8 sm:mx-10" />
       <motion.div
-        className="absolute top-5 left-0 h-0.5 bg-gradient-to-r from-primary to-secondary mx-10 hidden sm:block"
+        className="absolute top-5 left-0 h-0.5 bg-gradient-to-r from-primary to-secondary mx-8 sm:mx-10"
         initial={{ width: "0%" }}
         animate={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
         transition={{ duration: 0.4, ease: "easeInOut" }}
@@ -35,7 +35,7 @@ export function WizardProgress({ steps, currentStep }: WizardProgressProps) {
           <div key={step.id} className="flex flex-col items-center relative z-10">
             <motion.div
               className={`
-                w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300
+                w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300
                 ${isCompleted
                   ? "bg-primary text-primary-foreground shadow-[var(--shadow-primary)]"
                   : isActive
@@ -47,12 +47,12 @@ export function WizardProgress({ steps, currentStep }: WizardProgressProps) {
               transition={{ duration: 0.4 }}
             >
               {isCompleted ? (
-                <Check className="w-5 h-5" />
+                <Check className="w-4 h-4 sm:w-5 sm:h-5" />
               ) : (
-                <Icon className="w-5 h-5" />
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
               )}
             </motion.div>
-            <p className={`text-xs mt-2 font-medium text-center hidden sm:block ${
+            <p className={`text-[10px] sm:text-xs mt-1.5 sm:mt-2 font-medium text-center ${
               isActive ? "text-primary" : isCompleted ? "text-foreground" : "text-muted-foreground"
             }`}>
               {step.title}
