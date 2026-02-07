@@ -5,3 +5,4 @@ export { ProjectsSection } from './ProjectsSection';
 export { InstagramSection } from './InstagramSection';
 export { TestimonialsSection } from './TestimonialsSection';
 export { CTASection } from './CTASection';
+export { ContactSection } from './ContactSection';

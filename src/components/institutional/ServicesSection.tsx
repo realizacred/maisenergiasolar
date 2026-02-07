@@ -1,78 +1,82 @@
-import { FileText, FileCheck, Wrench, Settings } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import serviceProjeto from "@/assets/service-projeto.jpg";
+import serviceHomologacao from "@/assets/service-homologacao.jpg";
+import serviceInstalacao from "@/assets/service-instalacao.jpg";
+import serviceManutencao from "@/assets/service-manutencao.jpg";
 
 const services = [
   {
-    icon: FileText,
     title: "Projeto",
-    description: "Elaboramos um projeto único e customizado para atender as suas necessidades.",
-    image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&q=80",
+    description: "Elaboramos um projeto único e customizado para atender as suas necessidades, utilizando softwares de cálculo avançados.",
+    image: serviceProjeto,
   },
   {
-    icon: FileCheck,
     title: "Homologação",
-    description: "Cuidamos de todo o processo de legalização junto à distribuidora.",
-    image: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=400&q=80",
+    description: "Cuidamos de todo o processo de legalização junto à distribuidora de energia, sem burocracia para você.",
+    image: serviceHomologacao,
   },
   {
-    icon: Wrench,
     title: "Instalação",
-    description: "Instalamos o seu sistema usando os melhores equipamentos.",
-    image: "https://images.unsplash.com/photo-1559302504-64aae6ca6b6d?w=400&q=80",
+    description: "Instalamos o seu sistema usando os melhores equipamentos do mercado, com garantia e segurança total.",
+    image: serviceInstalacao,
   },
   {
-    icon: Settings,
     title: "Manutenção",
-    description: "Oferecemos uma assinatura de manutenção preventiva para o seu sistema.",
-    image: "https://images.unsplash.com/photo-1624397640148-949b1732bb0a?w=400&q=80",
+    description: "Oferecemos manutenção preventiva para garantir que seu sistema funcione com máxima eficiência sempre.",
+    image: serviceManutencao,
   },
 ];
 
 export function ServicesSection() {
   return (
-    <section id="servicos" className="py-10 sm:py-16 bg-muted/30">
+    <section id="servicos" className="py-16 sm:py-24 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2 sm:mb-3">
-            Serviços
-          </h2>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
-            Confira nossos serviços!
-          </p>
-        </div>
+        {/* Section Header */}
+        <p className="text-primary font-semibold text-sm uppercase tracking-wider mb-2 text-center">
+          Nossos Serviços
+        </p>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4 text-center">
+          Serviços
+        </h2>
+        <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12 text-lg">
+          Do projeto à manutenção, cuidamos de tudo para você ter a melhor experiência com energia solar.
+        </p>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 max-w-6xl mx-auto">
-          {services.map((service, index) => (
-            <Card 
-              key={index} 
-              className="group overflow-hidden hover:shadow-xl transition-all duration-300"
+        {/* Service Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          {services.map((service) => (
+            <div
+              key={service.title}
+              className="group relative rounded-2xl overflow-hidden bg-card border border-border/50 hover:shadow-xl transition-all duration-300"
             >
-              <div className="relative h-32 sm:h-48 overflow-hidden">
+              {/* Image */}
+              <div className="relative h-48 sm:h-56 overflow-hidden">
                 <img
                   src={service.image}
                   alt={service.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
-                <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center">
-                  <service.icon className="w-4 h-4 sm:w-6 sm:h-6 text-primary-foreground" />
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-foreground/50 to-transparent" />
               </div>
-              <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-6">
-                <CardTitle className="text-base sm:text-xl text-brand-blue">{service.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 pt-0">
-                <p className="text-muted-foreground text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-3">{service.description}</p>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="w-full border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground text-xs sm:text-sm"
+
+              {/* Content */}
+              <div className="p-5">
+                <h3 className="text-xl font-bold text-foreground mb-2">{service.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                  {service.description}
+                </p>
+                <a
+                  href="https://wa.me/5532998437675"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
                 >
-                  Confira
-                </Button>
-              </CardContent>
-            </Card>
+                  Saiba mais
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </a>
+              </div>
+            </div>
           ))}
         </div>
       </div>
