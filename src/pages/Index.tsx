@@ -8,9 +8,9 @@ import {
   AboutSection,
   ServicesSection,
   ProjectsSection,
-  InstagramSection,
-  TestimonialsSection,
   CTASection,
+  TestimonialsSection,
+  ContactSection,
 } from "@/components/institutional";
 import { VendorLandingPage } from "@/components/vendor/VendorLandingPage";
 
@@ -35,11 +35,11 @@ export default function Index() {
       <Header />
       <HeroBanner />
       <AboutSection />
-      <CTASection />
       <ServicesSection />
+      <CTASection />
       <ProjectsSection />
-      <InstagramSection />
       <TestimonialsSection />
+      <ContactSection />
       <Footer />
       <WhatsAppButton phoneNumber={WHATSAPP_NUMBER} />
     </div>

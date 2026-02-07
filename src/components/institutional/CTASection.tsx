@@ -1,47 +1,51 @@
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Phone, MessageCircle } from "lucide-react";
-
-const WHATSAPP_NUMBER = "5532998437675";
+import financingBg from "@/assets/financing-bg.jpg";
 
 export function CTASection() {
-  const handleWhatsApp = () => {
-    const message = encodeURIComponent(
-      "Olá! Gostaria de saber mais sobre energia solar e solicitar um orçamento."
-    );
-    window.open(
-      `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`,
-      "_blank"
-    );
+  const scrollToContact = () => {
+    document.getElementById("contato")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <section className="py-16 gradient-blue text-secondary-foreground">
-      <div className="container mx-auto px-4 text-center">
-        <h2 className="text-2xl md:text-4xl font-bold mb-4">
-          Economize até 90% na sua conta de Energia!
-        </h2>
-        <p className="text-lg opacity-90 mb-8 max-w-xl mx-auto">
-          Entre em contato conosco e solicite um orçamento personalizado!
+    <section className="relative py-20 sm:py-28 overflow-hidden">
+      {/* Background Image */}
+      <img
+        src={financingBg}
+        alt="Painéis solares"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      <div className="absolute inset-0 bg-secondary/85" />
+
+      {/* Content */}
+      <div className="relative z-10 container mx-auto px-4 text-center">
+        <p className="text-primary font-semibold text-sm uppercase tracking-wider mb-3">
+          Financiamento
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <Button 
-            onClick={handleWhatsApp}
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6 max-w-3xl mx-auto leading-tight">
+          Deseja financiar seu sistema de energia solar?
+        </h2>
+        <p className="text-white/80 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
+          Envie suas informações que nossa equipe irá fazer uma cotação com as instituições 
+          financeiras parceiras e enviar a melhor proposta para você.
+        </p>
+        <div className="flex flex-wrap justify-center gap-4">
+          <Button
             size="lg"
-            className="bg-white text-secondary hover:bg-white/90 font-semibold px-8 gap-2"
+            asChild
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-6 text-base rounded-full shadow-primary"
           >
-            <MessageCircle className="w-5 h-5" />
-            Fale pelo WhatsApp
+            <a href="https://wa.me/5532998437675" target="_blank" rel="noopener noreferrer">
+              Solicitar Orçamento
+            </a>
           </Button>
-          <Link to="/calculadora">
-            <Button 
-              variant="outline"
-              size="lg"
-              className="border-secondary-foreground text-secondary-foreground hover:bg-secondary-foreground/10 font-semibold px-8"
-            >
-              Simular Economia
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={scrollToContact}
+            className="border-white/50 text-white hover:bg-white/10 font-semibold px-8 py-6 text-base rounded-full"
+          >
+            Preencher Formulário
+          </Button>
         </div>
       </div>
     </section>
