@@ -31,6 +31,7 @@ import { ServicosManager } from "@/components/admin/ServicosManager";
 import { InstaladorManager } from "@/components/admin/InstaladorManager";
 import { InadimplenciaDashboard } from "@/components/admin/InadimplenciaDashboard";
 import { WhatsAppAutomationConfig } from "@/components/admin/WhatsAppAutomationConfig";
+import { DatabaseExportManager } from "@/components/admin/DatabaseExportManager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Footer from "@/components/layout/Footer";
 
@@ -247,6 +248,17 @@ export default function Admin() {
         );
       case "inadimplencia":
         return <InadimplenciaDashboard />;
+      case "exportar-dados":
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Exportar Dados do Banco</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DatabaseExportManager />
+            </CardContent>
+          </Card>
+        );
       default:
         return <LeadsView />;
     }
