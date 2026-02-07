@@ -29,6 +29,7 @@ import {
   MessageCircle,
   Cable,
   Workflow,
+  DatabaseBackup,
 } from "lucide-react";
 import {
   Sidebar,
@@ -100,6 +101,7 @@ const configMenuItems = [
   { id: "concessionarias", title: "Concessionárias", icon: Lightbulb },
   { id: "config", title: "Calculadora", icon: Calculator },
   { id: "financiamento", title: "Bancos", icon: Building2 },
+  { id: "exportar-dados", title: "Exportar Dados", icon: DatabaseBackup },
 ];
 
 export function AdminSidebar({
