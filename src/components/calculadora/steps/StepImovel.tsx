@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 import { UseFormReturn } from "react-hook-form";
-import { ChevronRight, ChevronLeft, Building2, TreePine } from "lucide-react";
+import { ChevronRight, ChevronLeft, Building2, TreePine, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FloatingInput } from "@/components/ui/floating-input";
 import { FloatingSelect } from "@/components/ui/floating-select";
 import { ESTADOS_BRASIL, TIPOS_TELHADO, REDES_ATENDIMENTO } from "@/lib/validations";
+import { useCidadesPorEstado } from "@/hooks/useCidadesPorEstado";
 import type { WizardFormData } from "../CalculadoraWizard";
 
 interface StepImovelProps {
@@ -27,11 +27,20 @@ const telhadoOptions = TIPOS_TELHADO.map((t) => ({ value: t, label: t }));
 const redeOptions = REDES_ATENDIMENTO.map((r) => ({ value: r, label: r }));
 
 export function StepImovel({ form, onNext, onBack }: StepImovelProps) {
-  const { register, setValue, watch, formState: { errors } } = form;
+  const { setValue, watch, formState: { errors } } = form;
   const area = watch("area");
   const estado = watch("estado");
+  const cidade = watch("cidade");
   const tipoTelhado = watch("tipo_telhado");
   const rede = watch("rede_atendimento");
+
+  const { cidades, isLoading: isLoadingCidades } = useCidadesPorEstado(estado);
+
+  const handleEstadoChange = (val: string) => {
+    setValue("estado", val, { shouldValidate: true });
+    // Clear city when state changes
+    setValue("cidade", "", { shouldValidate: false });
+  };
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -79,32 +88,41 @@ export function StepImovel({ form, onNext, onBack }: StepImovelProps) {
           )}
         </motion.div>
 
-        {/* Estado + Cidade */}
-        <motion.div custom={1} variants={fieldVariants} initial="hidden" animate="visible" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
+        {/* Estado */}
+        <motion.div custom={1} variants={fieldVariants} initial="hidden" animate="visible">
+          <FloatingSelect
+            label="Estado"
+            value={estado}
+            onValueChange={handleEstadoChange}
+            options={estadoOptions}
+            error={errors.estado?.message}
+          />
+        </motion.div>
+
+        {/* Cidade - Select dropdown loaded from IBGE */}
+        <motion.div custom={2} variants={fieldVariants} initial="hidden" animate="visible">
+          {isLoadingCidades ? (
+            <div className="h-14 rounded-xl border-2 border-muted-foreground/25 bg-card flex items-center justify-center gap-2 text-muted-foreground text-sm">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Carregando cidades...
+            </div>
+          ) : (
             <FloatingSelect
-              label="Estado"
-              value={estado}
-              onValueChange={(val) => setValue("estado", val, { shouldValidate: true })}
-              options={estadoOptions}
-              error={errors.estado?.message}
-            />
-          </div>
-          <div>
-            <FloatingInput
-              id="cidade"
               label="Cidade"
-              className="h-14 rounded-xl bg-card"
-              {...register("cidade")}
+              value={cidade}
+              onValueChange={(val) => setValue("cidade", val, { shouldValidate: true })}
+              options={cidades}
+              error={errors.cidade?.message}
+              placeholder={!estado ? "Selecione o estado primeiro" : "Selecione a cidade"}
             />
-            {errors.cidade && (
-              <p className="text-xs text-destructive mt-1">{errors.cidade.message}</p>
-            )}
-          </div>
+          )}
+          {!estado && !errors.cidade && (
+            <p className="text-xs text-muted-foreground mt-1 ml-1">Selecione o estado para ver as cidades</p>
+          )}
         </motion.div>
 
         {/* Tipo de Telhado */}
-        <motion.div custom={2} variants={fieldVariants} initial="hidden" animate="visible">
+        <motion.div custom={3} variants={fieldVariants} initial="hidden" animate="visible">
           <FloatingSelect
             label="Tipo de Telhado"
             value={tipoTelhado}
@@ -115,7 +133,7 @@ export function StepImovel({ form, onNext, onBack }: StepImovelProps) {
         </motion.div>
 
         {/* Rede */}
-        <motion.div custom={3} variants={fieldVariants} initial="hidden" animate="visible">
+        <motion.div custom={4} variants={fieldVariants} initial="hidden" animate="visible">
           <FloatingSelect
             label="Tipo de Rede Elétrica"
             value={rede}
