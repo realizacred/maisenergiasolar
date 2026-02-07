@@ -219,16 +219,37 @@ export function DatabaseExportManager() {
     const tablesToExport = selected.size > 0 ? Array.from(selected) : ALL_TABLES.map(t => t.name);
     setExportingAllSql(true);
     try {
+      // Pass 1: CREATE TABLE statements without foreign keys
       const ddlParts: string[] = [];
+      ddlParts.push("-- ==============================================");
+      ddlParts.push("-- PARTE 1: Criação das tabelas (sem foreign keys)");
+      ddlParts.push("-- ==============================================\n");
+
       for (const tableName of tablesToExport) {
-        const { data, error } = await supabase.rpc("get_table_ddl", { _table_name: tableName });
+        const { data, error } = await supabase.rpc("get_table_ddl", { _table_name: tableName, _include_fks: false } as any);
         if (error) {
           ddlParts.push(`-- Erro ao obter DDL de ${tableName}: ${error.message}\n`);
         } else {
-          ddlParts.push(`-- ==========================================\n-- Table: ${tableName}\n-- ==========================================\n${data}\n`);
+          ddlParts.push(`-- Table: ${tableName}\n${data}\n`);
         }
       }
-      const fullSql = ddlParts.join("\n");
+
+      // Pass 2: Foreign keys (after all tables exist)
+      const fkParts: string[] = [];
+      fkParts.push("\n-- ==============================================");
+      fkParts.push("-- PARTE 2: Foreign Keys");
+      fkParts.push("-- ==============================================\n");
+
+      let hasFks = false;
+      for (const tableName of tablesToExport) {
+        const { data, error } = await supabase.rpc("get_table_fks", { _table_name: tableName });
+        if (!error && data && (data as string).trim().length > 0) {
+          fkParts.push(`-- FK: ${tableName}\n${data}`);
+          hasFks = true;
+        }
+      }
+
+      const fullSql = ddlParts.join("\n") + (hasFks ? "\n" + fkParts.join("\n") : "");
       const blob = new Blob([fullSql], { type: "text/sql;charset=utf-8;" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
