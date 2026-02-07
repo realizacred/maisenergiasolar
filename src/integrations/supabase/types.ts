@@ -2730,6 +2730,7 @@ export type Database = {
           tarifa_media_kwh: number
         }[]
       }
+      get_enums_ddl: { Args: never; Returns: string }
       get_table_ddl: {
         Args: { _include_fks?: boolean; _table_name: string }
         Returns: string
