@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { Phone, Mail, MapPin, Instagram } from "lucide-react";
+import logoBranca from "@/assets/logo-branca.png";
 
 const Footer = forwardRef<HTMLElement>(function Footer(props, ref) {
   return (
@@ -8,10 +9,11 @@ const Footer = forwardRef<HTMLElement>(function Footer(props, ref) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-1 mb-4">
-              <span className="text-xl font-black text-primary">MAIS</span>
-              <span className="text-xl font-bold text-secondary-foreground">ENERGIA SOLAR</span>
-            </div>
+            <img 
+              src={logoBranca} 
+              alt="Mais Energia Solar" 
+              className="h-14 w-auto mb-4" 
+            />
             <p className="text-secondary-foreground/70 text-sm leading-relaxed">
               Soluções em energia solar fotovoltaica para residências, comércios, indústrias e propriedades rurais.
             </p>

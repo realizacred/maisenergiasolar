@@ -8,6 +8,7 @@ import {
   AboutSection,
   ServicesSection,
   ProjectsSection,
+  InstagramSection,
   CTASection,
   TestimonialsSection,
   ContactSection,
@@ -38,6 +39,7 @@ export default function Index() {
       <ServicesSection />
       <CTASection />
       <ProjectsSection />
+      <InstagramSection />
       <TestimonialsSection />
       <ContactSection />
       <Footer />
