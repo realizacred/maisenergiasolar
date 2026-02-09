@@ -1367,6 +1367,7 @@ export type Database = {
           complemento: string | null
           consumo_previsto: number
           created_at: string
+          created_from: string
           data_proxima_acao: string | null
           estado: string
           id: string
@@ -1397,6 +1398,7 @@ export type Database = {
           complemento?: string | null
           consumo_previsto: number
           created_at?: string
+          created_from?: string
           data_proxima_acao?: string | null
           estado: string
           id?: string
@@ -1427,6 +1429,7 @@ export type Database = {
           complemento?: string | null
           consumo_previsto?: number
           created_at?: string
+          created_from?: string
           data_proxima_acao?: string | null
           estado?: string
           id?: string
@@ -1509,6 +1512,7 @@ export type Database = {
           complemento: string | null
           consumo_previsto: number
           created_at: string
+          created_from: string
           data_proxima_acao: string | null
           estado: string
           id: string
@@ -1537,6 +1541,7 @@ export type Database = {
           complemento?: string | null
           consumo_previsto: number
           created_at?: string
+          created_from?: string
           data_proxima_acao?: string | null
           estado: string
           id?: string
@@ -1565,6 +1570,7 @@ export type Database = {
           complemento?: string | null
           consumo_previsto?: number
           created_at?: string
+          created_from?: string
           data_proxima_acao?: string | null
           estado?: string
           id?: string
@@ -2042,6 +2048,7 @@ export type Database = {
           concessionaria: string | null
           consumo_kwh: number | null
           created_at: string
+          created_from: string
           economia_anual: number | null
           economia_mensal: number | null
           estado: string | null
@@ -2063,6 +2070,7 @@ export type Database = {
           concessionaria?: string | null
           consumo_kwh?: number | null
           created_at?: string
+          created_from?: string
           economia_anual?: number | null
           economia_mensal?: number | null
           estado?: string | null
@@ -2084,6 +2092,7 @@ export type Database = {
           concessionaria?: string | null
           consumo_kwh?: number | null
           created_at?: string
+          created_from?: string
           economia_anual?: number | null
           economia_mensal?: number | null
           estado?: string | null
